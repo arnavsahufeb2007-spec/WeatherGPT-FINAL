@@ -8,7 +8,7 @@
  * - Stale response rejection
  */
 
-import { VoiceState, VoiceError, STTRecognitionResult, VoiceSettings } from "./types";
+import { VoiceState, VoiceError, STTRecognitionResult, VoiceSettings, SpeechToTextProvider, TextToSpeechProvider } from "./types";
 import { defaultSTTProvider, WebSpeechSTTProvider } from "./speechToTextProvider";
 import { defaultTTSProvider, WebSpeechTTSProvider } from "./textToSpeechProvider";
 
@@ -23,8 +23,8 @@ const DEFAULT_SETTINGS: VoiceSettings = {
 };
 
 export class VoiceManager {
-  private sttProvider: WebSpeechSTTProvider;
-  private ttsProvider: WebSpeechTTSProvider;
+  private sttProvider: SpeechToTextProvider;
+  private ttsProvider: TextToSpeechProvider;
   private state: VoiceState = "idle";
   private settings: VoiceSettings;
   private stateListeners: Set<(state: VoiceState) => void> = new Set();
@@ -33,9 +33,9 @@ export class VoiceManager {
   private lastSpokenText = "";
   private currentRequestId = 0;
 
-  constructor() {
-    this.sttProvider = defaultSTTProvider;
-    this.ttsProvider = defaultTTSProvider;
+  constructor(sttProvider?: SpeechToTextProvider, ttsProvider?: TextToSpeechProvider) {
+    this.sttProvider = sttProvider || defaultSTTProvider;
+    this.ttsProvider = ttsProvider || defaultTTSProvider;
     this.settings = this.loadSettings();
   }
 
@@ -77,17 +77,19 @@ export class VoiceManager {
   }
 
   public getEffectiveInputLanguage(appLanguage: string): string {
-    if (this.settings.inputLanguage && this.settings.inputLanguage !== "auto") {
+    if (this.settings.inputLanguage && this.settings.inputLanguage !== "auto" && this.settings.inputLanguage.toLowerCase() !== "all") {
       return this.settings.inputLanguage;
     }
-    return appLanguage || "en";
+    const fallback = appLanguage && appLanguage.toLowerCase() !== "all" && appLanguage !== "auto" ? appLanguage : "en";
+    return fallback;
   }
 
   public getEffectiveOutputLanguage(appLanguage: string): string {
-    if (this.settings.outputLanguage && this.settings.outputLanguage !== "auto") {
+    if (this.settings.outputLanguage && this.settings.outputLanguage !== "auto" && this.settings.outputLanguage.toLowerCase() !== "all") {
       return this.settings.outputLanguage;
     }
-    return appLanguage || "en";
+    const fallback = appLanguage && appLanguage.toLowerCase() !== "all" && appLanguage !== "auto" ? appLanguage : "en";
+    return fallback;
   }
 
   public subscribeSettings(listener: (settings: VoiceSettings) => void): () => void {
@@ -140,11 +142,15 @@ export class VoiceManager {
     this.stopSpeaking();
     this.notifyError(null);
 
+    const safeOverride = typeof explicitOverrideLang === "string" ? explicitOverrideLang.trim() : undefined;
     const effectiveLanguage =
-      explicitOverrideLang ||
-      (this.settings.inputLanguage && this.settings.inputLanguage !== "auto"
+      (safeOverride && safeOverride !== "auto" && safeOverride.toLowerCase() !== "all")
+        ? safeOverride
+        : (this.settings.inputLanguage && this.settings.inputLanguage !== "auto" && this.settings.inputLanguage.toLowerCase() !== "all")
         ? this.settings.inputLanguage
-        : language);
+        : (language && language !== "auto" && language.toLowerCase() !== "all")
+        ? language
+        : "";
 
     const requestId = ++this.currentRequestId;
 
@@ -215,10 +221,13 @@ export class VoiceManager {
     }
 
     const effectiveLanguage =
-      explicitOverrideLang ||
-      (this.settings.outputLanguage && this.settings.outputLanguage !== "auto"
+      (explicitOverrideLang && explicitOverrideLang !== "auto")
+        ? explicitOverrideLang
+        : (this.settings.outputLanguage && this.settings.outputLanguage !== "auto")
         ? this.settings.outputLanguage
-        : language);
+        : (language && language !== "auto")
+        ? language
+        : "en";
 
     // Stop previous speech
     this.stopSpeaking();
@@ -245,6 +254,7 @@ export class VoiceManager {
       onError: (error) => {
         if (this.currentRequestId === requestId) {
           console.warn("TTS playback error:", error.message);
+          this.notifyError(error);
           this.setState("idle");
         }
       },

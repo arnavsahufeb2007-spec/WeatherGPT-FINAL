@@ -13,7 +13,15 @@ import { getLanguageConfig } from "../../languages";
  * Maps WeatherGPT language code to optimal BCP-47 recognition tag
  */
 export function resolveSTTLanguageCode(languageCode: string): string {
-  const config = getLanguageConfig(languageCode);
+  if (!languageCode || typeof languageCode !== "string") {
+    return "";
+  }
+  const cleanCode = languageCode.trim().toLowerCase();
+  if (cleanCode === "auto" || cleanCode === "all") {
+    return "";
+  }
+
+  const config = getLanguageConfig(cleanCode);
 
   // Special handling for Hinglish:
   // hi-IN recognition in Google Speech works exceptionally well for Roman/Spoken Hinglish,
@@ -45,7 +53,7 @@ export function resolveSTTLanguageCode(languageCode: string): string {
     sd: "sd-IN",
   };
 
-  return indianFallbacks[config.code] || "en-IN";
+  return indianFallbacks[config.code] || "";
 }
 
 /**
@@ -92,6 +100,28 @@ export class WebSpeechSTTProvider implements SpeechToTextProvider {
       this.stop();
     }
 
+    const langParam = options.language?.trim();
+    if (!langParam || langParam === "auto" || langParam.toLowerCase() === "all") {
+      options.onError({
+        code: "language-unavailable",
+        message: "Browser speech recognition does not support automatic language detection. Please select an explicit spoken input language.",
+        fatal: true,
+        actionHint: "Open voice settings and choose your spoken input language.",
+      });
+      return;
+    }
+
+    const targetLang = resolveSTTLanguageCode(langParam);
+    if (!targetLang) {
+      options.onError({
+        code: "language-unavailable",
+        message: `Speech recognition is not available for language code "${langParam}". Please select a supported spoken input language.`,
+        fatal: true,
+        actionHint: "Open voice settings and choose a supported spoken input language.",
+      });
+      return;
+    }
+
     const win = window as any;
     const SpeechRecognitionClass = win.SpeechRecognition || win.webkitSpeechRecognition;
 
@@ -101,7 +131,6 @@ export class WebSpeechSTTProvider implements SpeechToTextProvider {
       this.recognition.interimResults = true;
       this.recognition.maxAlternatives = 1;
 
-      const targetLang = resolveSTTLanguageCode(options.language);
       this.recognition.lang = targetLang;
       this.hasReceivedFinalTranscript = false;
 

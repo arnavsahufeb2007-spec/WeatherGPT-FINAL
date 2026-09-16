@@ -58,7 +58,7 @@ export function HourlyForecastChart({ hourly, isFahrenheit }: HourlyForecastChar
             }`}
           >
             <Droplets className="w-3.5 h-3.5" />
-            <span>Precipitation %</span>
+            <span>Rain Probability</span>
           </button>
         </div>
       </div>

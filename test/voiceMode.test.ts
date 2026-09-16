@@ -1,7 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { resolveSTTLanguageCode } from "../src/services/voice/speechToTextProvider.js";
-import { resolveTTSLanguageCode, findBestVoiceForLanguage } from "../src/services/voice/textToSpeechProvider.js";
+import { resolveSTTLanguageCode, WebSpeechSTTProvider } from "../src/services/voice/speechToTextProvider.js";
+import {
+  resolveTTSLanguageCode,
+  findBestVoiceForLanguage,
+  WebSpeechTTSProvider,
+  selectVoice,
+  isVoiceCompatible,
+} from "../src/services/voice/textToSpeechProvider.js";
 import { formatSpokenWeatherResponse, splitIntoSpeechChunks } from "../src/services/voice/speechFormatter.js";
 import { VoiceManager } from "../src/services/voice/voiceManager.js";
 import { bhashiniProvider } from "../server/providers/bhashiniProvider.js";
@@ -137,12 +143,12 @@ test("20. Speech Formatter: Expands metric units in English (°C, km/h, %, mm)",
   assert.match(spoken, /5\.2 millimeters/);
 });
 
-test("21. Speech Formatter: Expands Hindi/Hinglish units into Hindi phonetics", () => {
+test("21. Speech Formatter: Expands Hindi/Hinglish units into Hindi phonetics and converts numbers to Hindi words", () => {
   const raw = "आज तापमान 28°C है और बारिश की 96% संभावना है। हवा की गति 14 km/h है।";
   const spoken = formatSpokenWeatherResponse(raw, "hi");
-  assert.match(spoken, /28 डिग्री सेल्सियस/);
-  assert.match(spoken, /96 प्रतिशत/);
-  assert.match(spoken, /14 किलोमीटर प्रति घंटा/);
+  assert.match(spoken, /अट्ठाईस डिग्री सेल्सियस/);
+  assert.match(spoken, /छियानवे प्रतिशत/);
+  assert.match(spoken, /चौदह किलोमीटर प्रति घंटा/);
 });
 
 test("22. Speech Formatter: Strips code blocks and raw JSON metadata", () => {
@@ -363,12 +369,76 @@ test("43. Speech Formatter: Multilingual unit enunciation for Bengali, Telugu, T
   assert.ok(pa.includes("ਪ੍ਰਤੀਸ਼ਤ"));
 });
 
-test("44. Speech Formatter: Hinglish expands units into natural bilingual speech", () => {
+test("44. Speech Formatter: Hinglish expands units into natural bilingual speech and converts numeric data to Hindi words", () => {
   const hinglishText = "Aaj Delhi me 28°C temperature rahega aur barish ke 96% chances hain.";
   const spoken = formatSpokenWeatherResponse(hinglishText, "hinglish");
-  assert.ok(spoken.includes("28 degree Celsius"));
-  assert.ok(spoken.includes("96 percent"));
+  assert.ok(spoken.includes("अट्ठाईस degree Celsius"));
+  assert.ok(spoken.includes("छियानवे percent"));
   assert.ok(spoken.includes("Delhi"));
+});
+
+test("44b. Speech Formatter: Wind speed 20 km/h enunciation and Indian language numeric conversion", () => {
+  // 1. English: Pronounces full kilometer per hour, English numbers intact
+  const enInput = "The wind blowing is 20 km/h and temperature is 28°C.";
+  const enSpoken = formatSpokenWeatherResponse(enInput, "en");
+  assert.match(enSpoken, /20 kilometers per hour/);
+  assert.match(enSpoken, /28 degrees Celsius/);
+  assert.doesNotMatch(enSpoken, /बीस/);
+
+  // 2. Hindi: Pronounces full kilometer (किलोमीटर प्रति घंटा) and 20 converted to बीस
+  const hiInput = "The wind blowing is 20 km/h";
+  const hiSpoken = formatSpokenWeatherResponse(hiInput, "hi");
+  assert.match(hiSpoken, /बीस किलोमीटर प्रति घंटा/);
+
+  // 3. Hinglish: Pronounces full kilometer (kilometer per hour) and 20 converted to बीस
+  const hinglishInput = "The wind blowing is 20 km/h";
+  const hinglishSpoken = formatSpokenWeatherResponse(hinglishInput, "hinglish");
+  assert.match(hinglishSpoken, /बीस kilometer per hour/);
+
+  // 4. Bengali: Converted into Bengali units while retaining natural-language numeric text (no Hindi number words)
+  const bnInput = "বাতাস ২০ km/h বেগে বইছে এবং তাপমাত্রা ২৬°C";
+  const bnSpoken = formatSpokenWeatherResponse(bnInput, "bn");
+  assert.doesNotMatch(bnSpoken, /बीस/);
+  assert.match(bnSpoken, /20\s+কিলোমিটার প্রতি ঘণ্টা/);
+  assert.match(bnSpoken, /26\s+ডিগ্রি সেলসিয়াস/);
+
+  // 5. Gujarati: Converted into Gujarati units while retaining natural-language numeric text (no Hindi number words)
+  const guInput = "પવન ૨૦ km/h ની ઝડપે ફૂંકાઈ રહ્યો છે અને તાપમાન ૨૮°C છે";
+  const guSpoken = formatSpokenWeatherResponse(guInput, "gu");
+  assert.doesNotMatch(guSpoken, /बीस/);
+  assert.match(guSpoken, /20\s+કિલોમીટર પ્રતિ કલાક/);
+  assert.match(guSpoken, /28\s+ડિગ્રી સેલ્સિયસ/);
+
+  // 6. Marathi: Converted into Marathi units while retaining natural-language numeric text (no Hindi number words)
+  const mrInput = "वारा 20 km/h वेगाने वाहत आहे आणि तापमान 28°C आहे";
+  const mrSpoken = formatSpokenWeatherResponse(mrInput, "mr");
+  assert.doesNotMatch(mrSpoken, /बीस/);
+  assert.match(mrSpoken, /20\s+किलोमीटर प्रति तास/);
+  assert.match(mrSpoken, /28\s+डिग्री सेल्सिअस/);
+
+  // 7. Telugu: Converted into Telugu units while retaining natural-language numeric text (no Hindi number words)
+  const teInput = "గాలి 20 km/h వేగంతో వీస్తోంది మరియు ఉష్णోగ్రత 28°C ఉంది";
+  const teSpoken = formatSpokenWeatherResponse(teInput, "te");
+  assert.doesNotMatch(teSpoken, /बीस/);
+  assert.match(teSpoken, /20\s+కిలోమీటర్ల వేగం/);
+
+  // 8. Tamil: Converted into Tamil units while retaining natural-language numeric text (no Hindi number words)
+  const taInput = "காற்று 20 km/h வேகத்தில் வீசுகிறது மற்றும் வெப்பநிலை 28°C";
+  const taSpoken = formatSpokenWeatherResponse(taInput, "ta");
+  assert.doesNotMatch(taSpoken, /बीस/);
+  assert.match(taSpoken, /20\s+கிலோமீட்டர் வேகம்/);
+
+  // 9. Punjabi: Converted into Punjabi units while retaining natural-language numeric text (no Hindi number words)
+  const paInput = "ਹਵਾ 20 km/h ਦੀ ਰਫ਼ਤਾਰ ਨਾਲ ਚੱਲ ਰਹੀ ਹੈ";
+  const paSpoken = formatSpokenWeatherResponse(paInput, "pa");
+  assert.doesNotMatch(paSpoken, /बीस/);
+  assert.match(paSpoken, /20\s+ਕਿਲੋਮੀਟਰ ਪ੍ਰਤੀ ਘੰਟਾ/);
+
+  // 10. Non-Indian languages (Spanish, German, French) preserve ASCII numbers
+  const esInput = "El viento sopla a 20 km/h";
+  const esSpoken = formatSpokenWeatherResponse(esInput, "es");
+  assert.match(esSpoken, /20 kilómetros por hora/);
+  assert.doesNotMatch(esSpoken, /बीस/);
 });
 
 test("45. Dual Voice Languages: Default settings initialize with auto for input and output", () => {
@@ -434,5 +504,332 @@ test("50. Dual Voice Languages: Resetting returns input and output to auto", () 
   assert.equal(manager.getEffectiveInputLanguage("kn"), "kn");
   assert.equal(manager.getEffectiveOutputLanguage("ml"), "ml");
 });
+
+class MockSpeechSynthesisUtterance {
+  public lang = "";
+  public voice: any = null;
+  public rate = 1;
+  public pitch = 1;
+  public volume = 1;
+  public onstart: any = null;
+  public onend: any = null;
+  public onerror: any = null;
+  constructor(public text: string) {}
+}
+
+test("51. TTS Queue: Sequential multi-chunk playback executes completely without 8s cutoffs", async () => {
+  (globalThis as any).SpeechSynthesisUtterance = MockSpeechSynthesisUtterance;
+  const spokenChunks: string[] = [];
+  let onStartFired = false;
+  let onEndFired = false;
+
+  // Mock synthesis environment
+  const mockSynth = {
+    speaking: false,
+    paused: false,
+    speak: (utterance: any) => {
+      spokenChunks.push(utterance.text);
+      // Simulate browser firing onstart then onend asynchronously
+      setTimeout(() => {
+        utterance.onstart?.();
+        setTimeout(() => {
+          utterance.onend?.();
+        }, 5);
+      }, 5);
+    },
+    cancel: () => {},
+    getVoices: () => [],
+  };
+
+  (globalThis as any).window = {
+    speechSynthesis: mockSynth,
+    SpeechSynthesisUtterance: MockSpeechSynthesisUtterance,
+  };
+
+  const provider = new WebSpeechTTSProvider();
+  const longHindiText =
+    "नई दिल्ली में आज का मौसम सुहावना है। तापमान 28 डिग्री सेल्सियस है। हवा में नमी 65 प्रतिशत दर्ज की गई है। हवा की गति 14 किलोमीटर प्रति घंटा है। शाम के समय हल्की बारिश की संभावना है।";
+
+  await provider.speak({
+    text: longHindiText,
+    language: "hi",
+    onStart: () => {
+      onStartFired = true;
+    },
+    onEnd: () => {
+      onEndFired = true;
+    },
+  });
+
+  // Wait for all chunks to finish playback
+  await new Promise((resolve) => setTimeout(resolve, 150));
+
+  assert.equal(onStartFired, true);
+  assert.equal(onEndFired, true);
+  assert.ok(spokenChunks.length >= 2, "Long text was divided into multiple chunks");
+  assert.equal(provider.isSpeaking(), false);
+});
+
+test("52. TTS Error Handling: language-unavailable or voice-unavailable reports error and does not loop", async () => {
+  let errorReported: any = null;
+  let speakCallCount = 0;
+
+  const mockSynth = {
+    speaking: false,
+    paused: false,
+    speak: (utterance: any) => {
+      speakCallCount++;
+      setTimeout(() => {
+        utterance.onerror?.({ error: "language-unavailable" });
+      }, 5);
+    },
+    cancel: () => {},
+    getVoices: () => [],
+  };
+
+  (globalThis as any).window = {
+    speechSynthesis: mockSynth,
+  };
+
+  const provider = new WebSpeechTTSProvider();
+  await provider.speak({
+    text: "અમદાવાદમાં આજે ભારે વરસાદની શક્યતા છે. સાવચેત રહેવું.",
+    language: "gu",
+    onError: (err) => {
+      errorReported = err;
+    },
+  });
+
+  await new Promise((resolve) => setTimeout(resolve, 50));
+
+  assert.ok(errorReported, "Error callback was invoked");
+  assert.equal(errorReported.code, "voice-unavailable");
+  assert.equal(speakCallCount, 1, "Playback halted immediately without re-trying remaining chunks");
+  assert.equal(provider.isSpeaking(), false);
+});
+
+test("53. TTS Cancellation: Rapid speech triggers cancel previous speech session cleanly", async () => {
+  let cancelCount = 0;
+  const mockSynth = {
+    speaking: false,
+    paused: false,
+    speak: () => {},
+    cancel: () => {
+      cancelCount++;
+    },
+    getVoices: () => [],
+  };
+
+  (globalThis as any).window = {
+    speechSynthesis: mockSynth,
+  };
+
+  const provider = new WebSpeechTTSProvider();
+  provider.speak({ text: "Sentence one", language: "en" });
+  provider.speak({ text: "Sentence two", language: "hi" });
+  provider.stop();
+
+  assert.ok(cancelCount >= 2, "cancel was called on old synthesis sessions");
+  assert.equal(provider.isSpeaking(), false);
+});
+
+test("54. VoiceManager: speakResponse prioritizes explicitOverrideLang from message language", async () => {
+  let spokenLang = "";
+  const mockProvider = {
+    id: "mock-tts",
+    name: "Mock TTS",
+    isSupported: () => true,
+    isSpeaking: () => false,
+    speak: async (options: any) => {
+      spokenLang = options.language;
+      options.onEnd?.();
+    },
+    stop: () => {},
+    pause: () => {},
+    resume: () => {},
+    getVoices: async () => [],
+  };
+
+  const manager = new VoiceManager(undefined, mockProvider as any);
+  // User selected global output language as English
+  manager.setOutputLanguage("en");
+
+  // A specific message arrived in Gujarati (gu)
+  await manager.speakResponse("અમદાવાદમાં તાપમાન 30 ડિગ્રી છે", "gu", true, "gu");
+
+  // The spoken language MUST be Gujarati (gu), NOT the global English setting
+  assert.equal(spokenLang, "gu", "Message language takes precedence for per-message speech playback");
+});
+
+test("55. Voice Selection: Never assigns English voice when targeting Indian regional language", () => {
+  const mockVoices = [
+    { name: "Google US English", lang: "en-US" },
+    { name: "Microsoft David - English (United States)", lang: "en-US" },
+    { name: "Google UK English Female", lang: "en-GB" },
+  ] as SpeechSynthesisVoice[];
+
+  // When searching for Hindi or Gujarati in an English-only voice environment
+  const hindiVoice = selectVoice(mockVoices, "hi");
+  const gujaratiVoice = selectVoice(mockVoices, "gu");
+  const bengaliVoice = selectVoice(mockVoices, "bn");
+
+  // Non-matching voices MUST return null (not an English voice)
+  assert.equal(hindiVoice, null, "Hindi must not be assigned an English voice");
+  assert.equal(gujaratiVoice, null, "Gujarati must not be assigned an English voice");
+  assert.equal(bengaliVoice, null, "Bengali must not be assigned an English voice");
+});
+
+test("56. Voice Selection: Matches Hindi voice correctly when installed", () => {
+  const mockVoices = [
+    { name: "Google US English", lang: "en-US" },
+    { name: "Google हिन्दी", lang: "hi-IN" },
+  ] as SpeechSynthesisVoice[];
+
+  const hindiVoice = selectVoice(mockVoices, "hi");
+  assert.ok(hindiVoice);
+  assert.equal(hindiVoice?.lang, "hi-IN");
+  assert.equal(isVoiceCompatible(hindiVoice!, "hi"), true);
+});
+
+test("57. Auto ASR: Speech recognition rejects auto/empty/ALL mode with clear error rather than English default", () => {
+  // 1. resolveSTTLanguageCode returns "" for auto, ALL, or empty
+  assert.equal(resolveSTTLanguageCode("auto"), "");
+  assert.equal(resolveSTTLanguageCode("ALL"), "");
+  assert.equal(resolveSTTLanguageCode(""), "");
+
+  // 2. WebSpeechSTTProvider start() triggers language-unavailable error
+  const origWindow = (globalThis as any).window;
+  try {
+    (globalThis as any).window = {
+      SpeechRecognition: class MockSpeechRecognition {
+        lang = "";
+      },
+    };
+
+    const stt = new WebSpeechSTTProvider();
+    let capturedError: any = null;
+
+    stt.start({
+      language: "auto",
+      onResult: () => {},
+      onError: (err: any) => {
+        capturedError = err;
+      },
+    });
+
+    assert.ok(capturedError, "Error must be reported when language is auto");
+    assert.equal(capturedError.code, "language-unavailable");
+    assert.match(capturedError.message, /does not support automatic language detection/i);
+  } finally {
+    (globalThis as any).window = origWindow;
+  }
+});
+
+test("58. TTS Fallback: Reports voice-unavailable error rather than silently defaulting to English voice", async () => {
+  const origWindow = (globalThis as any).window;
+  const origFetch = (globalThis as any).fetch;
+  const origAudio = (globalThis as any).Audio;
+
+  try {
+    const mockVoices = [
+      { name: "Google US English", lang: "en-US" },
+      { name: "Microsoft David", lang: "en-US" },
+    ];
+
+    let speakCalls = 0;
+    (globalThis as any).window = {
+      speechSynthesis: {
+        getVoices: () => mockVoices,
+        speak: () => {
+          speakCalls++;
+        },
+        cancel: () => {},
+        pause: () => {},
+        resume: () => {},
+      },
+    };
+    (globalThis as any).SpeechSynthesisUtterance = class {
+      lang = "";
+      text = "";
+    };
+    // Simulate Bhashini unconfigured or failing
+    (globalThis as any).fetch = async () => ({
+      ok: false,
+      status: 503,
+      json: async () => ({ success: false }),
+    });
+
+    const tts = new WebSpeechTTSProvider();
+    let capturedError: any = null;
+
+    await tts.speak({
+      text: "અમદાવાદમાં આજે ભારે વરસાદની આગાહી છે",
+      language: "gu",
+      onError: (err) => {
+        capturedError = err;
+      },
+    });
+
+    assert.ok(capturedError, "Error callback must be called when no Gujarati voice exists");
+    assert.equal(capturedError.code, "voice-unavailable");
+    assert.match(capturedError.message, /Gujarati/i);
+    assert.equal(speakCalls, 0, "Browser synthesis must NOT speak Gujarati using an English voice");
+  } finally {
+    (globalThis as any).window = origWindow;
+    (globalThis as any).fetch = origFetch;
+    (globalThis as any).Audio = origAudio;
+  }
+});
+
+test("59. TTS: Compatible browser voice is used directly when available", async () => {
+  const origWindow = (globalThis as any).window;
+
+  try {
+    const mockVoices = [
+      { name: "Google हिन्दी", lang: "hi-IN" },
+      { name: "Google US English", lang: "en-US" },
+    ];
+
+    let spokenUtterance: any = null;
+    (globalThis as any).window = {
+      speechSynthesis: {
+        getVoices: () => mockVoices,
+        speak: (utterance: any) => {
+          spokenUtterance = utterance;
+          setTimeout(() => utterance.onend?.(), 5);
+        },
+        cancel: () => {},
+        pause: () => {},
+        resume: () => {},
+      },
+    };
+    (globalThis as any).SpeechSynthesisUtterance = class {
+      lang = "";
+      text = "";
+      voice = null;
+      constructor(text: string) {
+        this.text = text;
+      }
+    };
+
+    const tts = new WebSpeechTTSProvider();
+    let completed = false;
+
+    await tts.speak({
+      text: "आज दिल्ली में मौसम साफ रहेगा",
+      language: "hi",
+      onEnd: () => {
+        completed = true;
+      },
+    });
+
+    assert.ok(spokenUtterance, "Utterance must be sent to synthesis");
+    assert.equal(spokenUtterance.lang, "hi-IN");
+    assert.equal(spokenUtterance.voice?.name, "Google हिन्दी");
+  } finally {
+    (globalThis as any).window = origWindow;
+  }
+});
+
 
 

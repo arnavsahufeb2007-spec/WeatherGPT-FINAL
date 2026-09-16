@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
+@custom-variant light (&:where(.light, .light *));
 
 @layer base {
   :root {
@@ -27,6 +28,118 @@
   }
 }
 
+/* Light mode specific styling */
+.light {
+  color-scheme: light;
+}
+
+.light aside#desktop-sidebar {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+.light header {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-color: #e2e8f0 !important;
+}
+
+.light nav#mobile-bottom-nav {
+  background-color: rgba(255, 255, 255, 0.98) !important;
+  border-color: #e2e8f0 !important;
+}
+
+.light .bg-slate-950,
+.light .bg-slate-900 {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+.light .bg-slate-950\/95,
+.light .bg-slate-950\/90,
+.light .bg-slate-950\/80,
+.light .bg-slate-950\/70,
+.light .bg-slate-950\/60,
+.light .bg-slate-950\/40,
+.light .bg-slate-950\/30,
+.light .bg-slate-900\/95,
+.light .bg-slate-900\/90,
+.light .bg-slate-900\/80,
+.light .bg-slate-900\/70,
+.light .bg-slate-900\/60,
+.light .bg-slate-900\/40 {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+.light .bg-slate-800,
+.light .bg-slate-800\/60,
+.light .bg-slate-800\/80 {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+.light .border-slate-800,
+.light .border-slate-800\/80,
+.light .border-slate-800\/90,
+.light .border-slate-700,
+.light .border-slate-700\/80,
+.light .border-slate-700\/60 {
+  border-color: #e2e8f0 !important;
+}
+
+.light h1, .light h2, .light h3, .light h4 {
+  color: #0f172a !important;
+}
+
+.light .text-slate-100,
+.light .text-slate-200 {
+  color: #1e293b !important;
+}
+
+.light .text-slate-300 {
+  color: #334155 !important;
+}
+
+.light .text-slate-400 {
+  color: #64748b !important;
+}
+
+.light .text-slate-500 {
+  color: #64748b !important;
+}
+
+/* Fix text-white in light mode so content remains clearly readable on light backgrounds */
+.light .text-white:not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-indigo-600 *):not(.bg-rose-500 *):not(.bg-emerald-500 *):not(.bg-blue-600 *):not(.bg-amber-500 *):not(.bg-sky-500):not(.bg-sky-600):not(.bg-rose-500):not(.bg-emerald-500) {
+  color: #0f172a !important;
+}
+
+.light .bg-gradient-to-b.from-slate-900 {
+  background-image: linear-gradient(to bottom, #ffffff, #f8fafc) !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+}
+
+.light .bg-gradient-to-r.from-slate-900 {
+  background-image: linear-gradient(to right, #f8fafc, #f1f5f9) !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* Ensure action buttons with solid colored backgrounds keep pristine white text */
+.light .bg-sky-500,
+.light .bg-sky-600,
+.light .bg-indigo-600,
+.light .bg-rose-500,
+.light .bg-emerald-500,
+.light .bg-blue-600,
+.light .bg-sky-500 *,
+.light .bg-sky-600 *,
+.light .bg-indigo-600 *,
+.light .bg-rose-500 *,
+.light .bg-emerald-500 *,
+.light .bg-blue-600 * {
+  color: #ffffff !important;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -34,6 +147,9 @@
 }
 ::-webkit-scrollbar-track {
   background: rgba(15, 23, 42, 0.6);
+}
+.light ::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.8);
 }
 ::-webkit-scrollbar-thumb {
   background: rgba(100, 116, 139, 0.4);

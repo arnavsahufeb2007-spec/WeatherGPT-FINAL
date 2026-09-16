@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ChatMessage, ConversationContext, LocationInfo } from "../types.js";
-import { queryWeatherAPI } from "../services/api.js";
+import { ChatMessage, ConversationContext, CurrentWeatherData, DailyForecastItem, LocationInfo, WeatherAnalysis } from "../types.js";
+import { queryWeatherAPI, localizeWeatherMessageAPI } from "../services/api.js";
 import {
   Send,
   Sparkles,
@@ -11,7 +11,6 @@ import {
   ShieldCheck,
   CornerDownLeft,
   Globe,
-  Satellite,
   Mic,
   MicOff,
   Volume2,
@@ -21,28 +20,65 @@ import {
   Radio,
   Sliders,
   Languages,
+  PlusCircle,
+  History,
 } from "lucide-react";
 import { WeatherIcon } from "./WeatherIcons.js";
 import { getLanguageConfig } from "../languages.js";
 import { useVoiceMode } from "../services/voice/useVoiceMode.js";
 import { VoiceLanguageModal } from "./VoiceLanguageModal.js";
+import { historyService } from "../services/historyService.js";
+import { UserProfile } from "../services/auth.js";
 
 interface WeatherChatProps {
   currentLocation: LocationInfo | null;
+  currentWeather?: CurrentWeatherData | null;
+  weatherAnalysis?: WeatherAnalysis | null;
+  dailyForecast?: DailyForecastItem[];
   context: ConversationContext;
   onUpdateContext: (ctx: ConversationContext) => void;
   onSelectLocation?: (loc: LocationInfo) => void;
   preferredLanguage: string;
   isFahrenheit: boolean;
+  currentUser?: UserProfile | null;
+  activeConversationId?: string | null;
+  activeConversationTitle?: string | null;
+  onActiveConversationChange?: (id: string | null, title?: string) => void;
+  onNewChat?: () => void;
+}
+
+export function detectScriptLanguage(text: string): string {
+  if (/[\u0A80-\u0AFF]/.test(text)) return "gu"; // Gujarati
+  if (/[\u0C00-\u0C7F]/.test(text)) return "te"; // Telugu
+  if (/[\u0B80-\u0BFF]/.test(text)) return "ta"; // Tamil
+  if (/[\u0C80-\u0CFF]/.test(text)) return "kn"; // Kannada
+  if (/[\u0D00-\u0D7F]/.test(text)) return "ml"; // Malayalam
+  if (/[\u0A00-\u0A7F]/.test(text)) return "pa"; // Gurmukhi (Punjabi)
+  if (/[\u0B00-\u0B7F]/.test(text)) return "or"; // Odia
+  if (/[\u0600-\u06FF]/.test(text)) return "ur"; // Urdu
+  if (/[\u0980-\u09FF]/.test(text)) return /[ৰৱ]/.test(text) ? "as" : "bn";
+  if (/[\u0900-\u097F]/.test(text)) {
+    // Avoid ASCII-style \b matching on Devanagari script; match Unicode boundary or start/end
+    return /(?:^|[^\u0900-\u097F])(आहे|आहेत|कसे|कसा|कशी|पाऊस|होईल|पडेल|नाही|झाला|हवामान|करा|सांगा|आजचे|उद्याचे)(?:[^\u0900-\u097F]|$)/.test(text) ? "mr" : "hi";
+  }
+  return "en";
 }
 
 export function WeatherChat({
   currentLocation,
+  currentWeather,
+  weatherAnalysis,
+  dailyForecast,
   context,
   onUpdateContext,
   onSelectLocation,
   preferredLanguage,
   isFahrenheit,
+  currentUser,
+  activeConversationId,
+  activeConversationTitle,
+  onActiveConversationChange,
+  onNewChat,
 }: WeatherChatProps) {
   const activeLocationName = context.currentLocation?.name || currentLocation?.name;
   const langConfig = getLanguageConfig(preferredLanguage);
@@ -53,8 +89,23 @@ export function WeatherChat({
   const [currentlySpeakingMessageId, setCurrentlySpeakingMessageId] = useState<string | null>(null);
   const [isVoiceSettingsOpen, setIsVoiceSettingsOpen] = useState(false);
 
+  // Synchronize currentlySpeakingMessageId when speech playback finishes or is cancelled
+  useEffect(() => {
+    if (!voice.isSpeaking && currentlySpeakingMessageId) {
+      setCurrentlySpeakingMessageId(null);
+    }
+  }, [voice.isSpeaking, currentlySpeakingMessageId]);
+
   const inputLangConfig = getLanguageConfig(voice.effectiveInputLanguage);
   const outputLangConfig = getLanguageConfig(voice.effectiveOutputLanguage);
+
+  const formatTemp = (celsius?: number) => {
+    if (celsius === undefined) return "--";
+    if (isFahrenheit) {
+      return `${Math.round((celsius * 9) / 5 + 32)}°F`;
+    }
+    return `${celsius}°C`;
+  };
 
   const dynamicSuggestedQueries = React.useMemo(() => {
     if (langConfig.sampleQueries && langConfig.sampleQueries.length > 0) {
@@ -86,7 +137,64 @@ I combine factual Open-Meteo observations with deterministic analysis and multil
 I combine factual Open-Meteo observations with deterministic analysis and multilingual Gemini interpretation. Ask me anything about current conditions, rain forecasts, sport/activity suitability, highway travel weather, or city comparisons across India and worldwide!`,
       timestamp: new Date().toISOString(),
       isAIGenerated: false,
+      language: preferredLanguage,
     },
+  ]);
+
+  // Synchronize conversational weather summary with exact normalized weather context
+  useEffect(() => {
+    if (currentLocation && currentWeather) {
+      const rainStatus =
+        currentWeather.rain > 0
+          ? `${currentWeather.rain} mm active rainfall`
+          : currentWeather.precipitation > 0
+          ? `${currentWeather.precipitation} mm precipitation`
+          : "0.0 mm (No rain currently falling)";
+
+      const locationSummary = `Hello! Here is your verified weather intelligence summary for **${currentLocation.name}**${
+        currentLocation.admin1 ? `, ${currentLocation.admin1}` : ""
+      }${currentLocation.country ? ` (${currentLocation.country})` : ""}:
+
+• **Temperature**: ${formatTemp(currentWeather.temperature)} (Feels like ${formatTemp(currentWeather.feelsLike)})
+• **Conditions**: ${currentWeather.condition}
+• **Humidity**: ${currentWeather.humidity !== null ? `${currentWeather.humidity}%` : "Data unavailable"}
+• **Precipitation Probability**: ${currentWeather.precipitationProbability}% • *Current Rain*: ${rainStatus}
+• **Wind Speed**: ${currentWeather.windSpeed} km/h (Gusts: ${currentWeather.windGusts} km/h)
+• **UV Index**: ${currentWeather.uvIndex} / 12 • **Visibility**: ${(currentWeather.visibility / 1000).toFixed(1)} km
+• **Outdoor Suitability**: ${weatherAnalysis?.outdoorSuitabilityScore ?? 80}/100 (${weatherAnalysis?.comfortLabel || "Comfortable"})
+
+You can ask me about hourly rain chances, outdoor sports, travel routes, or comparison with other cities!`;
+
+      setMessages((prev) => {
+        const hasUserMessages = prev.some((m) => m.sender === "user");
+        if (!hasUserMessages) {
+          return [
+            {
+              id: `summary_${currentLocation.name}`,
+              role: "assistant",
+              sender: "assistant",
+              content: locationSummary,
+              text: locationSummary,
+              timestamp: new Date().toISOString(),
+              isAIGenerated: false,
+              language: effectiveOutputLang || preferredLanguage,
+              data: {
+                current: currentWeather,
+                analysis: weatherAnalysis || undefined,
+              },
+            },
+          ];
+        }
+        return prev;
+      });
+    }
+  }, [
+    currentLocation?.name,
+    currentWeather?.temperature,
+    currentWeather?.precipitationProbability,
+    currentWeather?.humidity,
+    currentWeather?.windSpeed,
+    isFahrenheit,
   ]);
 
   const [inputText, setInputText] = useState("");
@@ -107,6 +215,92 @@ I combine factual Open-Meteo observations with deterministic analysis and multil
       setCurrentlySpeakingMessageId(null);
     }
   }, [voice.isSpeaking]);
+
+  // Load conversation messages from Supabase if activeConversationId is provided
+  useEffect(() => {
+    if (activeConversationId && currentUser && !currentUser.isGuest) {
+      historyService.getConversationMessages(activeConversationId).then((records) => {
+        if (records && records.length > 0) {
+          const loaded: ChatMessage[] = records.map((r) => ({
+            id: r.id,
+            role: r.role,
+            sender: r.role,
+            content: r.content,
+            text: r.content,
+            timestamp: r.created_at,
+            language: r.language,
+            isAIGenerated: r.is_ai_generated,
+            data: r.weather_data,
+          }));
+          setMessages(loaded);
+        }
+      });
+    }
+  }, [activeConversationId, currentUser?.id, currentUser?.isGuest]);
+
+  // When user changes output language, update all visible assistant responses dynamically without re-querying weather APIs
+  const effectiveOutputLang =
+    voice.outputLanguage && voice.outputLanguage !== "auto"
+      ? voice.outputLanguage
+      : preferredLanguage;
+
+  const prevOutputLangRef = useRef<string>(effectiveOutputLang);
+
+  useEffect(() => {
+    if (prevOutputLangRef.current === effectiveOutputLang) return;
+    prevOutputLangRef.current = effectiveOutputLang;
+
+    // 1. Immediately update welcome / greeting message synchronously
+    setMessages((prevMessages) => {
+      return prevMessages.map((msg) => {
+        if (msg.id === "welcome_msg") {
+          const targetConfig = getLanguageConfig(effectiveOutputLang);
+          const localizedWelcome =
+            `Hello! I am WeatherGPT, your conversational weather intelligence assistant in ${targetConfig.name}. Ask me about rain forecasts, outdoor sports, travel routes, or city comparisons worldwide!`;
+          return {
+            ...msg,
+            text: localizedWelcome,
+            content: localizedWelcome,
+            language: effectiveOutputLang,
+          };
+        }
+        return msg;
+      });
+    });
+
+    // 2. Localize all existing assistant messages in the chat history
+    setMessages((currentMessages) => {
+      currentMessages.forEach(async (msg) => {
+        if ((msg.role === "assistant" || msg.sender === "assistant") && msg.id !== "welcome_msg") {
+          try {
+            const res = await localizeWeatherMessageAPI({
+              text: msg.text,
+              data: msg.data,
+              location: msg.data?.location || currentLocation || undefined,
+              targetLanguage: effectiveOutputLang,
+            });
+
+            if (res && res.text) {
+              setMessages((latest) =>
+                latest.map((m) =>
+                  m.id === msg.id
+                    ? { ...m, text: res.text, content: res.text, language: effectiveOutputLang }
+                    : m
+                )
+              );
+
+              if (currentUser && !currentUser.isGuest && activeConversationId) {
+                historyService.updateMessageContent(msg.id, res.text, effectiveOutputLang).catch(() => {});
+              }
+            }
+          } catch (err) {
+            console.warn("Failed to localize message:", err);
+          }
+        }
+      });
+      return currentMessages;
+    });
+  }, [effectiveOutputLang, currentLocation, currentUser, activeConversationId]);
 
   const handleSend = async (textToSend = inputText, isVoiceTriggered: boolean = false) => {
     const trimmed = textToSend.trim();
@@ -132,12 +326,50 @@ I combine factual Open-Meteo observations with deterministic analysis and multil
       voice.setProcessing();
     }
 
+    // Save to conversation history if user is authenticated
+    let convId = activeConversationId;
+    if (currentUser && !currentUser.isGuest) {
+      if (!convId) {
+        const title = historyService.generateTitle(trimmed, currentLocation || undefined);
+        const newConv = await historyService.createConversation(currentUser.id, {
+          title,
+          location: currentLocation || undefined,
+          language: preferredLanguage,
+        });
+        if (newConv) {
+          convId = newConv.id;
+          if (onActiveConversationChange) {
+            onActiveConversationChange(newConv.id, newConv.title);
+          }
+        }
+      }
+      if (convId) {
+        historyService.addMessage(currentUser.id, convId, {
+          role: "user",
+          content: trimmed,
+          language: preferredLanguage,
+          context,
+        });
+      }
+    }
+
     try {
-      // If a specific voice output language is chosen, request the AI response in that language
-      const queryLanguage =
-        voice.outputLanguage && voice.outputLanguage !== "auto"
-          ? voice.outputLanguage
-          : preferredLanguage;
+      // Language precedence:
+      // 1. Explicit voice output language (if set and not 'auto' and not 'all')
+      // 2. Explicit preferred language from app settings (if set and not 'auto' and not 'all')
+      // 3. Auto mode: regional script detection from query text, else 'auto'
+      const isVoiceExplicit = Boolean(voice.outputLanguage && voice.outputLanguage !== "auto" && voice.outputLanguage.toLowerCase() !== "all");
+      const isPrefExplicit = Boolean(preferredLanguage && preferredLanguage !== "auto" && preferredLanguage.toLowerCase() !== "all");
+
+      let queryLanguage: string;
+      if (isVoiceExplicit) {
+        queryLanguage = voice.outputLanguage;
+      } else if (isPrefExplicit) {
+        queryLanguage = preferredLanguage;
+      } else {
+        const detectedMsgLang = detectScriptLanguage(trimmed);
+        queryLanguage = detectedMsgLang !== "en" ? detectedMsgLang : "auto";
+      }
 
       const result = await queryWeatherAPI(trimmed, context, queryLanguage, currentLocation || undefined);
 
@@ -156,20 +388,33 @@ I combine factual Open-Meteo observations with deterministic analysis and multil
 
       setMessages((prev) => [...prev, assistantMsg]);
 
+      // Save assistant message to cloud history
+      if (currentUser && !currentUser.isGuest && convId) {
+        historyService.addMessage(currentUser.id, convId, {
+          role: "assistant",
+          content: result.reply,
+          language: result.language,
+          is_ai_generated: true,
+          weather_data: result.data,
+        });
+      }
+
       // Automatically speak the response if Voice Mode triggered it or Auto-Speak is enabled
       if (voice.autoSpeak || isVoiceTriggered) {
         setCurrentlySpeakingMessageId(assistantMsgId);
-        voice.speak(result.reply, voice.effectiveOutputLanguage);
+        voice.speak(result.reply, result.language || voice.effectiveOutputLanguage);
       }
       if (result.context) {
         onUpdateContext(result.context);
       }
       if (result.data?.location && onSelectLocation) {
         const resLoc = result.data.location;
+        const isSpuriousMy = resLoc.name?.toLowerCase() === "my" && (resLoc.countryCode === "BE" || resLoc.country?.toLowerCase() === "belgium");
         if (
-          !currentLocation ||
+          !isSpuriousMy &&
+          (!currentLocation ||
           Math.abs(resLoc.latitude - currentLocation.latitude) > 0.05 ||
-          Math.abs(resLoc.longitude - currentLocation.longitude) > 0.05
+          Math.abs(resLoc.longitude - currentLocation.longitude) > 0.05)
         ) {
           onSelectLocation(resLoc);
         }
@@ -208,38 +453,31 @@ I combine factual Open-Meteo observations with deterministic analysis and multil
   };
 
   // Toggle read-aloud for a specific chat message
-  const handleToggleSpeakMessage = (msgId: string, text: string, _msgLanguage?: string) => {
+  const handleToggleSpeakMessage = (msgId: string, text: string, msgLanguage?: string) => {
     if (currentlySpeakingMessageId === msgId && voice.isSpeaking) {
       voice.stopSpeaking();
       setCurrentlySpeakingMessageId(null);
     } else {
       setCurrentlySpeakingMessageId(msgId);
-      voice.speak(text, voice.effectiveOutputLanguage, true);
+      const targetLanguage = msgLanguage || voice.effectiveOutputLanguage || preferredLanguage;
+      voice.speak(text, targetLanguage, true);
     }
-  };
-
-  const formatTemp = (celsius?: number) => {
-    if (celsius === undefined) return "--";
-    if (isFahrenheit) {
-      return `${Math.round((celsius * 9) / 5 + 32)}°F`;
-    }
-    return `${celsius}°C`;
   };
 
   return (
-    <div className="flex flex-col h-[75vh] max-h-[750px] rounded-2xl bg-slate-900/90 border border-slate-800/90 shadow-xl overflow-hidden">
+    <div className="flex flex-col h-[75vh] max-h-[750px] rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800/90 shadow-xl overflow-hidden">
       {/* Chat Header */}
-      <div className="px-5 py-3.5 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between">
+      <div className="px-5 py-3.5 bg-slate-50 dark:bg-slate-950/80 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-sky-500/20 border border-sky-500/30 flex items-center justify-center">
             <Sparkles className="w-4 h-4 text-sky-400" />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="text-xs font-bold text-white uppercase tracking-wider">Conversational Intelligence</span>
+              <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Conversational Intelligence</span>
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             </div>
-            <span className="text-[11px] text-slate-400">Context: {activeLocationName || "Worldwide"}</span>
+            <span className="text-[11px] text-slate-500 dark:text-slate-400">Context: {activeLocationName || "Worldwide"}</span>
           </div>
         </div>
 
@@ -248,12 +486,12 @@ I combine factual Open-Meteo observations with deterministic analysis and multil
           <button
             id="voice-languages-config-btn"
             onClick={() => setIsVoiceSettingsOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-colors"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white text-xs font-medium transition-colors"
             title="Configure separate input and output voice languages"
           >
             <Sliders className="w-3.5 h-3.5 text-sky-400" />
             <span className="hidden sm:inline">Voice Langs</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-sky-300 font-mono">
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-sky-600 dark:text-sky-300 font-mono">
               {voice.inputLanguage === "auto" ? "In: Auto" : `In: ${voice.inputLanguage.toUpperCase()}`} • {voice.outputLanguage === "auto" ? "Out: Auto" : `Out: ${voice.outputLanguage.toUpperCase()}`}
             </span>
           </button>
@@ -263,8 +501,8 @@ I combine factual Open-Meteo observations with deterministic analysis and multil
             onClick={voice.toggleAutoSpeak}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
               voice.autoSpeak
-                ? "bg-sky-500/10 border-sky-500/30 text-sky-400 hover:bg-sky-500/20"
-                : "bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-300"
+                ? "bg-sky-500/10 border-sky-500/30 text-sky-600 dark:text-sky-400 hover:bg-sky-500/20"
+                : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-300"
             }`}
             title="Toggle automatic speech output for answers"
           >
@@ -276,7 +514,7 @@ I combine factual Open-Meteo observations with deterministic analysis and multil
           {voice.isSpeaking && (
             <button
               onClick={voice.stopSpeaking}
-              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500/20 text-xs transition-colors"
+              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-500 dark:text-rose-400 hover:bg-rose-500/20 text-xs transition-colors"
               title="Stop voice playback"
             >
               <Square className="w-3 h-3 fill-rose-400" />
@@ -284,11 +522,41 @@ I combine factual Open-Meteo observations with deterministic analysis and multil
             </button>
           )}
 
-          <div className="text-[11px] text-slate-400 hidden md:block pl-2 border-l border-slate-800">
-            Active: <strong className="text-slate-200 capitalize">{langConfig.name}</strong>
+          {/* New Chat Button */}
+          {onNewChat && (
+            <button
+              onClick={onNewChat}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-500/30 text-xs font-semibold transition-colors cursor-pointer"
+              title="Start a new conversation session"
+            >
+              <PlusCircle className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">New Chat</span>
+            </button>
+          )}
+
+          <div className="text-[11px] text-slate-500 dark:text-slate-400 hidden md:block pl-2 border-l border-slate-200 dark:border-slate-800">
+            Active: <strong className="text-slate-800 dark:text-slate-200 capitalize">{langConfig.name}</strong>
           </div>
         </div>
       </div>
+
+      {/* Active Conversation Session Indicator */}
+      {activeConversationTitle && (
+        <div className="px-5 py-2 bg-sky-50 dark:bg-sky-950/40 border-b border-sky-200 dark:border-sky-500/20 flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2 text-sky-700 dark:text-sky-300">
+            <History className="w-3.5 h-3.5" />
+            <span>Session: <strong className="text-slate-900 dark:text-white font-medium">{activeConversationTitle}</strong></span>
+          </div>
+          {onNewChat && (
+            <button
+              onClick={onNewChat}
+              className="text-[11px] text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white underline cursor-pointer"
+            >
+              Start New Chat
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Messages Scroll Area */}
       <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
@@ -308,97 +576,68 @@ I combine factual Open-Meteo observations with deterministic analysis and multil
                   className={`p-4 rounded-2xl text-xs sm:text-sm leading-relaxed ${
                     isUser
                       ? "bg-sky-500 text-white rounded-tr-none shadow-md shadow-sky-500/10 font-medium"
-                      : "bg-slate-950 border border-slate-800 text-slate-200 rounded-tl-none shadow-sm"
+                      : "bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none shadow-sm"
                   }`}
                 >
                   <div className="whitespace-pre-line">{msg.text}</div>
 
                   {/* Attached Mini Cards if response included structured data */}
                   {!isUser && msg.data?.current && (
-                    <div className="mt-3 pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs bg-slate-900/60 p-2.5 rounded-xl">
+                    <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs bg-slate-50 dark:bg-slate-900/60 p-2.5 rounded-xl">
                       <div className="flex items-center gap-2">
                         <WeatherIcon code={msg.data.current.weatherCode} className="w-6 h-6" />
                         <div>
-                          <span className="font-bold text-white block">
+                          <span className="font-bold text-slate-900 dark:text-white block">
                             {formatTemp(msg.data.current.temperature)} • {msg.data.current.condition}
                           </span>
-                          <span className="text-[11px] text-slate-400">Feels like {formatTemp(msg.data.current.feelsLike)}</span>
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400">Feels like {formatTemp(msg.data.current.feelsLike)}</span>
                         </div>
                       </div>
-                      <div className="text-right text-[11px] text-slate-300">
-                        <span>Rain: {msg.data.current.precipitationProbability}%</span>
-                        <span className="block text-slate-400">Wind: {msg.data.current.windSpeed} km/h</span>
+                      <div className="text-right text-[11px] text-slate-600 dark:text-slate-300">
+                        <span>Rain Prob: {msg.data.current.precipitationProbability}%</span>
+                        <span className="block text-slate-500 dark:text-slate-400">
+                          {msg.data.current.rain > 0
+                            ? `${msg.data.current.rain} mm rain`
+                            : "0.0 mm (No rain falling)"}
+                        </span>
                       </div>
                     </div>
                   )}
 
                   {!isUser && msg.data?.activity && (
-                    <div className="mt-2 p-2.5 rounded-xl bg-slate-900/70 border border-slate-800 flex items-center justify-between text-xs">
+                    <div className="mt-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
                       <div>
-                        <span className="font-bold text-white">{msg.data.activity.activityName}</span>
-                        <span className="text-[11px] text-slate-400 block mt-0.5">Risk: {msg.data.activity.riskLevel}</span>
+                        <span className="font-bold text-slate-900 dark:text-white">{msg.data.activity.activityName}</span>
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">Risk: {msg.data.activity.riskLevel}</span>
                       </div>
-                      <span className="font-extrabold text-sky-400 text-sm">
+                      <span className="font-extrabold text-sky-600 dark:text-sky-400 text-sm">
                         {msg.data.activity.suitabilityScore}/100 ({msg.data.activity.suitability.toUpperCase()})
                       </span>
                     </div>
                   )}
 
                   {!isUser && msg.data?.travel && (
-                    <div className="mt-2 p-2.5 rounded-xl bg-slate-900/70 border border-slate-800 flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-1.5 font-semibold text-white">
+                    <div className="mt-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-1.5 font-semibold text-slate-900 dark:text-white">
                         <span>{msg.data.travel.origin.name}</span>
                         <ArrowRight className="w-3 h-3 text-slate-400" />
                         <span>{msg.data.travel.destination.name}</span>
                       </div>
-                      <span className="text-amber-400 font-bold uppercase text-[11px]">
+                      <span className="text-amber-500 dark:text-amber-400 font-bold uppercase text-[11px]">
                         {msg.data.travel.weatherRiskLevel} Risk ({msg.data.travel.totalDistanceKm} km)
                       </span>
-                    </div>
-                  )}
-
-                  {!isUser && msg.data?.nasa && msg.data.nasa.status === "available" && (
-                    <div className="mt-2 p-2.5 rounded-xl bg-slate-900/70 border border-slate-800 text-xs">
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-slate-200 flex items-center gap-1.5">
-                          <Satellite className="w-3.5 h-3.5 text-sky-400" />
-                          <span>NASA Earth Observation Layer</span>
-                        </span>
-                        <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 font-medium">
-                          Near-Real-Time
-                        </span>
-                      </div>
-                      <div className="mt-1.5 text-[11px] text-slate-300">
-                        {msg.data.nasa.naturalEvents && msg.data.nasa.naturalEvents.events.length > 0 ? (
-                          <span className="text-amber-300 font-medium block">
-                            ⚠️ {msg.data.nasa.naturalEvents.events[0].title} (~{msg.data.nasa.naturalEvents.events[0].distanceKm} km away)
-                          </span>
-                        ) : (
-                          <span className="text-slate-400 block">
-                            No active natural hazards curated within {msg.data.nasa.radiusKm} km.
-                          </span>
-                        )}
-                        {msg.data.nasa.climateContext && (
-                          <span className="block text-slate-400 mt-0.5">
-                            {msg.data.nasa.climateContext.month} 20-yr baseline: {msg.data.nasa.climateContext.historicalNormalTempC}°C
-                            {msg.data.nasa.climateContext.currentTempDeltaC !== undefined &&
-                              ` (${msg.data.nasa.climateContext.currentTempDeltaC > 0 ? "+" : ""}${msg.data.nasa.climateContext.currentTempDeltaC}°C vs normal)`}
-                            {" • "}Solar: {msg.data.nasa.climateContext.allSkySolarIrradianceKwhM2Day} kWh/m²/day
-                          </span>
-                        )}
-                      </div>
                     </div>
                   )}
                 </div>
 
                 {/* Footnote status & Voice read aloud button */}
                 {!isUser && (
-                  <div className="flex items-center justify-between text-[10px] text-slate-400 px-1">
+                  <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 px-1">
                     <div className="flex items-center gap-2">
                       <span>{new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                       <span>•</span>
                       <span className="flex items-center gap-1">
-                        <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                        <ShieldCheck className="w-3 h-3 text-emerald-500 dark:text-emerald-400" />
                         {msg.isAIGenerated ? "Grounded Gemini Interpretation" : "Deterministic Meteorological Engine"}
                       </span>
                     </div>
@@ -408,15 +647,15 @@ I combine factual Open-Meteo observations with deterministic analysis and multil
                       onClick={() => handleToggleSpeakMessage(msg.id, msg.text, msg.language || preferredLanguage)}
                       className={`flex items-center gap-1 px-2 py-0.5 rounded transition-colors ${
                         currentlySpeakingMessageId === msg.id && voice.isSpeaking
-                          ? "bg-sky-500/20 text-sky-300 border border-sky-500/30"
-                          : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+                          ? "bg-sky-500/20 text-sky-600 dark:text-sky-300 border border-sky-500/30"
+                          : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
                       }`}
                       title={currentlySpeakingMessageId === msg.id && voice.isSpeaking ? "Stop reading aloud" : "Read response aloud"}
                     >
                       {currentlySpeakingMessageId === msg.id && voice.isSpeaking ? (
                         <>
                           <Square className="w-3 h-3 fill-sky-400 text-sky-400" />
-                          <span className="text-[10px] font-medium text-sky-300">Stop</span>
+                          <span className="text-[10px] font-medium text-sky-600 dark:text-sky-300">Stop</span>
                         </>
                       ) : (
                         <>
@@ -430,8 +669,8 @@ I combine factual Open-Meteo observations with deterministic analysis and multil
               </div>
 
               {isUser && (
-                <div className="w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 mt-0.5">
-                  <User className="w-4 h-4 text-slate-300" />
+                <div className="w-7 h-7 rounded-lg bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 flex items-center justify-center shrink-0 mt-0.5">
+                  <User className="w-4 h-4 text-slate-600 dark:text-slate-300" />
                 </div>
               )}
             </div>
@@ -494,21 +733,21 @@ I combine factual Open-Meteo observations with deterministic analysis and multil
       )}
 
       {/* Language Indicator & Suggested Query Chips */}
-      <div className="px-4 py-2 bg-slate-950/60 border-t border-slate-800/60 flex items-center gap-2 overflow-x-auto scrollbar-none">
-        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-sky-500/10 border border-sky-500/20 text-[10px] text-sky-400 shrink-0 font-medium">
+      <div className="px-4 py-2 bg-slate-50 dark:bg-slate-950/60 border-t border-slate-200 dark:border-slate-800/60 flex items-center gap-2 overflow-x-auto scrollbar-none">
+        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-sky-500/10 border border-sky-500/20 text-[10px] text-sky-600 dark:text-sky-400 shrink-0 font-medium">
           <Globe className="w-3 h-3" />
           <span>{langConfig.name}</span>
           {langConfig.nativeName !== langConfig.name && (
-            <span className="text-slate-400 font-normal">({langConfig.nativeName})</span>
+            <span className="text-slate-500 dark:text-slate-400 font-normal">({langConfig.nativeName})</span>
           )}
         </div>
-        <span className="text-[10px] text-slate-500 uppercase font-semibold shrink-0">Try:</span>
+        <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-semibold shrink-0">Try:</span>
         {dynamicSuggestedQueries.map((q, i) => (
           <button
             key={i}
             onClick={() => handleSend(q)}
             disabled={isSending}
-            className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[11px] text-slate-300 whitespace-nowrap transition-colors disabled:opacity-50 hover:text-white"
+            className="px-2.5 py-1 rounded-lg bg-white hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-[11px] text-slate-700 dark:text-slate-300 whitespace-nowrap transition-colors disabled:opacity-50 hover:text-slate-900 dark:hover:text-white"
           >
             {q}
           </button>
@@ -516,25 +755,25 @@ I combine factual Open-Meteo observations with deterministic analysis and multil
       </div>
 
       {/* Dual Voice Language Indicator Strip */}
-      <div className="px-4 py-1.5 bg-slate-950/40 border-t border-slate-800/40 flex items-center justify-between text-[11px] text-slate-400">
+      <div className="px-4 py-1.5 bg-slate-100/80 dark:bg-slate-950/40 border-t border-slate-200 dark:border-slate-800/40 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
-          <div className="flex items-center gap-1 text-emerald-400 font-medium shrink-0">
+          <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium shrink-0">
             <Mic className="w-3 h-3" />
             <span>
               Mic Input:{" "}
-              <strong className="text-emerald-300">
+              <strong className="text-emerald-700 dark:text-emerald-300">
                 {voice.inputLanguage === "auto"
                   ? `Auto (${inputLangConfig.name})`
                   : inputLangConfig.name}
               </strong>
             </span>
           </div>
-          <span className="text-slate-600">•</span>
-          <div className="flex items-center gap-1 text-sky-400 font-medium shrink-0">
+          <span className="text-slate-300 dark:text-slate-600">•</span>
+          <div className="flex items-center gap-1 text-sky-600 dark:text-sky-400 font-medium shrink-0">
             <Volume2 className="w-3 h-3" />
             <span>
               Voice Output:{" "}
-              <strong className="text-sky-300">
+              <strong className="text-sky-700 dark:text-sky-300">
                 {voice.outputLanguage === "auto"
                   ? `Auto (${outputLangConfig.name})`
                   : outputLangConfig.name}
@@ -545,14 +784,14 @@ I combine factual Open-Meteo observations with deterministic analysis and multil
         <button
           type="button"
           onClick={() => setIsVoiceSettingsOpen(true)}
-          className="text-[11px] text-slate-400 hover:text-sky-300 underline font-medium shrink-0 ml-2"
+          className="text-[11px] text-slate-500 hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-300 underline font-medium shrink-0 ml-2"
         >
           Change Voice Languages
         </button>
       </div>
 
       {/* Input Box */}
-      <div className="p-3.5 bg-slate-950 border-t border-slate-800">
+      <div className="p-3.5 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -570,7 +809,7 @@ I combine factual Open-Meteo observations with deterministic analysis and multil
                 : t.askPlaceholder || `Ask WeatherGPT in ${langConfig.name}...`
             }
             disabled={isSending}
-            className="flex-1 px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 disabled:opacity-50"
+            className="flex-1 px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-sky-500 disabled:opacity-50"
           />
 
           {/* Voice Input Microphone Button */}
@@ -582,8 +821,8 @@ I combine factual Open-Meteo observations with deterministic analysis and multil
               voice.isListening
                 ? "bg-rose-500 text-white shadow-lg shadow-rose-500/30 ring-2 ring-rose-400 animate-pulse"
                 : voice.isSpeaking
-                ? "bg-sky-500/20 text-sky-400 border border-sky-500/40 hover:bg-sky-500/30"
-                : "bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white"
+                ? "bg-sky-500/20 text-sky-500 dark:text-sky-400 border border-sky-500/40 hover:bg-sky-500/30"
+                : "bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
             }`}
             title={
               voice.isListening

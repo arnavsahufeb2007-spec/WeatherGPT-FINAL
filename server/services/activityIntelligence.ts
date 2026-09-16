@@ -96,7 +96,7 @@ function evaluateCricket(current: CurrentWeatherData, hourly?: HourlyForecastIte
   }
 
   // Visibility / Light
-  if (current.visibility < 3000) {
+  if (current.visibility !== null && current.visibility !== undefined && current.visibility < 3000) {
     score -= 25;
     reasons.push("Reduced visibility may cause difficulty sighting high catches and fast deliveries.");
     factors.push({ factor: "Sightline Visibility", value: `${(current.visibility / 1000).toFixed(1)} km`, impact: "negative" });
@@ -156,7 +156,7 @@ function evaluateRunning(current: CurrentWeatherData, hourly?: HourlyForecastIte
   }
 
   // Air / Visibility
-  if (current.visibility < 2000) {
+  if (current.visibility !== null && current.visibility !== undefined && current.visibility < 2000) {
     score -= 15;
     reasons.push("Poor air visibility requires bright reflective clothing near road traffic.");
     factors.push({ factor: "Visibility", value: `${(current.visibility / 1000).toFixed(1)} km`, impact: "neutral" });
@@ -197,18 +197,18 @@ function evaluateCycling(current: CurrentWeatherData, hourly?: HourlyForecastIte
     factors.push({ factor: "Wind Resistance", value: `${current.windSpeed} km/h (Gentle)`, impact: "positive" });
   }
 
-  // Rain / Wet Road Slippage
+  // Rain / Precipitation Risk
   if (current.rain > 1 || current.precipitationProbability > 60) {
     score -= 35;
-    reasons.push("Wet tarmac reduces tire traction by up to 50% and degrades rim/disc braking distances.");
-    factors.push({ factor: "Road Grip / Rain", value: `${current.precipitationProbability}% rain chance`, impact: "negative" });
+    reasons.push("Active rain and elevated precipitation probability increase exposure to inclement cycling conditions.");
+    factors.push({ factor: "Precipitation Risk", value: `${current.precipitationProbability}% rain chance`, impact: "negative" });
   }
 
   // Temperature
   if (current.temperature > 37) {
     score -= 30;
-    reasons.push("Severe asphalt heat radiation accelerates fatigue on long cycling stretches.");
-    factors.push({ factor: "Pavement Heat", value: `${current.temperature}°C`, impact: "negative" });
+    reasons.push(`High ambient temperature (${current.temperature}°C) and thermal strain accelerate fatigue during extended outdoor cycling.`);
+    factors.push({ factor: "Thermal Strain", value: `${current.temperature}°C`, impact: "negative" });
   }
 
   score = Math.max(15, Math.min(100, score));
@@ -221,13 +221,13 @@ function evaluateCycling(current: CurrentWeatherData, hourly?: HourlyForecastIte
     suitability,
     suitabilityScore: score,
     riskLevel,
-    primaryReasons: reasons.length > 0 ? reasons : ["Favorable wind speeds and dry roadway conditions for cycling."],
+    primaryReasons: reasons.length > 0 ? reasons : ["Favorable wind speeds and low precipitation risk for cycling."],
     weatherFactors: factors,
     bestTimeWindow: findBestWindow(hourly, true),
     tips: [
       "Check tire pressure and disc brake responsiveness prior to departure.",
       "Use front white and rear flashing red lights even in daytime if haze is present.",
-      "Stay alert to wet manhole covers and painted road stripes if sprinkles occur.",
+      "Carry weather-appropriate layers and remain cautious if sudden precipitation occurs.",
     ],
   };
 }
@@ -327,11 +327,11 @@ function evaluateHiking(current: CurrentWeatherData, hourly?: HourlyForecastItem
 
   if (current.rain > 3 || current.precipitationProbability > 65) {
     score -= 40;
-    reasons.push("Wet trails increase mud slippage, rockfall potential, and creek flooding.");
-    factors.push({ factor: "Trail Traction", value: "Slippery / Muddy", impact: "negative" });
+    reasons.push("Elevated precipitation probability and rainfall create challenging outdoor hiking conditions.");
+    factors.push({ factor: "Precipitation Risk", value: `${current.precipitationProbability}% rain chance`, impact: "negative" });
   }
 
-  if (current.visibility < 2000) {
+  if (current.visibility !== null && current.visibility !== undefined && current.visibility < 2000) {
     score -= 30;
     reasons.push("Dense fog or mist obscures trail markings and ridge viewpoints.");
     factors.push({ factor: "Trail Visibility", value: `${(current.visibility / 1000).toFixed(1)} km`, impact: "negative" });
@@ -345,7 +345,7 @@ function evaluateHiking(current: CurrentWeatherData, hourly?: HourlyForecastItem
     suitability,
     suitabilityScore: score,
     riskLevel: score < 45 ? "high" : score < 65 ? "moderate" : "low",
-    primaryReasons: reasons.length > 0 ? reasons : ["Clear mountain sightlines, firm footing, and stable weather for hiking."],
+    primaryReasons: reasons.length > 0 ? reasons : ["Clear mountain sightlines, calm winds, and stable weather for hiking."],
     weatherFactors: factors,
     bestTimeWindow: findBestWindow(hourly, true),
     tips: ["Always inform someone of your route and estimated turnaround time.", "Pack headlamp, thermal layer, and waterproof rain shell."],
@@ -357,13 +357,15 @@ function evaluatePhotography(current: CurrentWeatherData, hourly?: HourlyForecas
   const factors: ActivityAnalysis["weatherFactors"] = [];
   let score = 85;
 
-  if (current.visibility > 10000) {
-    score += 10;
-    factors.push({ factor: "Atmospheric Clarity", value: `${(current.visibility / 1000).toFixed(0)} km (Crystal clear)`, impact: "positive" });
-  } else if (current.visibility < 3000) {
-    score -= 20;
-    reasons.push("Haze or heavy fog limits landscape depth and background contrast.");
-    factors.push({ factor: "Haze / Fog", value: `${(current.visibility / 1000).toFixed(1)} km`, impact: "negative" });
+  if (current.visibility !== null && current.visibility !== undefined) {
+    if (current.visibility > 10000) {
+      score += 10;
+      factors.push({ factor: "Atmospheric Clarity", value: `${(current.visibility / 1000).toFixed(0)} km (Crystal clear)`, impact: "positive" });
+    } else if (current.visibility < 3000) {
+      score -= 20;
+      reasons.push("Haze or heavy fog limits landscape depth and background contrast.");
+      factors.push({ factor: "Haze / Fog", value: `${(current.visibility / 1000).toFixed(1)} km`, impact: "negative" });
+    }
   }
 
   if (current.cloudCover >= 30 && current.cloudCover <= 70) {

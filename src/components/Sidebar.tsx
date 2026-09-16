@@ -16,12 +16,13 @@ import {
   ExternalLink,
   ChevronRight,
   Sliders,
+  History,
 } from "lucide-react";
 import { LocationInfo } from "../types.js";
 import { UserProfile } from "../services/auth.js";
 import { getLanguageConfig } from "../languages.js";
 
-export type NavSection = "home" | "forecast" | "insights" | "travel" | "voice" | "explore" | "settings";
+export type NavSection = "home" | "forecast" | "insights" | "travel" | "voice" | "explore" | "history" | "settings" | "auth";
 
 interface SidebarProps {
   currentSection: NavSection;
@@ -82,6 +83,12 @@ export function Sidebar({
       id: "explore",
       label: "Explore & Compare",
       icon: <Compass className="w-4 h-4" />,
+    },
+    {
+      id: "history",
+      label: "Cloud History",
+      icon: <History className="w-4 h-4" />,
+      badge: "Sync",
     },
     {
       id: "settings",
@@ -218,7 +225,7 @@ export function Sidebar({
           </button>
         ) : (
           <button
-            onClick={onOpenAuth}
+            onClick={() => onSelectSection("auth")}
             className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-xs font-bold shadow-md shadow-sky-500/20 transition-colors cursor-pointer"
           >
             <LogIn className="w-3.5 h-3.5" />

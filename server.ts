@@ -2,16 +2,16 @@ import express, { Request, Response } from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import { geocodingProvider } from "./server/providers/geocodingProvider.js";
-import { weatherProvider } from "./server/providers/weatherProvider.js";
+import { weatherProvider, WeatherProviderError } from "./server/providers/weatherProvider.js";
 import { analyzeWeather, generateAdvisories } from "./server/services/weatherIntelligence.js";
 import { evaluateActivity } from "./server/services/activityIntelligence.js";
 import { compareLocations } from "./server/services/comparisonIntelligence.js";
 import { analyzeTravel } from "./server/services/travelIntelligence.js";
-import { parseQuery } from "./server/services/nluService.js";
+import { parseQuery, detectLanguageFromText, resolveLocationAndIntent, resolveQueryLanguage } from "./server/services/nluService.js";
 import { generateWeatherExplanation, GroundedWeatherContext } from "./server/services/geminiService.js";
+import { buildMultilingualDeterministicFallback, getLocalizedLocationRequiredMessage } from "./server/services/multilingualFallback.js";
 import { ConversationContext, LocationInfo, QueryRequest, QueryResponse } from "./server/types.js";
 import { bhashiniProvider } from "./server/providers/bhashiniProvider.js";
-import { getNasaEnvironmentalData } from "./server/services/nasaService.js";
 import { ALL_LANGUAGES, INDIAN_LANGUAGES, INTERNATIONAL_LANGUAGES } from "./src/languages.js";
 
 async function startServer() {
@@ -28,8 +28,82 @@ async function startServer() {
   });
 
   // ==========================================
-  // API ROUTES
+  // API ROUTES & OAUTH CALLBACK
   // ==========================================
+
+  // OAuth Callback Handler (for Google / Supabase Auth popup & redirect flows)
+  app.get(["/auth/callback", "/auth/callback/"], (req: Request, res: Response) => {
+    res.setHeader("Content-Type", "text/html");
+    res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>WeatherGPT • Authentication Complete</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #080f1a;
+      color: #f1f5f9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .card {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 1rem;
+      padding: 2.2rem;
+      text-align: center;
+      max-width: 380px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+    .spinner {
+      border: 3px solid rgba(56, 189, 248, 0.15);
+      border-top: 3px solid #38bdf8;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 1.2rem;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    h2 { font-size: 1.15rem; margin: 0 0 0.5rem; font-weight: 700; color: #fff; }
+    p { font-size: 0.85rem; color: #94a3b8; margin: 0; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="spinner"></div>
+    <h2>Authenticating with Google...</h2>
+    <p>Finalizing your verified WeatherGPT session. This window will close automatically in a moment.</p>
+  </div>
+  <script>
+    try {
+      if (window.opener && window.opener !== window) {
+        window.opener.postMessage({
+          type: 'SUPABASE_AUTH_SUCCESS',
+          hash: window.location.hash,
+          search: window.location.search,
+          href: window.location.href
+        }, '*');
+        setTimeout(function() {
+          window.close();
+        }, 800);
+      } else {
+        window.location.href = '/' + window.location.search + window.location.hash;
+      }
+    } catch (e) {
+      window.location.href = '/';
+    }
+  </script>
+</body>
+</html>`);
+  });
 
   // 1. Health Status
   app.get("/health", (req: Request, res: Response) => {
@@ -96,6 +170,22 @@ async function startServer() {
     }
   });
 
+  function handleWeatherError(res: Response, err: any) {
+    if (err instanceof WeatherProviderError) {
+      const status = err.category === "validation_error" ? 400 :
+                     err.category === "timeout" ? 504 :
+                     err.category === "http_error" ? (err.statusCode || 502) :
+                     502;
+      return res.status(status).json({
+        success: false,
+        error: err.message,
+        category: err.category,
+        statusCode: err.statusCode,
+      });
+    }
+    return res.status(500).json({ success: false, error: err.message || "Internal weather error" });
+  }
+
   // 3. Current Weather
   app.get("/api/weather/current", async (req: Request, res: Response) => {
     try {
@@ -135,7 +225,7 @@ async function startServer() {
         advisories,
       });
     } catch (err: any) {
-      res.status(500).json({ success: false, error: err.message });
+      handleWeatherError(res, err);
     }
   });
 
@@ -153,7 +243,7 @@ async function startServer() {
       const weatherData = await weatherProvider.getWeatherData(lat, lon, tz);
       res.json({ success: true, hourly: weatherData.hourly });
     } catch (err: any) {
-      res.status(500).json({ success: false, error: err.message });
+      handleWeatherError(res, err);
     }
   });
 
@@ -171,7 +261,7 @@ async function startServer() {
       const weatherData = await weatherProvider.getWeatherData(lat, lon, tz);
       res.json({ success: true, daily: weatherData.daily });
     } catch (err: any) {
-      res.status(500).json({ success: false, error: err.message });
+      handleWeatherError(res, err);
     }
   });
 
@@ -192,7 +282,7 @@ async function startServer() {
 
       res.json({ success: true, advisories });
     } catch (err: any) {
-      res.status(500).json({ success: false, error: err.message });
+      handleWeatherError(res, err);
     }
   });
 
@@ -233,26 +323,35 @@ async function startServer() {
   // 8. Location Comparison
   app.post("/api/comparison/analyze", async (req: Request, res: Response) => {
     try {
-      const { locations } = req.body;
+      const { locations, timeContext } = req.body;
       if (!locations || !Array.isArray(locations) || locations.length < 2) {
         return res.status(400).json({ success: false, error: "Please provide an array of at least 2 locations to compare." });
       }
 
       const resolvedLocations: LocationInfo[] = [];
+      const failedLocations: string[] = [];
       for (const item of locations) {
         if (typeof item === "string") {
           const resLoc = await geocodingProvider.resolveLocation(item);
           if (resLoc) resolvedLocations.push(resLoc);
+          else failedLocations.push(item);
         } else if (item.latitude && item.longitude) {
           resolvedLocations.push(item);
         }
       }
 
       if (resolvedLocations.length < 2) {
-        return res.status(400).json({ success: false, error: "Could not resolve enough valid locations for comparison." });
+        return res.status(400).json({
+          success: false,
+          error: "Could not resolve enough valid locations for comparison.",
+          failedLocations,
+        });
       }
 
-      const comparison = await compareLocations(resolvedLocations);
+      const comparison = await compareLocations(resolvedLocations, timeContext);
+      if (failedLocations.length > 0) {
+        comparison.failedLocations = failedLocations;
+      }
       res.json({ success: true, comparison });
     } catch (err: any) {
       res.status(500).json({ success: false, error: err.message });
@@ -281,26 +380,7 @@ async function startServer() {
     }
   });
 
-  // 10. NASA Earth Observation & Environmental Layer (Modular Supplementary Layer)
-  app.get("/api/nasa/environmental", async (req: Request, res: Response) => {
-    try {
-      const lat = parseFloat(String(req.query.lat));
-      const lon = parseFloat(String(req.query.lon));
-      const currentTemp = req.query.currentTemp ? parseFloat(String(req.query.currentTemp)) : undefined;
-      const radiusKm = req.query.radius ? parseInt(String(req.query.radius), 10) : 1200;
-
-      if (isNaN(lat) || isNaN(lon)) {
-        return res.status(400).json({ success: false, error: "Latitude and longitude coordinates are required." });
-      }
-
-      const nasaData = await getNasaEnvironmentalData(lat, lon, currentTemp, radiusKm);
-      res.json({ success: true, nasa: nasaData });
-    } catch (err: any) {
-      res.status(500).json({ success: false, error: err.message });
-    }
-  });
-
-  // 11. Main Conversational AI Weather Query Endpoint: POST /api/weather/query
+  // 10. Main Conversational AI Weather Query Endpoint: POST /api/weather/query
   app.post("/api/weather/query", async (req: Request, res: Response) => {
     try {
       const body: QueryRequest = req.body;
@@ -310,35 +390,35 @@ async function startServer() {
       }
 
       const context: ConversationContext = body.context || {};
-      const parsed = parseQuery(message, context);
-      const language = body.preferredLanguage || parsed.language;
+      const { parsed, resolution } = await resolveLocationAndIntent(
+        message,
+        context,
+        body.preferredLanguage,
+        body.location
+      );
 
-      // Determine location with strict binding to client request
-      let primaryLocation: LocationInfo | null = null;
-      const targetLoc = body.location || context.currentLocation;
+      const language = resolution.language;
+      let primaryLocation: LocationInfo | null = resolution.location;
 
-      if (parsed.detectedLocations[0]) {
-        const detectedName = parsed.detectedLocations[0].toLowerCase();
-        // Check if detected location refers to the current bound location
-        const isCurrentLoc =
-          targetLoc &&
-          (targetLoc.name.toLowerCase().includes(detectedName) ||
-            detectedName.includes(targetLoc.name.toLowerCase()) ||
-            (targetLoc.admin1 && targetLoc.admin1.toLowerCase().includes(detectedName)));
-
-        if (isCurrentLoc && targetLoc) {
-          primaryLocation = targetLoc;
-        } else {
-          primaryLocation = await geocodingProvider.resolveLocation(parsed.detectedLocations[0]);
-        }
-      }
-
-      if (!primaryLocation) {
-        if (targetLoc?.latitude !== undefined && targetLoc?.longitude !== undefined) {
-          primaryLocation = targetLoc;
-        } else if (targetLoc?.name) {
-          primaryLocation = await geocodingProvider.resolveLocation(targetLoc.name);
-        }
+      // If location is required but could not be resolved (and query is not travel or comparison)
+      if (parsed.intent !== "travel" && parsed.intent !== "comparison" && resolution.requiresLocation) {
+        const reply = getLocalizedLocationRequiredMessage(language);
+        return res.json({
+          success: true,
+          reply,
+          language,
+          intent: parsed.intent,
+          isAIGenerated: false,
+          fallbackUsed: true,
+          context: {
+            ...context,
+            lastQueryTimestamp: new Date().toISOString(),
+          },
+          data: {
+            requiresLocation: true,
+            locationResolution: resolution,
+          },
+        });
       }
 
       // Execute appropriate intelligence based on parsed intent
@@ -350,6 +430,8 @@ async function startServer() {
 
       const responseData: QueryResponse["data"] = {
         location: primaryLocation || undefined,
+        requiresLocation: false,
+        locationResolution: resolution,
       };
 
       if (parsed.intent === "travel" && parsed.travelDetails) {
@@ -360,24 +442,62 @@ async function startServer() {
           groundedContext.travel = travelRes;
           responseData.travel = travelRes;
         }
-      } else if (parsed.intent === "comparison" && parsed.comparisonLocations && parsed.comparisonLocations.length >= 2) {
+      } else if (parsed.intent === "comparison" && parsed.comparisonLocations && parsed.comparisonLocations.length >= 1) {
         const compLocs: LocationInfo[] = [];
+        const failedLocNames: string[] = [];
+
         for (const cName of parsed.comparisonLocations) {
-          const resolved = await geocodingProvider.resolveLocation(cName);
-          if (resolved) compLocs.push(resolved);
+          try {
+            const resolved = await geocodingProvider.resolveLocation(cName);
+            if (resolved) {
+              compLocs.push(resolved);
+            } else {
+              failedLocNames.push(cName);
+            }
+          } catch {
+            failedLocNames.push(cName);
+          }
         }
+
         if (compLocs.length >= 2) {
-          const compRes = await compareLocations(compLocs);
+          const compRes = await compareLocations(compLocs, parsed.timeContext);
+          if (failedLocNames.length > 0) {
+            compRes.failedLocations = failedLocNames;
+            groundedContext.failedLocations = failedLocNames;
+            responseData.failedLocations = failedLocNames;
+          }
           groundedContext.comparison = compRes;
           responseData.comparison = compRes;
+          primaryLocation = compLocs[0];
+          groundedContext.location = primaryLocation;
+          responseData.location = primaryLocation;
+        } else if (compLocs.length === 1 && failedLocNames.length > 0) {
+          primaryLocation = compLocs[0];
+          groundedContext.location = primaryLocation;
+          responseData.location = primaryLocation;
+
+          const weatherData = await weatherProvider.getWeatherData(primaryLocation.latitude, primaryLocation.longitude, primaryLocation.timezone);
+          const analysis = analyzeWeather(weatherData.current, weatherData.hourly, weatherData.daily);
+          const advisories = generateAdvisories(primaryLocation.name, weatherData.current, weatherData.hourly, weatherData.daily);
+
+          groundedContext.current = weatherData.current;
+          groundedContext.hourly = weatherData.hourly;
+          groundedContext.daily = weatherData.daily;
+          groundedContext.analysis = analysis;
+          groundedContext.advisories = advisories;
+          groundedContext.failedLocations = failedLocNames;
+
+          responseData.current = weatherData.current;
+          responseData.hourly = weatherData.hourly;
+          responseData.daily = weatherData.daily;
+          responseData.analysis = analysis;
+          responseData.advisories = advisories;
+          responseData.failedLocations = failedLocNames;
         }
       } else {
         // Fetch weather data for primary location
         if (primaryLocation) {
-          const [weatherData, nasaData] = await Promise.all([
-            weatherProvider.getWeatherData(primaryLocation.latitude, primaryLocation.longitude, primaryLocation.timezone),
-            getNasaEnvironmentalData(primaryLocation.latitude, primaryLocation.longitude).catch(() => null),
-          ]);
+          const weatherData = await weatherProvider.getWeatherData(primaryLocation.latitude, primaryLocation.longitude, primaryLocation.timezone);
 
           const analysis = analyzeWeather(weatherData.current, weatherData.hourly, weatherData.daily);
           const advisories = generateAdvisories(primaryLocation.name, weatherData.current, weatherData.hourly, weatherData.daily);
@@ -387,10 +507,6 @@ async function startServer() {
           groundedContext.daily = weatherData.daily;
           groundedContext.analysis = analysis;
           groundedContext.advisories = advisories;
-          if (nasaData && nasaData.status === "available") {
-            groundedContext.nasa = nasaData;
-            responseData.nasa = nasaData;
-          }
 
           responseData.current = weatherData.current;
           responseData.hourly = weatherData.hourly;
@@ -480,11 +596,12 @@ async function startServer() {
   // 14. Voice TTS (Text-to-Speech via Bhashini when configured)
   app.post("/api/voice/tts", async (req: Request, res: Response) => {
     try {
-      const { text, sourceLanguage, gender } = req.body;
+      const { text, gender } = req.body;
+      const sourceLanguage = req.body.sourceLanguage || req.body.language;
       if (!text || !sourceLanguage) {
         return res.status(400).json({
           success: false,
-          error: "text and sourceLanguage are required.",
+          error: "text and sourceLanguage/language are required.",
         });
       }
 
@@ -495,6 +612,75 @@ async function startServer() {
       });
 
       res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // 15. Real-time Weather Explanation Localization (No re-querying of weather APIs)
+  app.post("/api/weather/localize", async (req: Request, res: Response) => {
+    try {
+      const { text, data, location, targetLanguage, userQuery } = req.body;
+      const target = targetLanguage || "en";
+
+      // If structured grounded weather data is attached, re-synthesize explanation in targetLanguage
+      if (data && (data.current || data.travel || data.comparison || data.activity)) {
+        let localized = "";
+        try {
+          const aiResult = await generateWeatherExplanation({
+            userQuery: userQuery || "Grounded weather intelligence explanation",
+            language: target,
+            location: location || data.location,
+            current: data.current,
+            hourly: data.hourly,
+            daily: data.daily,
+            analysis: data.analysis,
+            advisories: data.advisories,
+            activity: data.activity,
+            comparison: data.comparison,
+            travel: data.travel,
+          });
+          localized = aiResult.reply;
+        } catch (geminiErr: any) {
+          console.info("Gemini localization fallback used:", geminiErr?.message || geminiErr);
+        }
+
+        if (!localized || localized.includes("AI processing limit")) {
+          localized = buildMultilingualDeterministicFallback({
+            userQuery: userQuery || "Weather",
+            language: target,
+            location: location || data.location,
+            current: data.current,
+            hourly: data.hourly,
+            daily: data.daily,
+            analysis: data.analysis,
+            advisories: data.advisories,
+            activity: data.activity,
+            comparison: data.comparison,
+            travel: data.travel,
+          });
+        }
+
+        return res.json({ success: true, text: localized, language: target });
+      }
+
+      // If plain text (e.g. conversational answer or greeting)
+      if (text) {
+        try {
+          const aiResult = await generateWeatherExplanation({
+            userQuery: `Translate or re-express this meteorological assistant response into ${target}. Retain all numerical figures, numbers, and weather facts exactly without modification: "${text}"`,
+            language: target,
+            location: location,
+          });
+          if (aiResult?.reply && !aiResult.reply.includes("AI processing limit")) {
+            return res.json({ success: true, text: aiResult.reply, language: target });
+          }
+        } catch {
+          // fallback
+        }
+      }
+
+      return res.json({ success: true, text: text || "", language: target });
     } catch (err: any) {
       res.status(500).json({ success: false, error: err.message });
     }

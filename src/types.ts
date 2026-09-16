@@ -26,10 +26,11 @@ export interface CurrentWeatherData {
   windSpeed: number;
   windDirection: number;
   windGusts: number;
+  windGust?: number;
   cloudCover: number;
   uvIndex: number;
-  visibility: number; // in meters or km
-  pressure: number;
+  visibility: number | null; // in meters or km
+  pressure: number | null;
   dewPoint?: number;
   isDay: boolean;
   sunrise: string;
@@ -42,6 +43,7 @@ export interface HourlyForecastItem {
   temperature: number;
   feelsLike: number;
   precipitationProbability: number;
+  precipitation?: number;
   rain: number;
   weatherCode: number;
   condition: string;
@@ -85,7 +87,7 @@ export interface WeatherAnalysis {
 
 export interface WeatherAdvisory {
   id: string;
-  type: "rain" | "heat" | "wind" | "uv" | "fog" | "storm";
+  type: "rain" | "heat" | "wind" | "uv" | "fog" | "storm" | "cold";
   severity: "info" | "moderate" | "severe" | "extreme";
   title: string;
   description: string;
@@ -127,18 +129,34 @@ export interface ActivityAnalysis {
 export interface ComparisonLocationResult {
   location: LocationInfo;
   current: CurrentWeatherData;
+  targetForecast?: {
+    targetDay: string;
+    date: string;
+    tempMax: number;
+    tempMin: number;
+    precipitationProbability: number;
+    rainSum: number;
+    condition: string;
+    weatherCode: number;
+    windSpeedMax: number;
+    isThunderstorm: boolean;
+    uvIndexMax: number;
+  };
   analysis: WeatherAnalysis;
   advisories: WeatherAdvisory[];
 }
 
 export interface ComparisonAnalysis {
   locations: ComparisonLocationResult[];
+  failedLocations?: string[];
+  targetDay?: string;
   metricDeltas: {
     metric: string;
     values: { locationName: string; value: string | number }[];
     highlight: string;
   }[];
   comparativeSummary: string;
+  recommendation: string;
 }
 
 export interface RouteCheckpoint {
@@ -167,41 +185,6 @@ export interface TravelAnalysis {
   routeSummary: string;
 }
 
-export interface NasaNaturalEvent {
-  id: string;
-  title: string;
-  category: string;
-  categoryTitle: string;
-  distanceKm: number;
-  latitude: number;
-  longitude: number;
-  date: string;
-  sources: { id: string; url: string }[];
-}
-
-export interface NasaClimateContext {
-  month: string;
-  monthIndex: number;
-  historicalNormalTempC: number;
-  currentTempDeltaC?: number;
-  allSkySolarIrradianceKwhM2Day: number;
-  dataset: string;
-  temporalLabel: string;
-}
-
-export interface NasaEnvironmentalData {
-  status: "available" | "unavailable";
-  provider: string;
-  radiusKm: number;
-  naturalEvents: {
-    count: number;
-    events: NasaNaturalEvent[];
-    summary: string;
-    temporalLabel: string;
-  };
-  climateContext?: NasaClimateContext;
-}
-
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant" | "system";
@@ -222,9 +205,10 @@ export interface ChatMessage {
     activity?: ActivityAnalysis;
     comparison?: ComparisonAnalysis;
     travel?: TravelAnalysis;
-    nasa?: NasaEnvironmentalData;
     isAIGenerated?: boolean;
     fallbackUsed?: boolean;
+    requiresLocation?: boolean;
+    locationResolution?: any;
   };
 }
 
@@ -248,3 +232,46 @@ export interface ConversationContext {
   };
   comparisonLocations?: LocationInfo[];
 }
+
+export interface ConversationRecord {
+  id: string;
+  user_id: string;
+  title: string;
+  location_name?: string;
+  latitude?: number;
+  longitude?: number;
+  timezone?: string;
+  language?: string;
+  created_at: string;
+  updated_at: string;
+  message_count?: number;
+  last_message_preview?: string;
+}
+
+export interface ConversationMessageRecord {
+  id: string;
+  conversation_id: string;
+  user_id: string;
+  role: "user" | "assistant";
+  content: string;
+  language?: string;
+  is_ai_generated?: boolean;
+  context?: ConversationContext;
+  weather_data?: any;
+  created_at: string;
+}
+
+export interface UserPreferencesRecord {
+  id?: string;
+  user_id: string;
+  preferred_language: string;
+  is_fahrenheit: boolean;
+  theme: "dark" | "light";
+  voice_input_language: string;
+  voice_output_language: string;
+  auto_speak: boolean;
+  speech_rate: number;
+  created_at?: string;
+  updated_at?: string;
+}
+

@@ -1455,9 +1455,11 @@ export const SPECIAL_LANGUAGES = ALL_LANGUAGES.filter((l) => l.category === "spe
 
 export function getLanguageConfig(code?: string): LanguageDefinition {
   if (!code) return LANGUAGE_REGISTRY.en;
-  const normalized = code.toLowerCase().trim() as LanguageCode;
-  if (LANGUAGE_REGISTRY[normalized]) {
-    return LANGUAGE_REGISTRY[normalized];
+  const normalized = code.toLowerCase().trim();
+  // "ALL" is a UI / output-mode selection, not a single language code
+  if (normalized === "all") return LANGUAGE_REGISTRY.en;
+  if (LANGUAGE_REGISTRY[normalized as LanguageCode]) {
+    return LANGUAGE_REGISTRY[normalized as LanguageCode];
   }
   // Try matching bcp47 or prefix
   const match = ALL_LANGUAGES.find(

@@ -13,6 +13,8 @@ export interface VoiceError {
     | "not-supported"
     | "aborted"
     | "synthesis-failed"
+    | "voice-unavailable"
+    | "language-unavailable"
     | "unknown";
   message: string;
   fatal: boolean;

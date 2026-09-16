@@ -67,7 +67,7 @@ export function useVoiceMode(language: string = "en", manager: VoiceManager = de
 
   const speak = useCallback(
     async (text: string, overrideLanguage?: string, force: boolean = false) => {
-      await manager.speakResponse(text, overrideLanguage || language, force);
+      await manager.speakResponse(text, overrideLanguage || language, force, overrideLanguage);
     },
     [language, manager]
   );

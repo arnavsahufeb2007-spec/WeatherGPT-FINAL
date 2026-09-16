@@ -1,4 +1,6 @@
 import { LocationInfo } from "../types.js";
+import { getSupabase, isSupabaseConfigured } from "./supabase.js";
+import { savedLocationsService } from "./savedLocationsService.js";
 
 export interface UserProfile {
   id: string;
@@ -11,9 +13,7 @@ export interface UserProfile {
   joinedDate: string;
 }
 
-const AUTH_STORAGE_KEY = "weathergpt_user_session";
-
-const DEFAULT_GUEST_USER: UserProfile = {
+export const DEFAULT_GUEST_USER: UserProfile = {
   id: "guest-user",
   name: "Guest Explorer",
   email: "guest@weathergpt.local",
@@ -27,35 +27,116 @@ const DEFAULT_GUEST_USER: UserProfile = {
 class AuthService {
   private currentUser: UserProfile | null = null;
   private listeners: Set<(user: UserProfile | null) => void> = new Set();
+  private isInitialized = false;
 
   constructor() {
-    this.loadSession();
+    this.currentUser = { ...DEFAULT_GUEST_USER };
+    this.init();
   }
 
-  private loadSession() {
-    try {
-      const saved = localStorage.getItem(AUTH_STORAGE_KEY);
-      if (saved) {
-        this.currentUser = JSON.parse(saved);
-      } else {
-        // Default to guest session for immediate usability
-        this.currentUser = { ...DEFAULT_GUEST_USER };
-      }
-    } catch {
-      this.currentUser = { ...DEFAULT_GUEST_USER };
+  private async init() {
+    if (this.isInitialized) return;
+    this.isInitialized = true;
+
+    // First load guest saved locations
+    const guestLocs = await savedLocationsService.getSavedLocations("guest-user", true);
+    if (this.currentUser && this.currentUser.isGuest) {
+      this.currentUser.savedLocations = guestLocs;
+      this.notify();
     }
-  }
 
-  private saveSession() {
+    if (!isSupabaseConfigured()) {
+      return;
+    }
+
+    const client = getSupabase();
+    if (!client) return;
+
     try {
-      if (this.currentUser) {
-        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(this.currentUser));
-      } else {
-        localStorage.removeItem(AUTH_STORAGE_KEY);
+      // Check existing Supabase session
+      const { data: { session }, error } = await client.auth.getSession();
+      if (!error && session?.user) {
+        await this.handleUserSession(session.user);
       }
+
+      // Listen to auth state changes (sign in, sign out, token refresh)
+      client.auth.onAuthStateChange(async (event, session) => {
+        if (session?.user) {
+          await this.handleUserSession(session.user);
+        } else if (event === "SIGNED_OUT") {
+          this.currentUser = { ...DEFAULT_GUEST_USER };
+          const locs = await savedLocationsService.getSavedLocations("guest-user", true);
+          this.currentUser.savedLocations = locs;
+          this.notify();
+        }
+      });
     } catch (err) {
-      console.warn("Failed to persist user session:", err);
+      console.warn("Error initializing Supabase session:", err);
     }
+  }
+
+  private async handleUserSession(user: any) {
+    const userId = user.id;
+    const email = user.email || "";
+    const meta = user.user_metadata || {};
+    const namePart = meta.full_name || meta.name || email.split("@")[0] || "User";
+    const avatar = meta.avatar_url || meta.picture || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(namePart)}`;
+    const joined = user.created_at
+      ? new Date(user.created_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })
+      : new Date().toLocaleDateString("en-US", { month: "short", year: "numeric" });
+
+    // Sync profile to public.profiles
+    const client = getSupabase();
+    let displayName = namePart;
+    let plan: "Free" | "Pro" = "Free";
+
+    if (client) {
+      try {
+        const { data: profile } = await client
+          .from("profiles")
+          .select("display_name, avatar_url, plan")
+          .eq("id", userId)
+          .maybeSingle();
+
+        if (profile) {
+          if (profile.display_name) displayName = profile.display_name;
+          if (profile.plan === "Pro") plan = "Pro";
+        } else {
+          // Provision profile
+          await client.from("profiles").upsert(
+            {
+              id: userId,
+              email,
+              display_name: displayName,
+              avatar_url: avatar,
+              plan: "Free",
+            },
+            { onConflict: "id" }
+          );
+        }
+      } catch (err) {
+        console.warn("Could not sync public.profiles:", err);
+      }
+    }
+
+    // Load saved locations from Supabase
+    const savedLocs = await savedLocationsService.getSavedLocations(userId, false);
+
+    // Sync any leftover guest favorites to cloud
+    await savedLocationsService.syncGuestLocationsToCloud(userId);
+    const updatedLocs = await savedLocationsService.getSavedLocations(userId, false);
+
+    this.currentUser = {
+      id: userId,
+      name: displayName,
+      email,
+      avatarUrl: avatar,
+      isGuest: false,
+      plan,
+      savedLocations: updatedLocs.length > 0 ? updatedLocs : savedLocs,
+      joinedDate: joined,
+    };
+
     this.notify();
   }
 
@@ -73,103 +154,209 @@ class AuthService {
     return () => this.listeners.delete(listener);
   }
 
-  public async login(email: string, _password: string): Promise<UserProfile> {
-    // Generate clean username from email or capital
-    const namePart = email.split("@")[0] || "User";
-    const displayName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+  /**
+   * Real Google OAuth through Supabase Auth
+   */
+  /**
+   * Resolves the environment-aware post-login redirect origin.
+   * Uses the current browser/runtime origin instead of hardcoding localhost.
+   */
+  public getRedirectOrigin(): string {
+    const runtimeUrl =
+      (typeof process !== "undefined" && process.env?.APP_URL) ||
+      (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_APP_URL) ||
+      "";
 
-    const user: UserProfile = {
-      id: `usr_${Date.now()}`,
-      name: displayName,
-      email: email.trim().toLowerCase(),
-      avatarUrl: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(displayName)}`,
-      isGuest: false,
-      plan: "Pro",
-      savedLocations: this.currentUser?.savedLocations || [],
-      joinedDate: new Date().toLocaleDateString("en-US", { month: "short", year: "numeric" }),
-    };
-
-    this.currentUser = user;
-    this.saveSession();
-    return user;
-  }
-
-  public async signup(name: string, email: string, _password: string): Promise<UserProfile> {
-    const user: UserProfile = {
-      id: `usr_${Date.now()}`,
-      name: name.trim() || "Weather Explorer",
-      email: email.trim().toLowerCase(),
-      avatarUrl: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name || "explorer")}`,
-      isGuest: false,
-      plan: "Pro",
-      savedLocations: this.currentUser?.savedLocations || [],
-      joinedDate: new Date().toLocaleDateString("en-US", { month: "short", year: "numeric" }),
-    };
-
-    this.currentUser = user;
-    this.saveSession();
-    return user;
-  }
-
-  public loginWithDemoAccount(): UserProfile {
-    const demoUser: UserProfile = {
-      id: "demo_pilot",
-      name: "Alex Vance",
-      email: "alex.vance@weathergpt.io",
-      avatarUrl: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
-      isGuest: false,
-      plan: "Pro",
-      savedLocations: [
-        {
-          name: "New Delhi",
-          country: "India",
-          countryCode: "IN",
-          latitude: 28.6139,
-          longitude: 77.209,
-          timezone: "Asia/Kolkata",
-          admin1: "Delhi",
-        },
-        {
-          name: "Tokyo",
-          country: "Japan",
-          countryCode: "JP",
-          latitude: 35.6895,
-          longitude: 139.6917,
-          timezone: "Asia/Tokyo",
-          admin1: "Tokyo",
-        },
-      ],
-      joinedDate: "Jan 2026",
-    };
-
-    this.currentUser = demoUser;
-    this.saveSession();
-    return demoUser;
-  }
-
-  public logout(): void {
-    this.currentUser = { ...DEFAULT_GUEST_USER };
-    this.saveSession();
-  }
-
-  public toggleFavoriteLocation(loc: LocationInfo): boolean {
-    if (!this.currentUser) return false;
-
-    const existingIdx = this.currentUser.savedLocations.findIndex(
-      (l) => Math.abs(l.latitude - loc.latitude) < 0.05 && Math.abs(l.longitude - loc.longitude) < 0.05
-    );
-
-    let isAdded = false;
-    if (existingIdx >= 0) {
-      this.currentUser.savedLocations.splice(existingIdx, 1);
-      isAdded = false;
-    } else {
-      this.currentUser.savedLocations.push(loc);
-      isAdded = true;
+    if (typeof window !== "undefined" && window.location?.origin && window.location.origin !== "null") {
+      // If running inside the container where window.location.origin is localhost,
+      // prefer the runtime APP_URL if available.
+      if (window.location.origin.includes("localhost") && runtimeUrl && runtimeUrl.startsWith("https://")) {
+        return runtimeUrl;
+      }
+      return window.location.origin;
     }
 
-    this.saveSession();
-    return isAdded;
+    if (runtimeUrl && runtimeUrl.startsWith("https://")) {
+      return runtimeUrl;
+    }
+
+    return "";
+  }
+
+  /**
+   * Initiates Google OAuth authentication via Supabase.
+   */
+  public async signInWithGoogle(): Promise<{ success: boolean; error?: string }> {
+    if (!isSupabaseConfigured()) {
+      return {
+        success: false,
+        error: "Supabase configuration is required for Google OAuth. Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your settings.",
+      };
+    }
+
+    const client = getSupabase();
+    if (!client) {
+      return { success: false, error: "Supabase client is not available." };
+    }
+
+    const redirectUrl = this.getRedirectOrigin();
+    const isInsideIframe = typeof window !== "undefined" && window.self !== window.top;
+
+    try {
+      if (isInsideIframe) {
+        // AI Studio Preview is in an iframe. Use popup flow with provider URL directly.
+        const { data, error } = await client.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo: redirectUrl,
+            skipBrowserRedirect: true,
+          },
+        });
+
+        if (error) {
+          return { success: false, error: error.message };
+        }
+
+        if (!data?.url) {
+          return { success: false, error: "Failed to generate Google OAuth authorization URL." };
+        }
+
+        // Open popup
+        const authWindow = window.open(
+          data.url,
+          "supabase_google_oauth",
+          "width=600,height=700,status=no,toolbar=no,menubar=no"
+        );
+
+        if (!authWindow) {
+          return {
+            success: false,
+            error: "Popup was blocked by your browser. Please allow popups for this site to continue with Google.",
+          };
+        }
+
+        return new Promise((resolve) => {
+          let hasResolved = false;
+
+          const finishSuccess = async () => {
+            if (hasResolved) return;
+            hasResolved = true;
+            window.removeEventListener("message", messageListener);
+            clearInterval(checkClosed);
+
+            const { data: sessData } = await client.auth.getSession();
+            if (sessData.session?.user) {
+              await this.handleUserSession(sessData.session.user);
+            }
+            resolve({ success: true });
+          };
+
+          const messageListener = async (event: MessageEvent) => {
+            if (event.data?.type === "SUPABASE_AUTH_SUCCESS") {
+              // If hash contains tokens, ensure session is set in opener without logging sensitive credentials
+              if (event.data?.hash) {
+                try {
+                  const hashParams = new URLSearchParams(event.data.hash.replace(/^#/, ""));
+                  const accessToken = hashParams.get("access_token");
+                  const refreshToken = hashParams.get("refresh_token");
+                  if (accessToken && refreshToken) {
+                    await client.auth.setSession({
+                      access_token: accessToken,
+                      refresh_token: refreshToken,
+                    });
+                  }
+                } catch {
+                  // Fall back to getSession() in finishSuccess
+                }
+              }
+              await finishSuccess();
+            }
+          };
+          window.addEventListener("message", messageListener);
+
+          // Fallback interval check if popup closed
+          const checkClosed = setInterval(async () => {
+            if (authWindow.closed) {
+              clearInterval(checkClosed);
+              window.removeEventListener("message", messageListener);
+              setTimeout(async () => {
+                if (hasResolved) return;
+                const { data: sessData } = await client.auth.getSession();
+                if (sessData.session?.user) {
+                  await this.handleUserSession(sessData.session.user);
+                  hasResolved = true;
+                  resolve({ success: true });
+                } else if (this.currentUser && !this.currentUser.isGuest) {
+                  hasResolved = true;
+                  resolve({ success: true });
+                } else {
+                  hasResolved = true;
+                  resolve({ success: false, error: "Google sign-in was closed or cancelled." });
+                }
+              }, 300);
+            }
+          }, 1000);
+        });
+      } else {
+        // Direct browser redirect
+        const { error } = await client.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo: redirectUrl,
+          },
+        });
+        if (error) {
+          return { success: false, error: error.message };
+        }
+        return { success: true };
+      }
+    } catch (err: any) {
+      console.error("Google sign-in error:", err);
+      return { success: false, error: err.message || "An unexpected error occurred during Google sign-in." };
+    }
+  }
+
+  /**
+   * Sign out and revert to guest mode
+   */
+  public async logout(): Promise<void> {
+    const client = getSupabase();
+    if (client) {
+      try {
+        await client.auth.signOut();
+      } catch (err) {
+        console.warn("Supabase signOut error:", err);
+      }
+    }
+    this.currentUser = { ...DEFAULT_GUEST_USER };
+    const locs = await savedLocationsService.getSavedLocations("guest-user", true);
+    this.currentUser.savedLocations = locs;
+    this.notify();
+  }
+
+  /**
+   * Toggle location saved/favorite status
+   */
+  public async toggleFavoriteLocation(loc: LocationInfo): Promise<boolean> {
+    if (!this.currentUser) return false;
+
+    const isCurrentlySaved = this.isLocationFavorited(loc);
+    const userId = this.currentUser.id;
+    const isGuest = this.currentUser.isGuest;
+
+    if (isCurrentlySaved) {
+      await savedLocationsService.removeLocation(userId, isGuest, loc);
+      this.currentUser.savedLocations = this.currentUser.savedLocations.filter(
+        (l) => !(Math.abs(l.latitude - loc.latitude) < 0.05 && Math.abs(l.longitude - loc.longitude) < 0.05)
+      );
+      this.notify();
+      return false;
+    } else {
+      await savedLocationsService.saveLocation(userId, isGuest, loc);
+      this.currentUser.savedLocations.push(loc);
+      this.notify();
+      return true;
+    }
   }
 
   public isLocationFavorited(loc: LocationInfo): boolean {
@@ -177,6 +364,36 @@ class AuthService {
     return this.currentUser.savedLocations.some(
       (l) => Math.abs(l.latitude - loc.latitude) < 0.05 && Math.abs(l.longitude - loc.longitude) < 0.05
     );
+  }
+
+  /**
+   * Update profile display name
+   */
+  public async updateDisplayName(newName: string): Promise<boolean> {
+    if (!this.currentUser || this.currentUser.isGuest || !newName.trim()) {
+      return false;
+    }
+
+    const client = getSupabase();
+    if (!client) return false;
+
+    try {
+      const { error } = await client
+        .from("profiles")
+        .update({ display_name: newName.trim(), updated_at: new Date().toISOString() })
+        .eq("id", this.currentUser.id);
+
+      if (error) {
+        console.warn("Failed to update profile name:", error.message);
+        return false;
+      }
+
+      this.currentUser.name = newName.trim();
+      this.notify();
+      return true;
+    } catch {
+      return false;
+    }
   }
 }
 

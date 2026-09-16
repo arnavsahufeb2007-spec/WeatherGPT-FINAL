@@ -7,7 +7,6 @@ import {
   DailyForecastItem,
   HourlyForecastItem,
   LocationInfo,
-  NasaEnvironmentalData,
   TravelAnalysis,
   WeatherAdvisory,
   WeatherAnalysis,
@@ -31,7 +30,6 @@ export interface QueryWeatherResult {
     activity?: ActivityAnalysis;
     comparison?: ComparisonAnalysis;
     travel?: TravelAnalysis;
-    nasa?: NasaEnvironmentalData;
   };
 }
 
@@ -131,13 +129,19 @@ export async function analyzeActivityAPI(
   return res.json();
 }
 
-export async function compareLocationsAPI(locations: (string | LocationInfo)[]): Promise<ComparisonAnalysis> {
+export async function compareLocationsAPI(
+  locations: (string | LocationInfo)[],
+  timeContext?: { isTomorrow?: boolean; isDayAfterTomorrow?: boolean }
+): Promise<ComparisonAnalysis> {
   const res = await fetch("/api/comparison/analyze", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ locations }),
+    body: JSON.stringify({ locations, timeContext }),
   });
-  if (!res.ok) throw new Error("Failed to analyze location comparison");
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.error || "Failed to analyze location comparison");
+  }
   const data = await res.json();
   return data.comparison;
 }
@@ -157,21 +161,23 @@ export async function analyzeTravelAPI(
   return data.travel;
 }
 
-export async function getNasaEnvironmentalAPI(
-  lat: number,
-  lon: number,
-  currentTemp?: number,
-  radius?: number
-): Promise<NasaEnvironmentalData> {
-  const q = new URLSearchParams({ lat: String(lat), lon: String(lon) });
-  if (currentTemp !== undefined) q.set("currentTemp", String(currentTemp));
-  if (radius !== undefined) q.set("radius", String(radius));
-
-  const res = await fetch(`/api/nasa/environmental?${q.toString()}`);
+export async function localizeWeatherMessageAPI(params: {
+  text?: string;
+  data?: any;
+  location?: LocationInfo;
+  targetLanguage: string;
+  userQuery?: string;
+}): Promise<{ success: boolean; text: string; language: string }> {
+  const res = await fetch("/api/weather/localize", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(params),
+  });
   if (!res.ok) {
-    throw new Error(`NASA Environmental request failed with status ${res.status}`);
+    const errorText = await res.text().catch(() => "");
+    throw new Error(`Localization failed (${res.status}): ${errorText}`);
   }
-  const data = await res.json();
-  return data.nasa;
+  return res.json();
 }
+
 

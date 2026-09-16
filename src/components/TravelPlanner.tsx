@@ -1,24 +1,27 @@
-import React, { useState } from "react";
-import { TravelAnalysis } from "../types.js";
+import React, { useState, useEffect } from "react";
+import { LocationInfo, TravelAnalysis } from "../types.js";
 import { analyzeTravelAPI } from "../services/api.js";
 import { Car, Bike, Bus, Train, Plane, MapPin, ArrowRight, Clock, AlertTriangle, ShieldCheck, Info } from "lucide-react";
 import { WeatherIcon } from "./WeatherIcons.js";
 
-const POPULAR_ROUTES = [
-  { origin: "Delhi", destination: "Jaipur", label: "Delhi → Jaipur" },
-  { origin: "Mumbai", destination: "Pune", label: "Mumbai → Pune" },
-  { origin: "Bengaluru", destination: "Mysuru", label: "Bengaluru → Mysuru" },
-  { origin: "Delhi", destination: "Chandigarh", label: "Delhi → Chandigarh" },
-  { origin: "Kolkata", destination: "Digha", label: "Kolkata → Digha" },
-];
+interface TravelPlannerProps {
+  isFahrenheit: boolean;
+  currentLocation?: LocationInfo | null;
+}
 
-export function TravelPlanner({ isFahrenheit }: { isFahrenheit: boolean }) {
-  const [origin, setOrigin] = useState("Delhi");
-  const [destination, setDestination] = useState("Jaipur");
+export function TravelPlanner({ isFahrenheit, currentLocation }: TravelPlannerProps) {
+  const [origin, setOrigin] = useState(() => currentLocation?.name || "");
+  const [destination, setDestination] = useState("");
   const [mode, setMode] = useState<"car" | "bike" | "bus" | "train" | "flight">("car");
   const [loading, setLoading] = useState(false);
   const [travelData, setTravelData] = useState<TravelAnalysis | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (currentLocation?.name && !origin) {
+      setOrigin(currentLocation.name);
+    }
+  }, [currentLocation?.name]);
 
   const handleAnalyze = async (orig = origin, dest = destination, m = mode) => {
     if (!orig || !dest) return;
@@ -57,14 +60,25 @@ export function TravelPlanner({ isFahrenheit }: { isFahrenheit: boolean }) {
         {/* Inputs */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-semibold text-slate-400 block mb-1.5">Departure Point</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-semibold text-slate-400">Departure Point</label>
+              {currentLocation?.name && origin !== currentLocation.name && (
+                <button
+                  type="button"
+                  onClick={() => setOrigin(currentLocation.name)}
+                  className="text-[11px] text-sky-400 hover:text-sky-300 font-medium cursor-pointer"
+                >
+                  Use {currentLocation.name}
+                </button>
+              )}
+            </div>
             <div className="relative">
               <MapPin className="w-4 h-4 text-emerald-400 absolute left-3 top-3" />
               <input
                 type="text"
                 value={origin}
                 onChange={(e) => setOrigin(e.target.value)}
-                placeholder="e.g. Delhi"
+                placeholder={currentLocation?.name ? `e.g. ${currentLocation.name}` : "e.g. Departure city"}
                 className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
               />
             </div>
@@ -78,7 +92,7 @@ export function TravelPlanner({ isFahrenheit }: { isFahrenheit: boolean }) {
                 type="text"
                 value={destination}
                 onChange={(e) => setDestination(e.target.value)}
-                placeholder="e.g. Jaipur"
+                placeholder="e.g. Destination city"
                 className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
               />
             </div>
@@ -146,8 +160,24 @@ export function TravelPlanner({ isFahrenheit }: { isFahrenheit: boolean }) {
 
         {/* Popular Route Presets */}
         <div className="pt-2 border-t border-slate-800/80 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-          <span className="text-[11px] text-slate-400 uppercase font-semibold shrink-0">Popular:</span>
-          {POPULAR_ROUTES.map((p, i) => (
+          <span className="text-[11px] text-slate-400 uppercase font-semibold shrink-0">Corridors:</span>
+          {currentLocation?.name && (
+            <button
+              onClick={() => {
+                setOrigin(currentLocation.name);
+              }}
+              className="px-2.5 py-1 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 border border-sky-500/30 text-[11px] text-sky-300 font-semibold whitespace-nowrap transition-colors cursor-pointer"
+            >
+              Start: {currentLocation.name}
+            </button>
+          )}
+          {[
+            { origin: "Delhi", destination: "Jaipur", label: "Delhi → Jaipur" },
+            { origin: "Mumbai", destination: "Pune", label: "Mumbai → Pune" },
+            { origin: "Bengaluru", destination: "Mysuru", label: "Bengaluru → Mysuru" },
+            { origin: "Delhi", destination: "Chandigarh", label: "Delhi → Chandigarh" },
+            { origin: "Kolkata", destination: "Digha", label: "Kolkata → Digha" },
+          ].map((p, i) => (
             <button
               key={i}
               onClick={() => {
@@ -155,7 +185,7 @@ export function TravelPlanner({ isFahrenheit }: { isFahrenheit: boolean }) {
                 setDestination(p.destination);
                 handleAnalyze(p.origin, p.destination, mode);
               }}
-              className="px-2.5 py-1 rounded-lg bg-slate-950/80 hover:bg-slate-800 border border-slate-800 text-[11px] text-slate-300 whitespace-nowrap transition-colors"
+              className="px-2.5 py-1 rounded-lg bg-slate-950/80 hover:bg-slate-800 border border-slate-800 text-[11px] text-slate-300 whitespace-nowrap transition-colors cursor-pointer"
             >
               {p.label}
             </button>

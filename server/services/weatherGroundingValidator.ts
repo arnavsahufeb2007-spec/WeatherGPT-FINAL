@@ -29,6 +29,40 @@ export interface StructuredAIOutput {
 
 const TRAVEL_DISCLAIMER = "*(Note: Travel advice is based purely on atmospheric and road-weather conditions; live traffic congestion, accidents, and transit delays are not monitored).*";
 
+function getLocalizedDryText(lang?: string): string {
+  switch (lang) {
+    case "hi": return "वर्तमान में बारिश नहीं हो रही है (बाहर का मौसम सूखा है)";
+    case "hinglish": return "abhi active rain nahi ho rahi hai (dry conditions right now)";
+    case "bn": return "বর্তমানে বৃষ্টি হচ্ছে না (বাইরের পরিবেশ শুষ্ক)";
+    case "te": return "ప్రస్తుతం వర్షం పడటం లేదు (వాతావరణం పొడిగా ఉంది)";
+    case "ta": return "தற்போது மழை பெய்யவில்லை (வறண்ட வானிலை)";
+    case "mr": return "सध्या पाऊस पडत नाहीये (हवामान कोरडे आहे)";
+    case "gu": return "હાલમાં વરસાદ નથી પડી રહ્યો (હવામાન સૂકું છે)";
+    case "kn": return "ಪ್ರಸ್ತುತ ಮಳೆ ಬೀಳುತ್ತಿಲ್ಲ (ಹವಾಮಾನ ಒಣಗಿದೆ)";
+    case "ml": return "നിലവിൽ മഴ പെയ്യുന്നില്ല (കാലാവസ്ഥ വരണ്ടതാണ്)";
+    case "pa": return "ਇਸ ਵੇਲੇ ਮੀਂਹ ਨਹੀਂ ਪੈ ਰਿਹਾ ਹੈ";
+    case "es": return "actualmente no llueve (condiciones secas en este momento)";
+    case "fr": return "il ne pleut pas actuellement (conditions sèches pour le moment)";
+    case "de": return "zurzeit fällt kein Regen (aktuell trockene Bedingungen)";
+    default: return "no rain is currently falling (dry conditions right now)";
+  }
+}
+
+function getLocalizedTravelDisclaimer(lang?: string): string {
+  switch (lang) {
+    case "hi": return "*(नोट: यह यात्रा परामर्श पूरी तरह से वायुमंडलीय मौसम पर आधारित है; वास्तविक सड़क जाम, दुर्घटनाएं या वाहन की गति का सीधा डेटा इसमें शामिल नहीं है।)*";
+    case "hinglish": return "*(Note: Travel advice atmospheric weather par based hai; live traffic jams, accidents aur transit telemetry monitored nahi hai).*";
+    case "bn": return "*(নোট: ভ্রমণ পরামর্শ বিশুদ্ধ আবহাওয়া তথ্যের উপর নির্ভরশীল; লাইভ ট্রাফিক পর্যবেক্ষণ অন্তর্ভুক্ত নয়।)*";
+    case "te": return "*(గమనిక: ఈ సలహా వాతావరణ పరిస్థితులపై ఆధారపడి ఉంటుంది; లైవ్ ట్రాఫిక్ జామ్‌లు పర్యవేక్షించబడవు).*";
+    case "ta": return "*(குறிப்பு: பயண ஆலோசனை வளிமண்டல வானிலையை அடிப்படையாகக் கொண்டது; நேரடி போக்குவரத்து நெரிசல் கண்காணிக்கப்படவில்லை).*";
+    case "mr": return "*(टीप: हा सल्ला हवामान स्थितीवर आधारित आहे; थेट ट्रॅफिक जामची माहिती यात समाविष्ट नाही).*";
+    case "es": return "*(Nota: La orientación de viaje se basa exclusivamente en factores meteorológicos; no supervisa atascos de tráfico en tiempo real).*";
+    case "fr": return "*(Remarque : Les conseils de trajet sont basés sur les conditions météorologiques ; le trafic en temps réel n'est pas surveillé).*";
+    case "de": return "*(Hinweis: Reiseempfehlungen basieren rein auf meteorologischen Bedingungen; Staudaten werden nicht überwacht).*";
+    default: return TRAVEL_DISCLAIMER;
+  }
+}
+
 /**
  * Server-side validation and grounding engine that enforces absolute meteorological truth.
  * Weather provider data is ALWAYS the source of truth.
@@ -339,36 +373,52 @@ export function validateAndGroundWeatherResponse(
       /\b(?:active\s+rain\s+is\s+currently\s+falling|active\s+rain\s+falling\s+now|raining\s+right\s+now|it\s+is\s+currently\s+raining|heavy\s+downpour\s+occurring\s+now|downpour\s+is\s+underway|active\s+showers\s+falling\s+now)\b/gi,
       /\b(?:abhi\s+barish\s+ho\s+rahi\s+hai|abhi\s+tez\s+barish\s+pad\s+rahi\s+hai|वर्तमान\s+में\s+बारिश\s+हो\s+रही\s+है)\b/gi,
     ];
+    const dryPhrase = getLocalizedDryText(context.language);
     activeRainZeroClaims.forEach((pattern) => {
       pattern.lastIndex = 0;
       if (pattern.test(correctedText)) {
         violationsDetected.push("Active rain claimed when current precipitation is 0 mm/hr. Grounded to dry current conditions.");
         pattern.lastIndex = 0;
-        correctedText = correctedText.replace(pattern, "no rain is currently falling (dry conditions right now)");
+        correctedText = correctedText.replace(pattern, dryPhrase);
       }
     });
   }
 
   // =========================================================================
-  // 7. TRANSPORTATION, ROAD GRIP & WATERLOGGING GROUNDING (Bug #1)
-  // - Disallow unsupported claims of slower vehicular transit, actual waterlogging,
-  //   actual road grip degradation, or hazards affecting travel.
+  // 7. TRANSPORTATION, ROAD CONDITIONS & WATERLOGGING GROUNDING (Data-Truth Bug)
+  // - Disallow unsupported claims of actual road conditions (roads are dry/wet, wet road conditions,
+  //   road grip, road visibility, waterlogging, traffic congestion).
   // =========================================================================
   const unverifiedTrafficAssertions = [
     {
+      pattern: /\b(?:roads\s+are\s+dry|dry\s+roads)\b/gi,
+      replacement: "dry atmospheric weather conditions are present",
+      reason: "Unsupported claim about road dryness without pavement surface sensors.",
+    },
+    {
+      pattern: /\b(?:roads\s+are\s+wet|roads\s+will\s+be\s+wet|wet\s+road\s+conditions|wet\s+roadways?|wet\s+pavement|wet\s+asphalt|wet\s+roads)\b/gi,
+      replacement: "rain and thunderstorms are likely, so allow extra travel time and consider carrying rain protection",
+      reason: "Unsupported claim about actual road conditions (roads are wet/wet road conditions).",
+    },
+    {
+      pattern: /\b(?:road\s+visibility)\b/gi,
+      replacement: "atmospheric visibility",
+      reason: "Road visibility claim replaced with atmospheric visibility.",
+    },
+    {
+      pattern: /\b(?:water\s+accumulation\s+and\s+reduced\s+road\s+grip\s+likely|road\s+grip\s+likely\s+affected|road\s+grip\s+is\s+reduced|poor\s+road\s+grip|reduced\s+tire\s+traction|tire\s+traction)\b/gi,
+      replacement: "inclement weather factors may require travel caution",
+      reason: "Asserting actual road grip or tire traction without pavement telemetry is prohibited.",
+    },
+    {
       pattern: /\b(?:expect\s+slower\s+vehicular\s+transit)\b/gi,
-      replacement: "wet outdoor surfaces may increase travel caution (note: live vehicular transit speeds are not monitored)",
+      replacement: "allow extra travel time if rain occurs (note: live vehicular transit speeds are not monitored)",
       reason: "Unsupported claim of slower vehicular transit.",
     },
     {
-      pattern: /\b(?:potential\s+local\s+water-logging|potential\s+water-logging|local\s+water-logging|waterlogging\s+expected|roads\s+are\s+water-logged|waterlogged\s+roads)\b/gi,
-      replacement: "localized water accumulation in low-lying sections may be possible if precipitation occurs",
+      pattern: /\b(?:potential\s+local\s+water-logging|potential\s+water-logging|local\s+water-logging|waterlogging\s+expected|roads\s+are\s+water-logged|waterlogged\s+roads|water-logged\s+roads|waterlogging)\b/gi,
+      replacement: "localized water accumulation in low-lying open areas may be possible if precipitation occurs",
       reason: "Definitive waterlogging assertions prohibited without municipal sensor data.",
-    },
-    {
-      pattern: /\b(?:water\s+accumulation\s+and\s+reduced\s+road\s+grip\s+likely|road\s+grip\s+likely\s+affected|road\s+grip\s+is\s+reduced|poor\s+road\s+grip)\b/gi,
-      replacement: "wet surfaces may increase the possibility of reduced tire traction",
-      reason: "Asserting actual road grip without pavement telemetry is prohibited.",
     },
     {
       pattern: /\b(?:hazards\s+are\s+affecting\s+travel|severe\s+weather\s+is\s+affecting\s+travel)\b/gi,
@@ -382,7 +432,7 @@ export function validateAndGroundWeatherResponse(
     },
     {
       pattern: /\b(?:roads\s+are\s+flooded|highways\s+are\s+flooded|flooded\s+highway|flooded\s+roads)\b/gi,
-      replacement: "wet roads or risk of localized water accumulation",
+      replacement: "rainy weather conditions or risk of water accumulation",
       reason: "Definitive road flooding assertions prohibited without infrastructure sensor data.",
     },
     {
@@ -406,8 +456,9 @@ export function validateAndGroundWeatherResponse(
     context.travel !== undefined ||
     /\b(travel|route|driving|highway|drive|flight|train|safar|yatra|nh48|road trip)\b/i.test(context.userQuery);
 
-  if (isTravelQuery && !correctedText.includes("*(Note: Travel advice is based purely on atmospheric")) {
-    correctedText = `${correctedText.trim()}\n\n${TRAVEL_DISCLAIMER}`;
+  const locDisclaimer = getLocalizedTravelDisclaimer(context.language);
+  if (isTravelQuery && !correctedText.includes(locDisclaimer) && !correctedText.includes("*(Note: Travel advice") && !correctedText.includes("*(नोट: यह यात्रा")) {
+    correctedText = `${correctedText.trim()}\n\n${locDisclaimer}`;
   }
 
   return {

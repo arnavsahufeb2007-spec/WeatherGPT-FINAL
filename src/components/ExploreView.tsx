@@ -206,6 +206,35 @@ export function ExploreView({
 
       {activeTab === "hubs" ? (
         <div className="space-y-6">
+          {/* Active Resolved Location Info Banner */}
+          {currentLocation && (
+            <div className="p-4 rounded-2xl bg-sky-950/30 border border-sky-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-sky-500/20 border border-sky-500/30 flex items-center justify-center text-sky-400 shrink-0">
+                  <MapPin className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-white">{currentLocation.name}</span>
+                    <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md bg-sky-500/20 text-sky-300">
+                      Active Location
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-300 mt-0.5">
+                    {currentLocation.admin1 ? `${currentLocation.admin1}, ` : ""}
+                    {currentLocation.country} • Timezone: {currentLocation.timezone || "Local"} • Coordinates: {currentLocation.latitude.toFixed(2)}°, {currentLocation.longitude.toFixed(2)}°
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={onOpenLocationSearch}
+                className="px-3 py-1.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 text-xs font-semibold self-start sm:self-auto transition-colors cursor-pointer"
+              >
+                Change Location
+              </button>
+            </div>
+          )}
+
           {/* Filter Chips & Global Search Trigger */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-1.5 bg-slate-900/60 p-1 rounded-xl border border-slate-800">
@@ -317,7 +346,7 @@ export function ExploreView({
       ) : (
         /* Side by Side Comparison Module */
         <div className="space-y-4">
-          <ComparisonView isFahrenheit={isFahrenheit} />
+          <ComparisonView isFahrenheit={isFahrenheit} currentLocation={currentLocation} />
         </div>
       )}
     </div>

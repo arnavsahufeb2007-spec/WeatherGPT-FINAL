@@ -15,8 +15,9 @@ import {
   Send,
   MessageSquare,
   HelpCircle,
+  AlertCircle,
 } from "lucide-react";
-import { LocationInfo } from "../types.js";
+import { LocationInfo, ConversationContext } from "../types.js";
 import { useVoiceMode } from "../services/voice/useVoiceMode.js";
 import { getLanguageConfig } from "../languages.js";
 import { queryWeatherAPI } from "../services/api.js";
@@ -27,6 +28,8 @@ interface VoiceStudioViewProps {
   preferredLanguage: string;
   isFahrenheit: boolean;
   onOpenLocationSearch: () => void;
+  context?: ConversationContext;
+  onUpdateContext?: (ctx: ConversationContext) => void;
 }
 
 interface VoiceTranscriptMessage {
@@ -34,6 +37,7 @@ interface VoiceTranscriptMessage {
   sender: "user" | "assistant";
   text: string;
   timestamp: string;
+  language?: string;
 }
 
 export function VoiceStudioView({
@@ -41,11 +45,28 @@ export function VoiceStudioView({
   preferredLanguage,
   isFahrenheit,
   onOpenLocationSearch,
+  context,
+  onUpdateContext,
 }: VoiceStudioViewProps) {
   const voice = useVoiceMode(preferredLanguage);
   const langConfig = getLanguageConfig(preferredLanguage);
   const inputLangConfig = getLanguageConfig(voice.effectiveInputLanguage);
   const outputLangConfig = getLanguageConfig(voice.effectiveOutputLanguage);
+
+  const [localContext, setLocalContext] = useState<ConversationContext>(() => {
+    return (
+      context || {
+        currentLocation: currentLocation || undefined,
+        lastQueryTimestamp: new Date().toISOString(),
+      }
+    );
+  });
+
+  React.useEffect(() => {
+    if (context) {
+      setLocalContext(context);
+    }
+  }, [context]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [messages, setMessages] = useState<VoiceTranscriptMessage[]>([
@@ -124,20 +145,26 @@ export function VoiceStudioView({
           ? voice.outputLanguage
           : preferredLanguage;
 
-      const res = await queryWeatherAPI(queryText, undefined, targetLang, currentLocation || undefined);
+      const res = await queryWeatherAPI(queryText, localContext, targetLang, currentLocation || undefined);
+
+      if (res.context) {
+        setLocalContext(res.context);
+        onUpdateContext?.(res.context);
+      }
 
       const botMsg: VoiceTranscriptMessage = {
         id: `bot_${Date.now()}`,
         sender: "assistant",
         text: res.reply,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        language: res.language || targetLang,
       };
 
       setMessages((prev) => [...prev, botMsg]);
 
       // Speak response out loud if autoSpeak enabled
       if (voice.autoSpeak) {
-        voice.speak(res.reply, voice.effectiveOutputLanguage);
+        voice.speak(res.reply, res.language || voice.effectiveOutputLanguage);
       }
     } catch (err: any) {
       const errMsg: VoiceTranscriptMessage = {
@@ -158,19 +185,37 @@ export function VoiceStudioView({
     } else if (voice.isSpeaking) {
       voice.stopSpeaking();
     } else {
-      voice.startListening(
-        (finalTranscript) => {
-          if (finalTranscript.trim()) {
-            handleSendVoiceQuery(finalTranscript);
-          }
-        },
-        () => {}
-      );
+      voice.startListening((finalTranscript) => {
+        if (finalTranscript.trim()) {
+          handleSendVoiceQuery(finalTranscript);
+        }
+      });
     }
   };
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
+      {/* Voice Error Banner */}
+      {voice.error && (
+        <div className="rounded-2xl bg-amber-950/50 border border-amber-500/40 p-4 flex items-start justify-between gap-3 text-xs text-amber-200 shadow-lg">
+          <div className="flex items-start gap-2.5">
+            <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <div className="font-semibold text-amber-300">{voice.error.message}</div>
+              {voice.error.actionHint && (
+                <div className="text-[11px] text-amber-400/90">{voice.error.actionHint}</div>
+              )}
+            </div>
+          </div>
+          <button
+            onClick={voice.clearError}
+            className="text-[11px] text-amber-400 hover:text-white underline shrink-0 px-2 py-1 rounded hover:bg-amber-900/40 transition-colors cursor-pointer"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {/* Studio Header Banner */}
       <div className="rounded-2xl bg-gradient-to-r from-sky-900/40 via-indigo-900/30 to-purple-900/40 border border-sky-500/20 p-6 shadow-xl relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -341,7 +386,7 @@ export function VoiceStudioView({
               {m.sender === "assistant" && (
                 <div className="pt-1 flex justify-end">
                   <button
-                    onClick={() => voice.speak(m.text, voice.effectiveOutputLanguage, true)}
+                    onClick={() => voice.speak(m.text, m.language || voice.effectiveOutputLanguage, true)}
                     className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-sky-400 text-[10px] font-medium"
                   >
                     <Volume2 className="w-3 h-3" />

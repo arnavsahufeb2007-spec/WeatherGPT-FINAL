@@ -59,10 +59,10 @@ export function CurrentWeatherHero({ location, current, analysis, todayDaily, is
             </div>
 
             {todayDaily && (
-              <div className="flex items-center gap-4 mt-3 text-xs text-slate-300 font-medium">
+              <div className="flex items-center gap-4 mt-3 text-xs text-slate-300 font-medium flex-wrap">
                 <span>High: <strong className="text-white">{formatTemp(todayDaily.tempMax)}</strong></span>
                 <span>Low: <strong className="text-white">{formatTemp(todayDaily.tempMin)}</strong></span>
-                <span>{t.precipitation}: <strong className="text-white">{todayDaily.precipitationProbabilityMax}%</strong></span>
+                <span>{t.humidity}: <strong className="text-white">{current.humidity !== null ? `${current.humidity}%` : "--"}</strong></span>
               </div>
             )}
           </div>
@@ -90,22 +90,34 @@ export function CurrentWeatherHero({ location, current, analysis, todayDaily, is
             <div className="p-1 rounded bg-sky-500/10 text-sky-400 shrink-0 mt-0.5">
               <Sparkles className="w-3.5 h-3.5" />
             </div>
-            <span>{analysis.summary}</span>
+            <span>
+              {isFahrenheit
+                ? analysis.summary
+                    .replace(new RegExp(`${current.temperature}°C`, "g"), formatTemp(current.temperature))
+                    .replace(new RegExp(`${current.feelsLike}°C`, "g"), formatTemp(current.feelsLike))
+                : analysis.summary}
+            </span>
           </div>
         )}
       </div>
 
       {/* Meteorological Parameters Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {/* Rain */}
+        {/* Rain Probability & Rainfall */}
         <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800/80 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xs font-medium">{t.precipitation}</span>
+            <span className="text-xs font-medium">{t.precipitation} Prob</span>
             <Droplets className="w-4 h-4 text-sky-400" />
           </div>
           <div>
             <span className="text-xl font-bold text-white">{current.precipitationProbability}%</span>
-            <p className="text-[11px] text-slate-400 mt-0.5">{current.rain > 0 ? `${current.rain} mm rain` : "No rain falling"}</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              {current.rain > 0
+                ? `${current.rain} mm rain falling`
+                : current.precipitation > 0
+                ? `${current.precipitation} mm precip`
+                : "0.0 mm (No rain falling)"}
+            </p>
           </div>
         </div>
 
@@ -156,8 +168,22 @@ export function CurrentWeatherHero({ location, current, analysis, todayDaily, is
             <Eye className="w-4 h-4 text-emerald-400" />
           </div>
           <div>
-            <span className="text-xl font-bold text-white">{(current.visibility / 1000).toFixed(1)} <span className="text-xs font-normal text-slate-400">km</span></span>
-            <p className="text-[11px] text-slate-400 mt-0.5">{current.visibility < 3000 ? "Haze or Fog" : "Clear sightline"}</p>
+            <span className="text-xl font-bold text-white">
+              {current.visibility !== null && current.visibility !== undefined ? (
+                <>
+                  {(current.visibility / 1000).toFixed(1)} <span className="text-xs font-normal text-slate-400">km</span>
+                </>
+              ) : (
+                <span className="text-sm font-medium text-slate-400">N/A</span>
+              )}
+            </span>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              {current.visibility !== null && current.visibility !== undefined
+                ? current.visibility < 3000
+                  ? "Haze or Fog"
+                  : "Clear sightline"
+                : "Observation unavailable"}
+            </p>
           </div>
         </div>
 
@@ -168,9 +194,9 @@ export function CurrentWeatherHero({ location, current, analysis, todayDaily, is
             <Sunrise className="w-4 h-4 text-orange-400" />
           </div>
           <div>
-            <span className="text-xs font-bold text-white block">Rise: {current.sunrise.slice(11, 16)}</span>
-            <span className="text-xs font-bold text-slate-300 block mt-0.5">Set: {current.sunset.slice(11, 16)}</span>
-            <p className="text-[10px] text-slate-400 mt-0.5">{current.pressure} hPa</p>
+            <span className="text-xs font-bold text-white block">Rise: {current.sunrise ? current.sunrise.slice(11, 16) : "--:--"}</span>
+            <span className="text-xs font-bold text-slate-300 block mt-0.5">Set: {current.sunset ? current.sunset.slice(11, 16) : "--:--"}</span>
+            <p className="text-[10px] text-slate-400 mt-0.5">{current.pressure !== null && current.pressure !== undefined ? `${current.pressure} hPa` : "Pressure: N/A"}</p>
           </div>
         </div>
       </div>

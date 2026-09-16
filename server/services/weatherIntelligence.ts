@@ -83,7 +83,10 @@ export function analyzeWeather(current: CurrentWeatherData, hourly?: HourlyForec
   let visibilityRiskLabel = "Good visibility (>10 km)";
 
   const vis = current.visibility;
-  if (vis < 1000) {
+  if (vis === null || vis === undefined) {
+    visibilityRisk = "moderate";
+    visibilityRiskLabel = "Visibility observation unavailable";
+  } else if (vis < 1000) {
     visibilityRisk = "dense_fog";
     visibilityRiskLabel = "Dense fog (<1 km): Severe driving and travel hazard";
   } else if (vis < 4000) {
@@ -149,7 +152,11 @@ export function analyzeWeather(current: CurrentWeatherData, hourly?: HourlyForec
 
   score = Math.max(10, Math.min(100, score));
 
-  const summary = `Current conditions are ${current.condition.toLowerCase()} with ${current.temperature}°C (feels like ${current.feelsLike}°C). Rain probability is ${current.precipitationProbability}%, humidity is ${current.humidity}%, wind is ${current.windSpeed} km/h, and UV index is ${current.uvIndex}. Overall outdoor rating: ${score}/100.`;
+  const humidityDisplay = current.humidity !== null && current.humidity !== undefined
+    ? `humidity is ${current.humidity}%`
+    : "humidity unavailable";
+
+  const summary = `Current conditions are ${current.condition.toLowerCase()} with ${current.temperature}°C (feels like ${current.feelsLike}°C). Rain probability is ${current.precipitationProbability}%, ${humidityDisplay}, wind is ${current.windSpeed} km/h, and UV index is ${current.uvIndex}. Overall outdoor rating: ${score}/100.`;
 
   return {
     rainRisk,
@@ -241,7 +248,7 @@ export function generateAdvisories(
   }
 
   // Dense Fog / Poor Visibility
-  if (current.visibility < 1500) {
+  if (current.visibility !== null && current.visibility !== undefined && current.visibility < 1500) {
     advisories.push({
       id: `adv_fog_${Date.now()}`,
       type: "fog",
@@ -265,6 +272,51 @@ export function generateAdvisories(
       description: `UV Index is measured at ${current.uvIndex}. Unprotected skin damage can occur rapidly.`,
       recommendation: "Apply broad-spectrum sunscreen (SPF 30+), wear UV-filtering sunglasses, and seek shade during midday hours.",
       timeframe: "Midday sun window (10:30 AM - 3:30 PM)",
+      locationName,
+      isOfficial: false,
+    });
+  }
+
+  // Thunderstorm & Severe Convective Storms
+  if ([95, 96, 99].includes(current.weatherCode)) {
+    advisories.push({
+      id: `adv_storm_${Date.now()}`,
+      type: "storm",
+      severity: current.weatherCode === 99 ? "extreme" : "severe",
+      title: "WeatherGPT Thunderstorm & Lightning Advisory",
+      description: `Active convective electrical activity and storm cells detected in ${locationName}. High wind gusts and localized heavy downpours possible.`,
+      recommendation: "Seek sturdy indoor shelter immediately. Stay away from isolated trees, metal fences, open balconies, and avoid standing near water bodies.",
+      timeframe: "Active now",
+      locationName,
+      isOfficial: false,
+    });
+  }
+
+  // Extreme Cold & Frost Advisory
+  if (current.temperature <= 5 || current.feelsLike <= 3) {
+    advisories.push({
+      id: `adv_cold_${Date.now()}`,
+      type: "cold",
+      severity: current.temperature <= 0 ? "extreme" : "severe",
+      title: current.temperature <= 0 ? "WeatherGPT Freezing Conditions Advisory" : "WeatherGPT Cold Stress Advisory",
+      description: `Ambient temperature is ${current.temperature}°C (feels like ${current.feelsLike}°C). Elevated risk of hypothermia and frost.`,
+      recommendation: "Wear insulated windproof layers, cover extremities (hands, head, ears), and ensure domestic animals and vulnerable household members remain in heated or shielded spaces.",
+      timeframe: "Current & Nighttime hours",
+      locationName,
+      isOfficial: false,
+    });
+  }
+
+  // Oppressive Humid Heat Stress (Tropical / Coastal Muggy conditions)
+  if (current.temperature >= 32 && (current.humidity ?? 0) >= 75 && current.feelsLike >= 38 && current.temperature < 40) {
+    advisories.push({
+      id: `adv_humid_${Date.now()}`,
+      type: "heat",
+      severity: current.feelsLike >= 42 ? "severe" : "moderate",
+      title: "WeatherGPT Oppressive Humid Heat Advisory",
+      description: `High moisture (${current.humidity}%) suppresses body sweat evaporation, elevating thermal discomfort to a feels-like ${current.feelsLike}°C.`,
+      recommendation: "Avoid heavy cardio during peak midday humidity. Hydrate regularly with water or mineral salts, and rest in ventilated or air-conditioned environments.",
+      timeframe: "Current & Midday",
       locationName,
       isOfficial: false,
     });

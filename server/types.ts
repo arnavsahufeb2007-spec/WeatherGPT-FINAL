@@ -26,10 +26,11 @@ export interface CurrentWeatherData {
   windSpeed: number;
   windDirection: number;
   windGusts: number;
+  windGust?: number;
   cloudCover: number;
   uvIndex: number;
-  visibility: number;
-  pressure: number;
+  visibility: number | null;
+  pressure: number | null;
   dewPoint?: number;
   isDay: boolean;
   sunrise: string;
@@ -42,6 +43,7 @@ export interface HourlyForecastItem {
   temperature: number;
   feelsLike: number;
   precipitationProbability: number;
+  precipitation?: number;
   rain: number;
   weatherCode: number;
   condition: string;
@@ -85,7 +87,7 @@ export interface WeatherAnalysis {
 
 export interface WeatherAdvisory {
   id: string;
-  type: "rain" | "heat" | "wind" | "uv" | "fog" | "storm";
+  type: "rain" | "heat" | "wind" | "uv" | "fog" | "storm" | "cold";
   severity: "info" | "moderate" | "severe" | "extreme";
   title: string;
   description: string;
@@ -127,18 +129,34 @@ export interface ActivityAnalysis {
 export interface ComparisonLocationResult {
   location: LocationInfo;
   current: CurrentWeatherData;
+  targetForecast?: {
+    targetDay: string;
+    date: string;
+    tempMax: number;
+    tempMin: number;
+    precipitationProbability: number;
+    rainSum: number;
+    condition: string;
+    weatherCode: number;
+    windSpeedMax: number;
+    isThunderstorm: boolean;
+    uvIndexMax: number;
+  };
   analysis: WeatherAnalysis;
   advisories: WeatherAdvisory[];
 }
 
 export interface ComparisonAnalysis {
   locations: ComparisonLocationResult[];
+  failedLocations?: string[];
+  targetDay?: string;
   metricDeltas: {
     metric: string;
     values: { locationName: string; value: string | number }[];
     highlight: string;
   }[];
   comparativeSummary: string;
+  recommendation: string;
 }
 
 export interface RouteCheckpoint {
@@ -181,47 +199,6 @@ export interface ConversationContext {
 
 export interface QueryRequest {
   message: string;
-  context?: ConversationContext;
-  preferredLanguage?: string;
-}
-
-export interface NasaNaturalEvent {
-  id: string;
-  title: string;
-  category: string;
-  categoryTitle: string;
-  distanceKm: number;
-  latitude: number;
-  longitude: number;
-  date: string;
-  sources: { id: string; url: string }[];
-}
-
-export interface NasaClimateContext {
-  month: string;
-  monthIndex: number;
-  historicalNormalTempC: number;
-  currentTempDeltaC?: number;
-  allSkySolarIrradianceKwhM2Day: number;
-  dataset: string;
-  temporalLabel: string;
-}
-
-export interface NasaEnvironmentalData {
-  status: "available" | "unavailable";
-  provider: string;
-  radiusKm: number;
-  naturalEvents: {
-    count: number;
-    events: NasaNaturalEvent[];
-    summary: string;
-    temporalLabel: string;
-  };
-  climateContext?: NasaClimateContext;
-}
-
-export interface QueryRequest {
-  message: string;
   location?: LocationInfo;
   locationVersion?: number;
   context?: ConversationContext;
@@ -247,6 +224,8 @@ export interface QueryResponse {
     activity?: ActivityAnalysis;
     comparison?: ComparisonAnalysis;
     travel?: TravelAnalysis;
-    nasa?: NasaEnvironmentalData;
+    failedLocations?: string[];
+    requiresLocation?: boolean;
+    locationResolution?: any;
   };
 }

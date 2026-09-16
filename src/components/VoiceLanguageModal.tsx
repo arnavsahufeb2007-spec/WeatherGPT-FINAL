@@ -76,21 +76,23 @@ export function VoiceLanguageModal({
     const effective = (!langCode || langCode === "auto") ? appLanguage : langCode;
     switch (effective) {
       case "hi":
-        return "वेदर जीपीटी वॉयस टेस्ट: आज 26 डिग्री सेल्सियस तापमान और साफ आसमान है।";
+        return "वेदर जीपीटी वॉयस टेस्ट: आज तापमान 26°C और हवा की गति 20 km/h है।";
       case "hinglish":
-        return "WeatherGPT voice test: Aaj 26 degree Celsius temperature aur clean skies hain.";
+        return "WeatherGPT voice test: Aaj temperature 26°C aur hawa 20 km/h chal rahi hai.";
       case "bn":
-        return "ওয়েদার জিপিটি ভয়েস টেস্ট: আজ ২৬ ডিগ্রি সেলসিয়াস তাপমাত্রা ও পরিষ্কার আকাশ।";
+        return "ওয়েদার জিপিটি ভয়েস টেস্ট: আজ তাপমাত্রা ২৬°C ও বাতাস ২০ km/h বেগে বইছে।";
       case "te":
-        return "వెదర్ జీపీటీ వాయిస్ టెస్ట్: నేడు 26 డిగ్రీల సెల్సియస్ ఉష్ణోగ్రత మరియు స్పష్టమైన ఆకాశం.";
+        return "వెదర్ జీపీటీ వాయిస్ టెస్ట్: నేడు ఉష్ణోగ్రత 26°C మరియు గాలి 20 km/h వేగంతో వీస్తోంది.";
       case "ta":
-        return "வெதர் ஜிபிடி வாய்ஸ் டெஸ்ட்: இன்று 26 டிகிரி செல்சியஸ் வெப்பநிலை மற்றும் தெளிவான வானிலை.";
+        return "வெதர் ஜிபிடி வாய்ஸ் டெஸ்ட்: இன்று வெப்பநிலை 26°C மற்றும் காற்று 20 km/h வேகத்தில் வீசுகிறது.";
       case "mr":
-        return "वेदर जीपीटी व्हॉईस टेस्ट: आज 26 डिग्री सेल्सिअस तापमान आणि निरभ्र आकाश आहे.";
+        return "वेदर जीपीटी व्हॉईस टेस्ट: आज तापमान 26°C आणि वारा 20 km/h वेगाने वाहत आहे.";
       case "gu":
-        return "વેધર જીપીટી વૉઇસ ટેસ્ટ: આજે 26 ડિગ્રી સેલ્સિયસ તાપમાન અને સ્વચ્છ આકાશ છે.";
+        return "વેધર જીપીટી વૉઇસ ટેસ્ટ: આજે તાપમાન ૨૬°C અને પવન ૨૦ km/h ની ઝડપે ફૂંકાઈ રહ્યો છે.";
+      case "pa":
+        return "ਵੈਦਰ ਜੀਪੀਟੀ ਵੌਇਸ ਟੈਸਟ: ਅੱਜ ਤਾਪਮਾਨ 26°C ਅਤੇ ਹਵਾ 20 km/h ਦੀ ਰਫ਼ਤਾਰ ਨਾਲ ਚੱਲ ਰਹੀ ਹੈ।";
       default:
-        return "WeatherGPT voice test: Current temperature is 26 degrees Celsius with clear skies.";
+        return "WeatherGPT voice test: The wind blowing is 20 km/h and temperature is 26°C.";
     }
   };
 

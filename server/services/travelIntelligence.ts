@@ -42,7 +42,7 @@ export async function analyzeTravel(
         const w = cpData.current;
         const risks: string[] = [];
         if (w.rain > 1 || w.precipitationProbability > 50) risks.push(`Rain: ${w.rain}mm (${w.precipitationProbability}%)`);
-        if (w.visibility < 3000) risks.push(`Haze/Fog: ${(w.visibility / 1000).toFixed(1)}km`);
+        if (w.visibility !== null && w.visibility !== undefined && w.visibility < 3000) risks.push(`Haze/Fog: ${(w.visibility / 1000).toFixed(1)}km`);
         if (w.windSpeed > 35) risks.push(`Wind: ${w.windSpeed}km/h`);
 
         return {
@@ -69,12 +69,12 @@ export async function analyzeTravel(
   // Rain checks
   const rainyCheckpoints = enrichedCheckpoints.filter((c) => c.weather && (c.weather.rain > 2 || c.weather.precipitationProbability > 60));
   if (rainyCheckpoints.length > 0) {
-    keyRisks.push(`Precipitation forecast near ${rainyCheckpoints.map((c) => c.name).join(", ")}; wet surfaces may increase the possibility of reduced tire traction.`);
+    keyRisks.push(`Precipitation forecast near ${rainyCheckpoints.map((c) => c.name).join(", ")}; elevated rain exposure along this transit corridor.`);
     moderateWeatherFound = true;
   }
 
   // Fog / Visibility checks
-  const foggyCheckpoints = enrichedCheckpoints.filter((c) => c.weather && c.weather.visibility < 2000);
+  const foggyCheckpoints = enrichedCheckpoints.filter((c) => c.weather && c.weather.visibility !== null && c.weather.visibility !== undefined && c.weather.visibility < 2000);
   if (foggyCheckpoints.length > 0) {
     keyRisks.push(`Reduced visibility / dense mist along ${foggyCheckpoints.map((c) => c.name).join(", ")}`);
     severeWeatherFound = true;
@@ -100,18 +100,43 @@ export async function analyzeTravel(
 
   const weatherRiskLevel = severeWeatherFound ? "high" : moderateWeatherFound ? "moderate" : "low";
 
-  // Mode specific recommendations
+  // Context-aware, data-grounded recommendations tailored to actual corridor observations
   const recommendations: string[] = [];
-  if (mode === "bike") {
-    recommendations.push("During wet spells, wet pavement may increase the possibility of reduced traction on painted road markings and expansion joints.");
-    recommendations.push("Wear high-visibility reflective riding gear and securely fastened rain liner.");
-  } else if (mode === "car") {
-    recommendations.push("Inspect wiper blade condition, windshield washer fluid, and tire treads before departure.");
-    recommendations.push("Maintain safe following distance in rainy or foggy sectors.");
-  } else if (mode === "train" || mode === "bus") {
-    recommendations.push("Carry light layers to manage transition between air-conditioned cabins and humid stations.");
-  } else if (mode === "flight") {
-    recommendations.push("Turbulence can occur near strong convective weather or thunderstorm cells.");
+
+  if (rainyCheckpoints.length > 0) {
+    const rainSectors = rainyCheckpoints.map((c) => c.name).slice(0, 3).join(", ");
+    if (mode === "bike") {
+      recommendations.push(`Active rain or high precipitation probability forecast near ${rainSectors}; wear waterproof high-visibility outer layers and allow extra journey time.`);
+    } else if (mode === "car") {
+      recommendations.push(`Precipitation detected near ${rainSectors}. Ensure wiper blades and defogger are operational; increase following distance by 2x.`);
+    } else {
+      recommendations.push(`Rain expected along the route near ${rainSectors}. Carry compact waterproof gear for transfers.`);
+    }
+  }
+
+  if (foggyCheckpoints.length > 0) {
+    const fogSectors = foggyCheckpoints.map((c) => c.name).slice(0, 3).join(", ");
+    recommendations.push(`Reduced visibility (<2 km) near ${fogSectors}. Use low-beam fog lights, avoid abrupt overtaking maneuvers, and verify trip timings.`);
+  }
+
+  if (maxTemp >= 40) {
+    recommendations.push(`Elevated thermal load (${maxTemp}°C) along corridor. Verify vehicle engine coolant, tire pressure, and carry oral rehydration salts or ample water.`);
+  } else if (minTemp <= 6) {
+    recommendations.push(`Chilly conditions (${minTemp}°C) along corridor. Pack thermal insulating layers and monitor cold morning temperature drops.`);
+  }
+
+  if (mode === "flight" && (severeWeatherFound || rainyCheckpoints.some((c) => c.weather?.weatherCode && [95, 96, 99].includes(c.weather.weatherCode)))) {
+    recommendations.push("Convective cells or atmospheric turbulence possible near route corridor; keep seatbelts fastened throughout cruise.");
+  }
+
+  if (recommendations.length === 0) {
+    if (mode === "bike") {
+      recommendations.push("Atmospheric conditions along the corridor are favorable. Standard helmet and protective riding gear recommended.");
+    } else if (mode === "car") {
+      recommendations.push("Clear highway atmospheric visibility. Maintain standard highway speeds and scheduled driver rest intervals.");
+    } else {
+      recommendations.push("Normal meteorological conditions along the route corridor with no significant atmospheric impediments.");
+    }
   }
 
   recommendations.push("Note: WeatherGPT travel intelligence evaluates verified atmospheric and route data. It does not monitor live traffic congestion, accidents, road closures, or transit delays.");
