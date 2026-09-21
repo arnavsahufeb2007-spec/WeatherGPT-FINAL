@@ -1,10 +1,14 @@
-import { test } from "node:test";
+import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { historyService } from "../src/services/historyService.js";
 import { savedLocationsService } from "../src/services/savedLocationsService.js";
 import { preferencesService } from "../src/services/preferencesService.js";
 import { authService } from "../src/services/auth.js";
 import { LocationInfo } from "../src/types.js";
+
+after(() => {
+  setTimeout(() => process.exit(0), 50);
+});
 
 test("1. historyService: generateTitle creates clean titles with location and query", () => {
   const loc: LocationInfo = {

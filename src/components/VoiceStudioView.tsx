@@ -16,12 +16,14 @@ import {
   MessageSquare,
   HelpCircle,
   AlertCircle,
+  Zap,
 } from "lucide-react";
 import { LocationInfo, ConversationContext } from "../types.js";
 import { useVoiceMode } from "../services/voice/useVoiceMode.js";
 import { getLanguageConfig } from "../languages.js";
 import { queryWeatherAPI } from "../services/api.js";
 import { VoiceLanguageModal } from "./VoiceLanguageModal.js";
+import { GeminiLiveModal } from "./GeminiLiveModal.js";
 
 interface VoiceStudioViewProps {
   currentLocation: LocationInfo | null;
@@ -69,6 +71,7 @@ export function VoiceStudioView({
   }, [context]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLiveModalOpen, setIsLiveModalOpen] = useState(false);
   const [messages, setMessages] = useState<VoiceTranscriptMessage[]>([
     {
       id: "welcome_voice",
@@ -185,6 +188,7 @@ export function VoiceStudioView({
     } else if (voice.isSpeaking) {
       voice.stopSpeaking();
     } else {
+      voice.unlockAudio();
       voice.startListening((finalTranscript) => {
         if (finalTranscript.trim()) {
           handleSendVoiceQuery(finalTranscript);
@@ -238,8 +242,20 @@ export function VoiceStudioView({
 
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setIsLiveModalOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-xs font-bold text-white shadow-lg shadow-cyan-500/20 transition-all cursor-pointer"
+            >
+              <Zap className="w-4 h-4 text-cyan-200" />
+              <span>Gemini Live (Voice Duplex)</span>
+              <span className="flex h-2 w-2 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-200 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+              </span>
+            </button>
+
+            <button
               onClick={() => setIsModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 text-xs font-semibold text-white shadow-sm transition-colors"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 text-xs font-semibold text-white shadow-sm transition-colors cursor-pointer"
             >
               <Sliders className="w-4 h-4 text-sky-400" />
               <span>Configure Voice & Dialects</span>
@@ -418,6 +434,14 @@ export function VoiceStudioView({
         }}
         isSpeakingTest={voice.isSpeaking}
         onStopTestVoice={voice.stopSpeaking}
+      />
+
+      {/* Gemini Live Duplex Voice Assistant Modal (gemini-3.8-live) */}
+      <GeminiLiveModal
+        isOpen={isLiveModalOpen}
+        onClose={() => setIsLiveModalOpen(false)}
+        preferredLanguage={preferredLanguage}
+        currentLocationName={currentLocation?.name}
       />
     </div>
   );

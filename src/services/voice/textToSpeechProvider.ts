@@ -14,6 +14,10 @@ import { getLanguageConfig } from "../../languages";
  * Resolves best matching BCP-47 tag for Text-to-Speech
  */
 export function resolveTTSLanguageCode(languageCode: string): string {
+  if (!languageCode || languageCode.toLowerCase() === "all" || languageCode.toLowerCase() === "auto") {
+    return "en-IN";
+  }
+
   const config = getLanguageConfig(languageCode);
 
   if (config.code === "hinglish") {
@@ -169,6 +173,16 @@ export class WebSpeechTTSProvider implements TextToSpeechProvider {
   private synth: SpeechSynthesis | null = null;
   private currentUtterance: SpeechSynthesisUtterance | null = null;
   private currentAudio: HTMLAudioElement | null = null;
+  private audioContext: AudioContext | null = null;
+  private currentAudioSource: AudioBufferSourceNode | null = null;
+  // Preserved successful audio payload for user-gesture replay or cached playback
+  private preservedAudio: {
+    audioBase64: string;
+    format: string;
+    text: string;
+    language: string;
+    timestamp: number;
+  } | null = null;
   private _isSpeaking = false;
   private voices: SpeechSynthesisVoice[] = [];
   private voicesLoaded = false;
@@ -190,6 +204,37 @@ export class WebSpeechTTSProvider implements TextToSpeechProvider {
           this.loadVoices();
         };
       }
+    }
+
+    // Attach user gesture unlock listeners to capture user interaction in the document or iframe
+    if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+      const unlock = () => {
+        this.unlockAudio();
+      };
+      window.addEventListener("pointerdown", unlock, { capture: true, passive: true });
+      window.addEventListener("keydown", unlock, { capture: true, passive: true });
+      window.addEventListener("touchstart", unlock, { capture: true, passive: true });
+      window.addEventListener("click", unlock, { capture: true, passive: true });
+    }
+  }
+
+  /**
+   * Unlocks Web Audio API AudioContext during a user gesture
+   * to ensure playback can proceed after asynchronous network roundtrips.
+   */
+  public unlockAudio(): void {
+    if (typeof window === "undefined") return;
+    try {
+      const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      if (!this.audioContext) {
+        this.audioContext = new AudioCtx();
+      }
+      if (this.audioContext && this.audioContext.state === "suspended") {
+        this.audioContext.resume().catch(() => {});
+      }
+    } catch {
+      // Ignore audio context initialization failures in restricted environments
     }
   }
 
@@ -262,6 +307,15 @@ export class WebSpeechTTSProvider implements TextToSpeechProvider {
     if (typeof window !== "undefined") {
       (window as any).__weathergpt_current_utterance__ = null;
     }
+    if (this.currentAudioSource) {
+      try {
+        this.currentAudioSource.stop();
+        this.currentAudioSource.disconnect();
+      } catch {
+        // ignore
+      }
+      this.currentAudioSource = null;
+    }
     if (this.currentAudio) {
       try {
         this.currentAudio.pause();
@@ -281,6 +335,13 @@ export class WebSpeechTTSProvider implements TextToSpeechProvider {
   }
 
   public pause(): void {
+    if (this.audioContext && this.audioContext.state === "running") {
+      try {
+        this.audioContext.suspend().catch(() => {});
+      } catch {
+        // ignore
+      }
+    }
     if (this.currentAudio && !this.currentAudio.paused) {
       try {
         this.currentAudio.pause();
@@ -298,6 +359,13 @@ export class WebSpeechTTSProvider implements TextToSpeechProvider {
   }
 
   public resume(): void {
+    if (this.audioContext && this.audioContext.state === "suspended") {
+      try {
+        this.audioContext.resume().catch(() => {});
+      } catch {
+        // ignore
+      }
+    }
     if (this.currentAudio && this.currentAudio.paused) {
       try {
         this.currentAudio.play();
@@ -314,6 +382,156 @@ export class WebSpeechTTSProvider implements TextToSpeechProvider {
     }
   }
 
+  private base64ToArrayBuffer(base64: string): ArrayBuffer {
+    const binaryString =
+      typeof atob === "function"
+        ? atob(base64)
+        : typeof Buffer !== "undefined"
+        ? Buffer.from(base64, "base64").toString("binary")
+        : "";
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes.buffer;
+  }
+
+  /**
+   * Safely plays audio payload (base64) using Web Audio API AudioContext when available/unlocked,
+   * or HTMLAudioElement fallback with explicit NotAllowedError / user-gesture handling.
+   */
+  private async playAudioPayload(
+    audioBase64: string,
+    format: string,
+    requestId: number,
+    options: TTSOptions,
+    providerName: string
+  ): Promise<boolean> {
+    if (this.activeRequestId !== requestId) return false;
+
+    // Strategy A: Web Audio API AudioContext (immune to transient user gesture timeout once running)
+    if (
+      this.audioContext &&
+      this.audioContext.state !== "closed" &&
+      typeof this.audioContext.decodeAudioData === "function"
+    ) {
+      try {
+        if (this.audioContext.state === "suspended") {
+          await this.audioContext.resume().catch(() => {});
+        }
+        if (this.audioContext.state === "running") {
+          const arrayBuffer = this.base64ToArrayBuffer(audioBase64);
+          const audioBuffer = await new Promise<AudioBuffer>((resolve, reject) => {
+            const res = this.audioContext!.decodeAudioData(arrayBuffer, resolve, reject);
+            if (res && typeof (res as any).then === "function") {
+              (res as any).then(resolve, reject);
+            }
+          });
+
+          if (this.activeRequestId !== requestId) return false;
+
+          const source = this.audioContext.createBufferSource();
+          source.buffer = audioBuffer;
+          source.playbackRate.value = options.rate || 1.0;
+          source.connect(this.audioContext.destination);
+
+          this.currentAudioSource = source;
+          this._isSpeaking = true;
+          options.onStart?.();
+
+          source.onended = () => {
+            if (this.activeRequestId === requestId) {
+              this._isSpeaking = false;
+              this.currentAudioSource = null;
+              options.onEnd?.();
+            }
+          };
+
+          source.start(0);
+          return true;
+        }
+      } catch {
+        // Fall back to HTMLAudioElement
+      }
+    }
+
+    // Strategy B: Standard HTMLAudioElement
+    if (typeof Audio !== "undefined") {
+      try {
+        const audio = new Audio(`data:${format || "audio/wav"};base64,${audioBase64}`);
+        this.currentAudio = audio;
+        audio.playbackRate = options.rate || 1.0;
+
+        audio.onplay = () => {
+          if (this.activeRequestId === requestId) {
+            this._isSpeaking = true;
+            options.onStart?.();
+          }
+        };
+
+        audio.onended = () => {
+          if (this.activeRequestId === requestId) {
+            this._isSpeaking = false;
+            this.currentAudio = null;
+            options.onEnd?.();
+          }
+        };
+
+        audio.onerror = () => {
+          if (this.activeRequestId === requestId) {
+            this.currentAudio = null;
+            this._isSpeaking = false;
+            // CRITICAL: Do NOT convert audio playback error into "voice-unavailable"!
+            options.onError?.({
+              code: "synthesis-failed",
+              message: `Audio playback error occurred while playing ${providerName} voice response.`,
+              fatal: true,
+              actionHint: "Tap Speak to try playing the audio again.",
+            });
+          }
+        };
+
+        const playPromise = audio.play();
+        if (playPromise && typeof playPromise.then === "function") {
+          await playPromise;
+        }
+        return true;
+      } catch (playErr: any) {
+        if (this.activeRequestId !== requestId) return false;
+        this.currentAudio = null;
+        this._isSpeaking = false;
+
+        const isNotAllowed =
+          playErr?.name === "NotAllowedError" ||
+          (typeof playErr?.message === "string" &&
+            /notallowed|user gesture|interact|autoplay|not-allowed|permission/i.test(playErr.message));
+
+        if (isNotAllowed) {
+          // Playback blocked by browser autoplay/user-gesture policy.
+          // CRITICAL: Do NOT treat as "voice-unavailable". The audio was generated successfully!
+          options.onError?.({
+            code: "not-allowed",
+            message: "Audio playback was blocked by the browser. Tap Speak to play audio.",
+            fatal: false,
+            actionHint: "Tap Speak to play the audio response.",
+          });
+          return true; // Successfully handled; do not fall through to voice-unavailable
+        }
+
+        options.onError?.({
+          code: "synthesis-failed",
+          message: `Failed to play ${providerName} voice response audio: ${playErr?.message || "Playback error"}`,
+          fatal: true,
+          actionHint: "Tap Speak to try again.",
+        });
+        return true; // Successfully handled; do not fall through to voice-unavailable
+      }
+    }
+
+    return false;
+  }
+
   public async speak(options: TTSOptions): Promise<void> {
     if (!this.isSupported() && typeof Audio === "undefined") {
       options.onError?.({
@@ -327,33 +545,166 @@ export class WebSpeechTTSProvider implements TextToSpeechProvider {
     // Always stop and cancel previous speech before speaking anew (prevents overlap)
     this.stop();
 
+    // Synchronously prime/unlock AudioContext during user interaction window
+    this.unlockAudio();
+
     const requestId = ++this.activeRequestId;
-    const formattedText = formatSpokenWeatherResponse(options.text, options.language);
+    const rawLang = options.language || "en";
+    // "ALL" or "auto" must never reach TTS engines; resolve a concrete language first
+    const effectiveLang = (!rawLang || rawLang.toLowerCase() === "all" || rawLang.toLowerCase() === "auto")
+      ? "en"
+      : rawLang;
+
+    const formattedText = formatSpokenWeatherResponse(options.text, effectiveLang);
 
     if (!formattedText || !formattedText.trim()) {
       options.onEnd?.();
       return;
     }
 
+    // Replay preserved audio immediately if user is repeating or retrying the exact response on tap
+    if (
+      this.preservedAudio &&
+      this.preservedAudio.text === formattedText &&
+      this.preservedAudio.language === effectiveLang &&
+      Date.now() - this.preservedAudio.timestamp < 300000
+    ) {
+      const played = await this.playAudioPayload(
+        this.preservedAudio.audioBase64,
+        this.preservedAudio.format,
+        requestId,
+        options,
+        "Sarvam"
+      );
+      if (played) return;
+    }
+
     // Check available browser voices first
     const availableVoices = await this.getVoices();
-    const selectedVoice = selectVoice(availableVoices, options.language);
-    const targetLangCode = resolveTTSLanguageCode(options.language);
-    const isLangEnglish = options.language === "en" || targetLangCode.toLowerCase().startsWith("en");
+    const selectedVoice = selectVoice(availableVoices, effectiveLang);
+    const targetLangCode = resolveTTSLanguageCode(effectiveLang);
+    const isLangEnglish = effectiveLang === "en" || targetLangCode.toLowerCase().startsWith("en");
 
-    // 1. Keep browser TTS when a compatible voice exists
-    if ((selectedVoice && isVoiceCompatible(selectedVoice, options.language)) || (isLangEnglish && availableVoices.length > 0)) {
-      await this.playWithBrowserSynthesis(formattedText, options, requestId, selectedVoice);
+    // 1. Keep browser TTS as first choice when a compatible voice exists
+    if ((selectedVoice && isVoiceCompatible(selectedVoice, effectiveLang)) || (isLangEnglish && availableVoices.length > 0)) {
+      await this.playWithBrowserSynthesis(formattedText, { ...options, language: effectiveLang }, requestId, selectedVoice);
       return;
     }
 
-    // 2. Use Bhashini only when configured and available for Indian languages
-    const indianLangCodes = [
-      "hi", "hinglish", "bn", "te", "mr", "ta", "gu", "kn", "ml", "pa", "as", "or", "ur", "ne", "sd"
+    // 2. Call Sarvam Bulbul v3 from the server as the primary Indian language TTS fallback
+    const langConfig = getLanguageConfig(effectiveLang);
+    const langCode = (langConfig?.code || effectiveLang.split("-")[0] || "en").toLowerCase();
+    const primaryLang = effectiveLang.toLowerCase().split("-")[0];
+
+    const sarvamSupportedLangs = [
+      "gu", "bn", "ta", "te", "mr", "kn", "ml", "pa", "od", "or", "hi", "hinglish", "en", "as",
+      "gu-in", "bn-in", "ta-in", "te-in", "mr-in", "kn-in", "ml-in", "pa-in", "od-in", "or-in", "hi-in", "en-in", "as-in"
     ];
-    if (indianLangCodes.includes(options.language) && typeof fetch !== "undefined" && typeof Audio !== "undefined") {
+    const isSarvamEligible =
+      sarvamSupportedLangs.includes(effectiveLang.toLowerCase()) ||
+      sarvamSupportedLangs.includes(langCode) ||
+      sarvamSupportedLangs.includes(primaryLang);
+
+    if (
+      isSarvamEligible &&
+      typeof fetch !== "undefined" &&
+      typeof Audio !== "undefined"
+    ) {
       try {
-        const bhashiniLang = options.language === "hinglish" ? "hi" : options.language;
+        const sarvamTargetLang = (langCode === "as" || primaryLang === "as") ? "bn-IN" : effectiveLang;
+        const sarvamResp = await fetch("/api/voice/sarvam/tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text: formattedText,
+            targetLanguage: sarvamTargetLang,
+            gender: "female",
+          }),
+        });
+
+        if (sarvamResp.ok) {
+          const sarvamData = await sarvamResp.json();
+          if (sarvamData.success && sarvamData.audioBase64) {
+            if (this.activeRequestId !== requestId) return;
+
+            // Preserve successful audio for user-gesture replay
+            this.preservedAudio = {
+              audioBase64: sarvamData.audioBase64,
+              format: sarvamData.format || "audio/wav",
+              text: formattedText,
+              language: effectiveLang,
+              timestamp: Date.now(),
+            };
+
+            const played = await this.playAudioPayload(
+              sarvamData.audioBase64,
+              sarvamData.format || "audio/wav",
+              requestId,
+              options,
+              "Sarvam"
+            );
+            if (played) return;
+          }
+        }
+      } catch {
+        // Sarvam fallback unavailable or failed; proceed to secondary check
+      }
+    }
+
+    // 3. Call ElevenLabs Multilingual v2 from the server (covers international languages and unserved Indian languages like Urdu, Nepali, Sindhi, etc.)
+    if (typeof fetch !== "undefined" && typeof Audio !== "undefined") {
+      try {
+        const elevenResp = await fetch("/api/voice/elevenlabs/tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text: formattedText,
+            targetLanguage: effectiveLang,
+          }),
+        });
+
+        if (elevenResp.ok) {
+          const elevenData = await elevenResp.json();
+          if (elevenData.success && elevenData.audioBase64) {
+            if (this.activeRequestId !== requestId) return;
+
+            // Preserve successful audio for user-gesture replay
+            this.preservedAudio = {
+              audioBase64: elevenData.audioBase64,
+              format: elevenData.format || "audio/mpeg",
+              text: formattedText,
+              language: effectiveLang,
+              timestamp: Date.now(),
+            };
+
+            const played = await this.playAudioPayload(
+              elevenData.audioBase64,
+              elevenData.format || "audio/mpeg",
+              requestId,
+              options,
+              "ElevenLabs"
+            );
+            if (played) return;
+          }
+        }
+      } catch {
+        // ElevenLabs unavailable or failed; proceed to secondary check
+      }
+    }
+
+    // 4. Keep Bhashini code unchanged as secondary server fallback
+    const indianLangCodes = [
+      "hi", "hinglish", "bn", "te", "mr", "ta", "gu", "kn", "ml", "pa", "as", "or", "ur", "ne", "sd",
+      "hi-in", "bn-in", "te-in", "mr-in", "ta-in", "gu-in", "kn-in", "ml-in", "pa-in", "as-in", "or-in", "ur-in"
+    ];
+    const isIndianLangEligible =
+      indianLangCodes.includes(effectiveLang.toLowerCase()) ||
+      indianLangCodes.includes(langCode) ||
+      indianLangCodes.includes(primaryLang);
+
+    if (isIndianLangEligible && typeof fetch !== "undefined" && typeof Audio !== "undefined") {
+      try {
+        const bhashiniLang = langCode === "hinglish" ? "hi" : (langCode || effectiveLang);
         const resp = await fetch("/api/voice/tts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -370,45 +721,23 @@ export class WebSpeechTTSProvider implements TextToSpeechProvider {
           if (data.success && data.audioBase64) {
             if (this.activeRequestId !== requestId) return;
 
-            const audio = new Audio(`data:${data.format || "audio/wav"};base64,${data.audioBase64}`);
-            this.currentAudio = audio;
-            audio.playbackRate = options.rate || 1.0;
-
-            audio.onplay = () => {
-              if (this.activeRequestId === requestId) {
-                this._isSpeaking = true;
-                options.onStart?.();
-              }
+            // Preserve successful audio for user-gesture replay
+            this.preservedAudio = {
+              audioBase64: data.audioBase64,
+              format: data.format || "audio/wav",
+              text: formattedText,
+              language: effectiveLang,
+              timestamp: Date.now(),
             };
 
-            audio.onended = () => {
-              if (this.activeRequestId === requestId) {
-                this._isSpeaking = false;
-                this.currentAudio = null;
-                options.onEnd?.();
-              }
-            };
-
-            audio.onerror = () => {
-              if (this.activeRequestId === requestId) {
-                this.currentAudio = null;
-                // Never silently fall back to English if no compatible voice exists
-                if (!selectedVoice && !isLangEnglish && availableVoices.length > 0) {
-                  const langName = getLanguageConfig(options.language).name;
-                  options.onError?.({
-                    code: "voice-unavailable",
-                    message: `No compatible voice for ${langName} (${targetLangCode}) is installed in your browser or operating system.`,
-                    fatal: true,
-                    actionHint: `Please install a ${langName} speech pack in your operating system or configure Bhashini voice services.`,
-                  });
-                } else {
-                  this.playWithBrowserSynthesis(formattedText, options, requestId, selectedVoice);
-                }
-              }
-            };
-
-            await audio.play();
-            return;
+            const played = await this.playAudioPayload(
+              data.audioBase64,
+              data.format || "audio/wav",
+              requestId,
+              options,
+              "Bhashini"
+            );
+            if (played) return;
           }
         }
       } catch {
@@ -416,20 +745,20 @@ export class WebSpeechTTSProvider implements TextToSpeechProvider {
       }
     }
 
-    // 3. Never silently fall back to English: check if compatible browser voice is truly available
+    // 4. Never silently fall back to English: check if compatible browser voice is truly available
     if (!selectedVoice && !isLangEnglish && availableVoices.length > 0) {
-      const langName = getLanguageConfig(options.language).name;
+      const langName = getLanguageConfig(effectiveLang).name;
       options.onError?.({
         code: "voice-unavailable",
         message: `No compatible voice for ${langName} (${targetLangCode}) is installed in your browser or operating system.`,
         fatal: true,
-        actionHint: `Please install a ${langName} speech pack in your operating system settings or configure Bhashini voice services.`,
+        actionHint: `Please install a ${langName} speech pack in your operating system settings or configure Sarvam AI / Bhashini voice services.`,
       });
       return;
     }
 
-    // 4. Play using client-side Web Speech API SpeechSynthesis (for English or mock environments)
-    await this.playWithBrowserSynthesis(formattedText, options, requestId, selectedVoice);
+    // 5. Play using client-side Web Speech API SpeechSynthesis (for English or mock environments)
+    await this.playWithBrowserSynthesis(formattedText, { ...options, language: effectiveLang }, requestId, selectedVoice);
   }
 
   private async playWithBrowserSynthesis(

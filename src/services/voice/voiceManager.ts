@@ -221,11 +221,11 @@ export class VoiceManager {
     }
 
     const effectiveLanguage =
-      (explicitOverrideLang && explicitOverrideLang !== "auto")
+      (explicitOverrideLang && explicitOverrideLang !== "auto" && explicitOverrideLang.toLowerCase() !== "all")
         ? explicitOverrideLang
-        : (this.settings.outputLanguage && this.settings.outputLanguage !== "auto")
+        : (this.settings.outputLanguage && this.settings.outputLanguage !== "auto" && this.settings.outputLanguage.toLowerCase() !== "all")
         ? this.settings.outputLanguage
-        : (language && language !== "auto")
+        : (language && language !== "auto" && language.toLowerCase() !== "all")
         ? language
         : "en";
 
@@ -269,6 +269,13 @@ export class VoiceManager {
     if (this.state === "speaking") {
       this.setState("idle");
     }
+  }
+
+  /**
+   * Unlocks audio during a user gesture
+   */
+  public unlockAudio(): void {
+    this.ttsProvider.unlockAudio?.();
   }
 
   /**

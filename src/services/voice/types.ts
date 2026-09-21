@@ -69,6 +69,7 @@ export interface TextToSpeechProvider {
   resume(): void;
   isSpeaking(): boolean;
   getVoices(): Promise<SpeechSynthesisVoice[] | Array<{ name: string; lang: string }>>;
+  unlockAudio?: () => void;
 }
 
 export interface VoiceSettings {
@@ -78,11 +79,32 @@ export interface VoiceSettings {
   preferredVoice?: string;
   inputLanguage: string; // 'auto' or specific language code (e.g. 'hi', 'hinglish', 'en', 'ta')
   outputLanguage: string; // 'auto' or specific language code (e.g. 'en', 'hi', 'bn', 'te')
+  sttProvider?: "auto" | "elevenlabs" | "native";
+  ttsProvider?: "auto" | "sarvam" | "elevenlabs" | "native";
 }
 
 export interface VoiceStatusResponse {
   sttAvailable: boolean;
   ttsAvailable: boolean;
+  elevenlabs?: {
+    enabled: boolean;
+    configured: boolean;
+    provider: string;
+    sttModel: string;
+    ttsModel: string;
+    defaultVoiceId: string;
+    features: {
+      stt: boolean;
+      tts: boolean;
+    };
+  };
+  sarvam?: {
+    enabled: boolean;
+    configured: boolean;
+    provider: string;
+    model: string;
+    supportedLanguages: string[];
+  };
   bhashini: {
     enabled: boolean;
     configured: boolean;

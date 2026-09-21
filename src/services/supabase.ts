@@ -24,9 +24,9 @@ export function getSupabase(): SupabaseClient | null {
     try {
       client = createClient(supabaseUrl, supabaseAnonKey, {
         auth: {
-          persistSession: true,
-          autoRefreshToken: true,
-          detectSessionInUrl: true,
+          persistSession: typeof window !== "undefined",
+          autoRefreshToken: typeof window !== "undefined",
+          detectSessionInUrl: typeof window !== "undefined",
           storage: typeof window !== "undefined" ? window.localStorage : undefined,
         },
       });

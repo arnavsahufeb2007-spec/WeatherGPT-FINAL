@@ -320,7 +320,7 @@ export function SettingsView({
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-          {ALL_LANGUAGES.slice(0, 16).map((lang) => {
+          {ALL_LANGUAGES.map((lang) => {
             const isSelected = preferredLanguage === lang.code;
             return (
               <button

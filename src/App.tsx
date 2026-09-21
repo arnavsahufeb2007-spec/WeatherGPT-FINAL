@@ -279,7 +279,7 @@ export default function App() {
   // Geolocation detection handler
   const handleUseGeolocation = () => {
     if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser environment.");
+      setError("Geolocation is not supported by your browser environment.");
       return;
     }
 

@@ -114,6 +114,17 @@ export function useVoiceMode(language: string = "en", manager: VoiceManager = de
     setError(null);
   }, []);
 
+  const replayLast = useCallback(
+    (language?: string) => {
+      manager.replayLast(language || effectiveOutputLanguage);
+    },
+    [manager, effectiveOutputLanguage]
+  );
+
+  const unlockAudio = useCallback(() => {
+    manager.unlockAudio();
+  }, [manager]);
+
   const support = manager.isVoiceSupported();
 
   return {
@@ -137,6 +148,8 @@ export function useVoiceMode(language: string = "en", manager: VoiceManager = de
     stopListening,
     speak,
     stopSpeaking,
+    replayLast,
+    unlockAudio,
     setProcessing,
     toggleAutoSpeak,
     setInputLanguage,

@@ -1,5 +1,8 @@
 import express, { Request, Response } from "express";
+import http from "http";
 import path from "path";
+import { WebSocketServer, WebSocket } from "ws";
+import { LiveServerMessage, Modality } from "@google/genai";
 import { createServer as createViteServer } from "vite";
 import { geocodingProvider } from "./server/providers/geocodingProvider.js";
 import { weatherProvider, WeatherProviderError } from "./server/providers/weatherProvider.js";
@@ -8,17 +11,21 @@ import { evaluateActivity } from "./server/services/activityIntelligence.js";
 import { compareLocations } from "./server/services/comparisonIntelligence.js";
 import { analyzeTravel } from "./server/services/travelIntelligence.js";
 import { parseQuery, detectLanguageFromText, resolveLocationAndIntent, resolveQueryLanguage } from "./server/services/nluService.js";
-import { generateWeatherExplanation, GroundedWeatherContext } from "./server/services/geminiService.js";
+import { generateWeatherExplanation, GroundedWeatherContext, transcribeAudioWithGemini, getGenAI } from "./server/services/geminiService.js";
 import { buildMultilingualDeterministicFallback, getLocalizedLocationRequiredMessage } from "./server/services/multilingualFallback.js";
 import { ConversationContext, LocationInfo, QueryRequest, QueryResponse } from "./server/types.js";
 import { bhashiniProvider } from "./server/providers/bhashiniProvider.js";
+import { sarvamProvider } from "./server/providers/sarvamProvider.js";
+import { elevenlabsProvider } from "./server/providers/elevenlabsProvider.js";
 import { ALL_LANGUAGES, INDIAN_LANGUAGES, INTERNATIONAL_LANGUAGES } from "./src/languages.js";
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  app.use(express.json());
+  // Support JSON and urlencoded bodies up to 15MB for base64 audio payloads
+  app.use(express.json({ limit: "15mb" }));
+  app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 
   // CORS and basic security headers
   app.use((req, res, next) => {
@@ -155,16 +162,16 @@ async function startServer() {
     }
   });
 
-  // 2. Location Search & Resolution
-  app.get("/api/location/search", async (req: Request, res: Response) => {
+  // 2. Location Search & Resolution (supports /api/location/search, /api/geocoding/search, /api/geocoding)
+  app.get(["/api/location/search", "/api/geocoding/search", "/api/geocoding"], async (req: Request, res: Response) => {
     try {
-      const q = String(req.query.q || "").trim();
+      const q = String(req.query.q || req.query.query || "").trim();
       if (!q) {
-        return res.json({ success: true, locations: [] });
+        return res.json({ success: true, locations: [], results: [] });
       }
       const count = req.query.count ? parseInt(String(req.query.count), 10) : 5;
       const locations = await geocodingProvider.searchLocations(q, count);
-      res.json({ success: true, locations });
+      res.json({ success: true, locations, results: locations });
     } catch (err: any) {
       res.status(500).json({ success: false, error: err.message });
     }
@@ -186,8 +193,8 @@ async function startServer() {
     return res.status(500).json({ success: false, error: err.message || "Internal weather error" });
   }
 
-  // 3. Current Weather
-  app.get("/api/weather/current", async (req: Request, res: Response) => {
+  // 3. Current Weather (supports /api/weather/current and /api/weather/live)
+  app.get(["/api/weather/current", "/api/weather/live"], async (req: Request, res: Response) => {
     try {
       let lat = req.query.lat ? parseFloat(String(req.query.lat)) : NaN;
       let lon = req.query.lon ? parseFloat(String(req.query.lon)) : NaN;
@@ -560,6 +567,8 @@ async function startServer() {
       sttAvailable: true,
       ttsAvailable: true,
       bhashini: bhashiniProvider.getStatus(),
+      sarvam: sarvamProvider.getStatus(),
+      elevenlabs: elevenlabsProvider.getStatus(),
       supportedLanguages: ALL_LANGUAGES.map((l) => ({
         code: l.code,
         bcp47: l.bcp47,
@@ -570,22 +579,176 @@ async function startServer() {
     });
   });
 
-  // 13. Voice ASR (Speech-to-Text via Bhashini when configured)
-  app.post("/api/voice/asr", async (req: Request, res: Response) => {
+  // 13. Voice Transcription & ASR (Prioritizing ElevenLabs Scribe v2, then Bhashini fallback)
+  app.post(["/api/voice/transcribe", "/api/voice/asr"], async (req: Request, res: Response) => {
     try {
-      const { audioBase64, sourceLanguage, audioFormat } = req.body;
-      if (!audioBase64 || !sourceLanguage) {
+      const { audioBase64, language, sourceLanguage, languageCode, mimeType, audioFormat } = req.body;
+      const targetLang = language || sourceLanguage || languageCode;
+
+      if (!audioBase64) {
         return res.status(400).json({
           success: false,
-          error: "audioBase64 and sourceLanguage are required.",
+          error: "audioBase64 is required for speech recognition.",
         });
       }
 
-      const result = await bhashiniProvider.asr({
-        audioBase64,
-        sourceLanguage,
-        audioFormat,
+      const audioBuffer = Buffer.from(audioBase64, "base64");
+
+      // 1. Prioritize ElevenLabs Scribe v2 when configured
+      if (elevenlabsProvider.isAvailable()) {
+        const elevenResult = await elevenlabsProvider.transcribe({
+          audioBuffer,
+          mimeType: mimeType || (audioFormat ? `audio/${audioFormat}` : "audio/webm"),
+          languageCode: targetLang,
+        });
+
+        if (elevenResult.success && elevenResult.transcript) {
+          return res.json(elevenResult);
+        }
+
+        // If ElevenLabs returned an error and Bhashini is not configured, return ElevenLabs response
+        if (!bhashiniProvider.isAvailable()) {
+          return res.status(elevenResult.code?.includes("400") ? 400 : 502).json(elevenResult);
+        }
+      }
+
+      // 2. Secondary fallback to Bhashini ASR if configured
+      if (bhashiniProvider.isAvailable() && targetLang) {
+        const bhashiniResult = await bhashiniProvider.asr({
+          audioBase64,
+          sourceLanguage: targetLang,
+          audioFormat: audioFormat || "wav",
+        });
+        return res.json(bhashiniResult);
+      }
+
+      return res.status(503).json({
+        success: false,
+        error: "No server-side speech recognition provider is currently configured (configure ELEVENLABS_API_KEY in .env).",
+        code: "stt-provider-unavailable",
       });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // 14. Explicit ElevenLabs Speech-To-Text Endpoint (Scribe v2)
+  app.post("/api/voice/elevenlabs/transcribe", async (req: Request, res: Response) => {
+    try {
+      const { audioBase64, language, mimeType } = req.body;
+      if (!audioBase64) {
+        return res.status(400).json({
+          success: false,
+          error: "audioBase64 is required.",
+        });
+      }
+
+      if (!elevenlabsProvider.isAvailable()) {
+        return res.status(503).json({
+          success: false,
+          error: "ElevenLabs API is not configured or ELEVENLABS_API_KEY is missing on server.",
+          code: "elevenlabs-unavailable",
+        });
+      }
+
+      const audioBuffer = Buffer.from(audioBase64, "base64");
+      const result = await elevenlabsProvider.transcribe({
+        audioBuffer,
+        mimeType: mimeType || "audio/webm",
+        languageCode: language,
+      });
+
+      res.status(result.success ? 200 : 502).json(result);
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // 15. Explicit ElevenLabs Text-To-Speech Endpoint (Multilingual v2)
+  app.post("/api/voice/elevenlabs/tts", async (req: Request, res: Response) => {
+    try {
+      const { text, voiceId, targetLanguage, stability, similarityBoost } = req.body;
+      if (!text || !text.trim()) {
+        return res.status(400).json({
+          success: false,
+          error: "text is required.",
+        });
+      }
+
+      if (!elevenlabsProvider.isAvailable()) {
+        return res.status(503).json({
+          success: false,
+          error: "ElevenLabs API is not configured or ELEVENLABS_API_KEY is missing on server.",
+          code: "elevenlabs-unavailable",
+        });
+      }
+
+      const result = await elevenlabsProvider.tts({
+        text,
+        voiceId,
+        targetLanguage,
+        stability,
+        similarityBoost,
+      });
+
+      res.status(result.success ? 200 : 502).json(result);
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // 16. Voice TTS via Sarvam Bulbul v3 (Server-side fallback for Indian languages)
+  app.post("/api/voice/sarvam/tts", async (req: Request, res: Response) => {
+    try {
+      const { text, gender, speaker, pace } = req.body;
+      const targetLanguage = req.body.targetLanguage || req.body.language || req.body.sourceLanguage;
+
+      if (!text || !targetLanguage) {
+        return res.status(400).json({
+          success: false,
+          error: "text and targetLanguage/language are required.",
+        });
+      }
+
+      // "ALL" or "auto" must never reach Sarvam as a language code
+      if (
+        targetLanguage.toLowerCase() === "all" ||
+        targetLanguage.toLowerCase() === "auto"
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: "A concrete language code is required. 'ALL' or 'auto' cannot be synthesized directly.",
+          code: "concrete-language-required",
+        });
+      }
+
+      if (!sarvamProvider.isAvailable()) {
+        return res.status(503).json({
+          success: false,
+          error: "Sarvam AI TTS is not configured or SARVAM_API_KEY is missing on server.",
+          code: "sarvam-unavailable",
+        });
+      }
+
+      if (!sarvamProvider.isLanguageSupported(targetLanguage)) {
+        return res.status(400).json({
+          success: false,
+          error: `Language '${targetLanguage}' is not supported by Sarvam Bulbul v3.`,
+          code: "language-unsupported",
+        });
+      }
+
+      const result = await sarvamProvider.tts({
+        text,
+        targetLanguage,
+        gender,
+        speaker,
+        pace,
+      });
+
+      if (!result.success) {
+        return res.status(502).json(result);
+      }
 
       res.json(result);
     } catch (err: any) {
@@ -593,11 +756,11 @@ async function startServer() {
     }
   });
 
-  // 14. Voice TTS (Text-to-Speech via Bhashini when configured)
+  // 17. Voice TTS (Unified endpoint prioritizing Sarvam Bulbul v3 for Indian languages, ElevenLabs for multilingual, and Bhashini fallback)
   app.post("/api/voice/tts", async (req: Request, res: Response) => {
     try {
-      const { text, gender } = req.body;
-      const sourceLanguage = req.body.sourceLanguage || req.body.language;
+      const { text, gender, speaker, pace, voiceId } = req.body;
+      const sourceLanguage = req.body.sourceLanguage || req.body.language || req.body.targetLanguage;
       if (!text || !sourceLanguage) {
         return res.status(400).json({
           success: false,
@@ -605,6 +768,46 @@ async function startServer() {
         });
       }
 
+      // Reject "ALL" or "auto" from reaching server TTS engines
+      if (
+        sourceLanguage.toLowerCase() === "all" ||
+        sourceLanguage.toLowerCase() === "auto"
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: "A concrete language code is required. 'ALL' or 'auto' cannot be synthesized directly.",
+          code: "concrete-language-required",
+        });
+      }
+
+      // 1. Prioritize Sarvam Bulbul v3 for Indian regional languages
+      if (sarvamProvider.isAvailable() && sarvamProvider.isLanguageSupported(sourceLanguage)) {
+        const sarvamResult = await sarvamProvider.tts({
+          text,
+          targetLanguage: sourceLanguage,
+          gender,
+          speaker,
+          pace,
+        });
+
+        if (sarvamResult.success && sarvamResult.audioBase64) {
+          return res.json(sarvamResult);
+        }
+      }
+
+      // 2. ElevenLabs Multilingual v2 fallback/engine for English, international, or when Sarvam unavailable
+      if (elevenlabsProvider.isAvailable()) {
+        const elevenResult = await elevenlabsProvider.tts({
+          text,
+          voiceId,
+          targetLanguage: sourceLanguage,
+        });
+        if (elevenResult.success && elevenResult.audioBase64) {
+          return res.json(elevenResult);
+        }
+      }
+
+      // 3. Tertiary fallback to Bhashini when configured
       const result = await bhashiniProvider.tts({
         text,
         sourceLanguage,
@@ -686,6 +889,27 @@ async function startServer() {
     }
   });
 
+  // 12. Audio Transcription via Gemini 3.5 Transcribe
+  app.post(["/api/voice/transcribe", "/api/audio/transcribe"], async (req: Request, res: Response) => {
+    try {
+      const { audioBase64, mimeType = "audio/webm", language } = req.body;
+      if (!audioBase64) {
+        return res.status(400).json({ success: false, error: "audioBase64 is required for transcription" });
+      }
+
+      const text = await transcribeAudioWithGemini(audioBase64, mimeType, language);
+      return res.json({
+        success: true,
+        text,
+        model: "gemini-3.5-transcribe",
+        language: language || "auto",
+      });
+    } catch (err: any) {
+      console.error("Gemini transcribe error:", err);
+      return res.status(500).json({ success: false, error: err.message || "Transcription failed" });
+    }
+  });
+
   // ==========================================
   // VITE / STATIC MIDDLEWARE
   // ==========================================
@@ -703,7 +927,95 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  // Create HTTP & WebSocket Server for Gemini Live API
+  const server = http.createServer(app);
+  const wss = new WebSocketServer({ server, path: "/live" });
+
+  wss.on("connection", async (clientWs: WebSocket) => {
+    console.log("[Live API] Client connected to /live");
+    let session: any = null;
+
+    try {
+      const ai = getGenAI();
+      if (!ai) {
+        clientWs.send(JSON.stringify({ error: "Gemini API key not configured on server" }));
+        clientWs.close();
+        return;
+      }
+
+      session = await ai.live.connect({
+        model: "gemini-3.8-live",
+        config: {
+          responseModalities: [Modality.AUDIO],
+          speechConfig: {
+            voiceConfig: { prebuiltVoiceConfig: { voiceName: "Zephyr" } },
+          },
+          systemInstruction:
+            "You are WeatherGPT Live conversational assistant. You provide real-time, concise, accurate conversational weather intelligence. Keep answers natural, vocal-friendly, and informative.",
+        },
+        callbacks: {
+          onmessage: (message: LiveServerMessage) => {
+            if (clientWs.readyState !== WebSocket.OPEN) return;
+            const audio = message.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
+            if (audio) {
+              clientWs.send(JSON.stringify({ audio }));
+            }
+            if (message.serverContent?.interrupted) {
+              clientWs.send(JSON.stringify({ interrupted: true }));
+            }
+            const textParts = message.serverContent?.modelTurn?.parts
+              ?.map((p: any) => p.text)
+              .filter(Boolean)
+              .join(" ");
+            if (textParts) {
+              clientWs.send(JSON.stringify({ text: textParts }));
+            }
+          },
+          onclose: () => {
+            if (clientWs.readyState === WebSocket.OPEN) {
+              clientWs.close();
+            }
+          },
+        },
+      });
+
+      clientWs.on("message", (data) => {
+        try {
+          const msg = JSON.parse(data.toString());
+          if (msg.audio && session) {
+            session.sendRealtimeInput({
+              audio: { data: msg.audio, mimeType: "audio/pcm;rate=16000" },
+            });
+          } else if (msg.text && session) {
+            session.sendRealtimeInput({
+              text: msg.text,
+            });
+          }
+        } catch (err) {
+          console.error("[Live API] Error processing message from client:", err);
+        }
+      });
+
+      clientWs.on("close", () => {
+        console.log("[Live API] Client disconnected");
+        try {
+          if (session) session.close();
+        } catch {}
+      });
+
+      clientWs.on("error", (err) => {
+        console.error("[Live API] Client socket error:", err);
+      });
+    } catch (err: any) {
+      console.error("[Live API] Failed to initialize live session:", err);
+      if (clientWs.readyState === WebSocket.OPEN) {
+        clientWs.send(JSON.stringify({ error: err.message || "Failed to initialize Live API session" }));
+        clientWs.close();
+      }
+    }
+  });
+
+  server.listen(PORT, "0.0.0.0", () => {
     console.log(`WeatherGPT server running on http://0.0.0.0:${PORT}`);
   });
 }

@@ -1,6 +1,14 @@
 import { LocationInfo } from "../types.js";
 import { getSupabase, isSupabaseConfigured } from "./supabase.js";
 import { savedLocationsService } from "./savedLocationsService.js";
+import {
+  signInWithGoogleFirebase,
+  signOutFirebase,
+  subscribeToFirebaseAuthState,
+  saveUserProfileToFirestore,
+  getUserProfileFromFirestore,
+} from "./firebase.js";
+import type { User as FirebaseUser } from "firebase/auth";
 
 export interface UserProfile {
   id: string;
@@ -11,6 +19,7 @@ export interface UserProfile {
   plan: "Free" | "Pro";
   savedLocations: LocationInfo[];
   joinedDate: string;
+  authProvider?: "firebase" | "supabase" | "guest";
 }
 
 export const DEFAULT_GUEST_USER: UserProfile = {
@@ -22,6 +31,7 @@ export const DEFAULT_GUEST_USER: UserProfile = {
   plan: "Free",
   savedLocations: [],
   joinedDate: new Date().toLocaleDateString("en-US", { month: "short", year: "numeric" }),
+  authProvider: "guest",
 };
 
 class AuthService {
@@ -45,6 +55,30 @@ class AuthService {
       this.notify();
     }
 
+    // In SSR / testing environments without window, do not attach live socket auth listeners
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    // 1. Subscribe to Firebase Auth state
+    try {
+      subscribeToFirebaseAuthState(async (fbUser) => {
+        if (fbUser) {
+          await this.handleFirebaseUserSession(fbUser);
+        } else if (!isSupabaseConfigured()) {
+          if (this.currentUser && !this.currentUser.isGuest) {
+            this.currentUser = { ...DEFAULT_GUEST_USER };
+            const locs = await savedLocationsService.getSavedLocations("guest-user", true);
+            this.currentUser.savedLocations = locs;
+            this.notify();
+          }
+        }
+      });
+    } catch (err) {
+      console.warn("Could not attach Firebase auth state listener:", err);
+    }
+
+    // 2. Supabase session listener (if configured)
     if (!isSupabaseConfigured()) {
       return;
     }
@@ -53,9 +87,9 @@ class AuthService {
     if (!client) return;
 
     try {
-      // Check existing Supabase session
+      // Check existing Supabase session if not already signed in with Firebase
       const { data: { session }, error } = await client.auth.getSession();
-      if (!error && session?.user) {
+      if (!error && session?.user && (!this.currentUser || this.currentUser.isGuest)) {
         await this.handleUserSession(session.user);
       }
 
@@ -63,7 +97,7 @@ class AuthService {
       client.auth.onAuthStateChange(async (event, session) => {
         if (session?.user) {
           await this.handleUserSession(session.user);
-        } else if (event === "SIGNED_OUT") {
+        } else if (event === "SIGNED_OUT" && this.currentUser?.authProvider === "supabase") {
           this.currentUser = { ...DEFAULT_GUEST_USER };
           const locs = await savedLocationsService.getSavedLocations("guest-user", true);
           this.currentUser.savedLocations = locs;
@@ -73,6 +107,56 @@ class AuthService {
     } catch (err) {
       console.warn("Error initializing Supabase session:", err);
     }
+  }
+
+  private async handleFirebaseUserSession(fbUser: FirebaseUser) {
+    const userId = fbUser.uid;
+    const email = fbUser.email || "";
+    const namePart = fbUser.displayName || email.split("@")[0] || "Meteorologist";
+    const avatar = fbUser.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(namePart)}`;
+    const joined = fbUser.metadata?.creationTime
+      ? new Date(fbUser.metadata.creationTime).toLocaleDateString("en-US", { month: "short", year: "numeric" })
+      : new Date().toLocaleDateString("en-US", { month: "short", year: "numeric" });
+
+    let displayName = namePart;
+
+    // 1. Sync UserProfile in Firestore
+    try {
+      const existing = await getUserProfileFromFirestore(userId);
+      if (existing && existing.displayName) {
+        displayName = existing.displayName;
+      } else {
+        await saveUserProfileToFirestore({
+          uid: userId,
+          email,
+          displayName,
+          photoURL: avatar,
+          createdAt: fbUser.metadata?.creationTime || new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+      }
+    } catch (err) {
+      console.warn("Firestore profile sync error:", err);
+    }
+
+    // 2. Load saved locations & sync guest favorites
+    const savedLocs = await savedLocationsService.getSavedLocations(userId, false);
+    await savedLocationsService.syncGuestLocationsToCloud(userId);
+    const updatedLocs = await savedLocationsService.getSavedLocations(userId, false);
+
+    this.currentUser = {
+      id: userId,
+      name: displayName,
+      email,
+      avatarUrl: avatar,
+      isGuest: false,
+      plan: "Pro",
+      savedLocations: updatedLocs.length > 0 ? updatedLocs : savedLocs,
+      joinedDate: joined,
+      authProvider: "firebase",
+    };
+
+    this.notify();
   }
 
   private async handleUserSession(user: any) {
@@ -184,19 +268,37 @@ class AuthService {
   }
 
   /**
-   * Initiates Google OAuth authentication via Supabase.
+   * Initiates Google OAuth authentication via Firebase (primary) or Supabase (fallback).
    */
   public async signInWithGoogle(): Promise<{ success: boolean; error?: string }> {
+    // 1. Primary: Firebase Google Auth popup
+    try {
+      const fbResult = await signInWithGoogleFirebase();
+      if (fbResult && fbResult.user) {
+        await this.handleFirebaseUserSession(fbResult.user);
+        return { success: true };
+      }
+    } catch (fbErr: any) {
+      console.warn("Firebase Google OAuth popup result:", fbErr?.code || fbErr?.message);
+      if (fbErr?.code === "auth/popup-closed-by-user") {
+        return { success: false, error: "Google sign-in was closed." };
+      }
+      if (!isSupabaseConfigured()) {
+        return { success: false, error: fbErr?.message || "Google sign-in could not be completed." };
+      }
+    }
+
+    // 2. Fallback: Supabase Google OAuth
     if (!isSupabaseConfigured()) {
       return {
         success: false,
-        error: "Supabase configuration is required for Google OAuth. Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your settings.",
+        error: "Google sign-in could not be completed.",
       };
     }
 
     const client = getSupabase();
     if (!client) {
-      return { success: false, error: "Supabase client is not available." };
+      return { success: false, error: "Authentication client is not available." };
     }
 
     const redirectUrl = this.getRedirectOrigin();
@@ -253,7 +355,6 @@ class AuthService {
 
           const messageListener = async (event: MessageEvent) => {
             if (event.data?.type === "SUPABASE_AUTH_SUCCESS") {
-              // If hash contains tokens, ensure session is set in opener without logging sensitive credentials
               if (event.data?.hash) {
                 try {
                   const hashParams = new URLSearchParams(event.data.hash.replace(/^#/, ""));
@@ -320,6 +421,11 @@ class AuthService {
    * Sign out and revert to guest mode
    */
   public async logout(): Promise<void> {
+    try {
+      await signOutFirebase();
+    } catch (err) {
+      console.warn("Firebase signOut error:", err);
+    }
     const client = getSupabase();
     if (client) {
       try {

@@ -33,19 +33,19 @@ export function HourlyForecastChart({ hourly, isFahrenheit }: HourlyForecastChar
   }));
 
   return (
-    <div className="rounded-2xl bg-slate-900/90 border border-slate-800/90 p-5 shadow-lg">
+    <div className="rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800/90 p-5 shadow-lg">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
         <div className="flex items-center gap-2">
-          <Clock className="w-4 h-4 text-sky-400" />
-          <h3 className="text-sm font-bold text-white tracking-wide uppercase">24-Hour Forecast Progression</h3>
+          <Clock className="w-4 h-4 text-sky-500 dark:text-sky-400" />
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white tracking-wide uppercase">24-Hour Forecast Progression</h3>
         </div>
 
         {/* Chart View Toggle */}
-        <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-medium self-start sm:self-auto">
+        <div className="flex items-center bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-medium self-start sm:self-auto">
           <button
             onClick={() => setMetricMode("temp")}
             className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-colors ${
-              metricMode === "temp" ? "bg-sky-500 text-white shadow-sm" : "text-slate-400 hover:text-slate-200"
+              metricMode === "temp" ? "bg-sky-500 text-white shadow-sm" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
             }`}
           >
             <Thermometer className="w-3.5 h-3.5" />
@@ -54,7 +54,7 @@ export function HourlyForecastChart({ hourly, isFahrenheit }: HourlyForecastChar
           <button
             onClick={() => setMetricMode("rain")}
             className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-colors ${
-              metricMode === "rain" ? "bg-sky-500 text-white shadow-sm" : "text-slate-400 hover:text-slate-200"
+              metricMode === "rain" ? "bg-sky-500 text-white shadow-sm" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
             }`}
           >
             <Droplets className="w-3.5 h-3.5" />
@@ -124,20 +124,20 @@ export function HourlyForecastChart({ hourly, isFahrenheit }: HourlyForecastChar
       </div>
 
       {/* Horizontal Scannable Hourly Strip */}
-      <div className="mt-4 pt-4 border-t border-slate-800/80 flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
+      <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800/80 flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
         {displayHours.map((h, i) => (
           <div
             key={i}
-            className="flex flex-col items-center justify-between p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/60 min-w-[76px] shrink-0 text-center"
+            className="flex flex-col items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800/60 min-w-[76px] shrink-0 text-center"
           >
-            <span className="text-[11px] font-medium text-slate-400">{h.formattedTime}</span>
+            <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">{h.formattedTime}</span>
             <div className="my-1.5">
               <WeatherIcon code={h.weatherCode} className="w-5 h-5" />
             </div>
-            <span className="text-xs font-bold text-white">
+            <span className="text-xs font-bold text-slate-900 dark:text-white">
               {formatTemp(h.temperature)}°
             </span>
-            <div className="flex items-center gap-0.5 text-[10px] text-blue-400 font-medium mt-1">
+            <div className="flex items-center gap-0.5 text-[10px] text-blue-500 dark:text-blue-400 font-medium mt-1">
               <Droplets className="w-2.5 h-2.5" />
               <span>{h.precipitationProbability}%</span>
             </div>

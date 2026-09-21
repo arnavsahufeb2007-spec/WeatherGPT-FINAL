@@ -1,54 +1,75 @@
 import { LocationInfo } from "../types.js";
 import { getSupabase, isSupabaseConfigured } from "./supabase.js";
+import {
+  saveLocationToFirestore,
+  removeLocationFromFirestore,
+  getSavedLocationsFromFirestore,
+} from "./firebase.js";
 
 const GUEST_LOCATIONS_KEY = "weathergpt_guest_saved_locations";
 
 export class SavedLocationsService {
   /**
    * Load saved locations for user.
-   * If authenticated, reads from Supabase `saved_locations` table.
-   * If guest or Supabase unconfigured, reads from local storage.
+   * If authenticated, checks Firestore first, then Supabase if needed.
+   * If guest or remote unconfigured, reads from local storage.
    */
   public async getSavedLocations(userId: string, isGuest: boolean): Promise<LocationInfo[]> {
-    if (isGuest || !isSupabaseConfigured()) {
+    if (isGuest) {
       return this.getLocalSavedLocations();
     }
 
-    const client = getSupabase();
-    if (!client) return this.getLocalSavedLocations();
-
+    // 1. Check Firestore
     try {
-      const { data, error } = await client
-        .from("saved_locations")
-        .select("name, country, country_code, admin1, latitude, longitude, timezone")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.warn("Could not load saved locations from Supabase:", error.message);
-        return this.getLocalSavedLocations();
+      const firestoreLocs = await getSavedLocationsFromFirestore(userId);
+      if (firestoreLocs && firestoreLocs.length > 0) {
+        return firestoreLocs;
       }
-
-      return (data || []).map((row) => ({
-        name: row.name,
-        country: row.country || undefined,
-        countryCode: row.country_code || undefined,
-        admin1: row.admin1 || undefined,
-        latitude: row.latitude,
-        longitude: row.longitude,
-        timezone: row.timezone || "UTC",
-      }));
     } catch (err) {
-      console.warn("Error querying saved locations:", err);
-      return this.getLocalSavedLocations();
+      console.warn("Could not load saved locations from Firestore:", err);
     }
+
+    // 2. Fallback / Sync with Supabase if configured
+    if (isSupabaseConfigured()) {
+      const client = getSupabase();
+      if (client) {
+        try {
+          const { data, error } = await client
+            .from("saved_locations")
+            .select("name, country, country_code, admin1, latitude, longitude, timezone")
+            .eq("user_id", userId)
+            .order("created_at", { ascending: false });
+
+          if (!error && data && data.length > 0) {
+            const parsed = data.map((row) => ({
+              name: row.name,
+              country: row.country || undefined,
+              countryCode: row.country_code || undefined,
+              admin1: row.admin1 || undefined,
+              latitude: row.latitude,
+              longitude: row.longitude,
+              timezone: row.timezone || "UTC",
+            }));
+            // Persist to Firestore for future quick reads
+            for (const loc of parsed) {
+              saveLocationToFirestore(userId, loc).catch(() => {});
+            }
+            return parsed;
+          }
+        } catch (err) {
+          console.warn("Error querying saved locations from Supabase:", err);
+        }
+      }
+    }
+
+    return this.getLocalSavedLocations();
   }
 
   /**
    * Save a location as favorite.
    */
   public async saveLocation(userId: string, isGuest: boolean, loc: LocationInfo): Promise<boolean> {
-    if (isGuest || !isSupabaseConfigured()) {
+    if (isGuest) {
       const current = this.getLocalSavedLocations();
       const exists = current.some(
         (l) => Math.abs(l.latitude - loc.latitude) < 0.05 && Math.abs(l.longitude - loc.longitude) < 0.05
@@ -60,40 +81,45 @@ export class SavedLocationsService {
       return true;
     }
 
-    const client = getSupabase();
-    if (!client) return false;
-
+    let firestoreSuccess = false;
     try {
-      const { error } = await client.from("saved_locations").upsert(
-        {
-          user_id: userId,
-          name: loc.name,
-          country: loc.country || null,
-          country_code: loc.countryCode || null,
-          admin1: loc.admin1 || null,
-          latitude: loc.latitude,
-          longitude: loc.longitude,
-          timezone: loc.timezone || "UTC",
-        },
-        { onConflict: "user_id,latitude,longitude" }
-      );
-
-      if (error) {
-        console.warn("Failed to save location to Supabase:", error.message);
-        return false;
-      }
-      return true;
+      await saveLocationToFirestore(userId, loc);
+      firestoreSuccess = true;
     } catch (err) {
-      console.warn("Error in saveLocation:", err);
-      return false;
+      console.warn("Failed to save location to Firestore:", err);
     }
+
+    if (isSupabaseConfigured()) {
+      const client = getSupabase();
+      if (client) {
+        try {
+          await client.from("saved_locations").upsert(
+            {
+              user_id: userId,
+              name: loc.name,
+              country: loc.country || null,
+              country_code: loc.countryCode || null,
+              admin1: loc.admin1 || null,
+              latitude: loc.latitude,
+              longitude: loc.longitude,
+              timezone: loc.timezone || "UTC",
+            },
+            { onConflict: "user_id,latitude,longitude" }
+          );
+        } catch (err) {
+          console.warn("Error upserting to Supabase:", err);
+        }
+      }
+    }
+
+    return firestoreSuccess;
   }
 
   /**
    * Remove a saved favorite location.
    */
   public async removeLocation(userId: string, isGuest: boolean, loc: LocationInfo): Promise<boolean> {
-    if (isGuest || !isSupabaseConfigured()) {
+    if (isGuest) {
       const current = this.getLocalSavedLocations();
       const filtered = current.filter(
         (l) => !(Math.abs(l.latitude - loc.latitude) < 0.05 && Math.abs(l.longitude - loc.longitude) < 0.05)
@@ -102,37 +128,40 @@ export class SavedLocationsService {
       return true;
     }
 
-    const client = getSupabase();
-    if (!client) return false;
-
+    const locId = `${loc.latitude.toFixed(4)}_${loc.longitude.toFixed(4)}`;
     try {
-      // Find within coordinate delta
-      const { error } = await client
-        .from("saved_locations")
-        .delete()
-        .eq("user_id", userId)
-        .gte("latitude", loc.latitude - 0.05)
-        .lte("latitude", loc.latitude + 0.05)
-        .gte("longitude", loc.longitude - 0.05)
-        .lte("longitude", loc.longitude + 0.05);
-
-      if (error) {
-        console.warn("Failed to remove saved location from Supabase:", error.message);
-        return false;
-      }
-      return true;
+      await removeLocationFromFirestore(userId, locId);
     } catch (err) {
-      console.warn("Error in removeLocation:", err);
-      return false;
+      console.warn("Failed to remove location from Firestore:", err);
     }
+
+    if (isSupabaseConfigured()) {
+      const client = getSupabase();
+      if (client) {
+        try {
+          await client
+            .from("saved_locations")
+            .delete()
+            .eq("user_id", userId)
+            .gte("latitude", loc.latitude - 0.05)
+            .lte("latitude", loc.latitude + 0.05)
+            .gte("longitude", loc.longitude - 0.05)
+            .lte("longitude", loc.longitude + 0.05);
+        } catch (err) {
+          console.warn("Error deleting from Supabase:", err);
+        }
+      }
+    }
+
+    return true;
   }
 
   /**
-   * Migrate guest saved locations into the authenticated user's Supabase account.
+   * Migrate guest saved locations into the authenticated user's Firestore & Supabase account.
    */
   public async syncGuestLocationsToCloud(userId: string): Promise<void> {
     const guestLocs = this.getLocalSavedLocations();
-    if (guestLocs.length === 0 || !isSupabaseConfigured()) return;
+    if (guestLocs.length === 0) return;
 
     for (const loc of guestLocs) {
       await this.saveLocation(userId, false, loc);

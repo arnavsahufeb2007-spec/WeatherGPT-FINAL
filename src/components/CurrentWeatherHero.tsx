@@ -104,14 +104,14 @@ export function CurrentWeatherHero({ location, current, analysis, todayDaily, is
       {/* Meteorological Parameters Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {/* Rain Probability & Rainfall */}
-        <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800/80 flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
+        <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
             <span className="text-xs font-medium">{t.precipitation} Prob</span>
-            <Droplets className="w-4 h-4 text-sky-400" />
+            <Droplets className="w-4 h-4 text-sky-500 dark:text-sky-400" />
           </div>
           <div>
-            <span className="text-xl font-bold text-white">{current.precipitationProbability}%</span>
-            <p className="text-[11px] text-slate-400 mt-0.5">
+            <span className="text-xl font-bold text-slate-900 dark:text-white">{current.precipitationProbability}%</span>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
               {current.rain > 0
                 ? `${current.rain} mm rain falling`
                 : current.precipitation > 0
@@ -122,62 +122,62 @@ export function CurrentWeatherHero({ location, current, analysis, todayDaily, is
         </div>
 
         {/* Wind */}
-        <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800/80 flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
+        <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
             <span className="text-xs font-medium">{t.windSpeed}</span>
-            <Wind className="w-4 h-4 text-teal-400" />
+            <Wind className="w-4 h-4 text-teal-500 dark:text-teal-400" />
           </div>
           <div>
-            <span className="text-xl font-bold text-white">{current.windSpeed} <span className="text-xs font-normal text-slate-400">km/h</span></span>
-            <p className="text-[11px] text-slate-400 mt-0.5">Gusts: {current.windGusts} km/h • {current.windDirection}°</p>
+            <span className="text-xl font-bold text-slate-900 dark:text-white">{current.windSpeed} <span className="text-xs font-normal text-slate-500 dark:text-slate-400">km/h</span></span>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Gusts: {current.windGusts} km/h • {current.windDirection}°</p>
           </div>
         </div>
 
         {/* Humidity */}
-        <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800/80 flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
+        <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
             <span className="text-xs font-medium">{t.humidity}</span>
-            <Droplets className="w-4 h-4 text-indigo-400" />
+            <Droplets className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
           </div>
           <div>
-            <span className="text-xl font-bold text-white">{current.humidity}%</span>
-            <p className="text-[11px] text-slate-400 mt-0.5">
+            <span className="text-xl font-bold text-slate-900 dark:text-white">{current.humidity}%</span>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
               {current.dewPoint !== undefined ? `Dew pt: ${formatTemp(current.dewPoint)}` : "Normal range"}
             </p>
           </div>
         </div>
 
         {/* UV Index */}
-        <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800/80 flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
+        <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
             <span className="text-xs font-medium">{t.uvIndex}</span>
-            <Sun className="w-4 h-4 text-amber-400" />
+            <Sun className="w-4 h-4 text-amber-500 dark:text-amber-400" />
           </div>
           <div>
-            <span className="text-xl font-bold text-white">{current.uvIndex} <span className="text-xs font-normal text-slate-400">/ 12</span></span>
-            <p className="text-[11px] text-slate-400 mt-0.5">
+            <span className="text-xl font-bold text-slate-900 dark:text-white">{current.uvIndex} <span className="text-xs font-normal text-slate-500 dark:text-slate-400">/ 12</span></span>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
               {current.uvIndex >= 8 ? "Very High risk" : current.uvIndex >= 6 ? "High protection" : current.uvIndex >= 3 ? "Moderate" : "Low risk"}
             </p>
           </div>
         </div>
 
         {/* Visibility */}
-        <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800/80 flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
+        <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
             <span className="text-xs font-medium">{t.visibility}</span>
-            <Eye className="w-4 h-4 text-emerald-400" />
+            <Eye className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
           </div>
           <div>
-            <span className="text-xl font-bold text-white">
+            <span className="text-xl font-bold text-slate-900 dark:text-white">
               {current.visibility !== null && current.visibility !== undefined ? (
                 <>
-                  {(current.visibility / 1000).toFixed(1)} <span className="text-xs font-normal text-slate-400">km</span>
+                  {(current.visibility / 1000).toFixed(1)} <span className="text-xs font-normal text-slate-500 dark:text-slate-400">km</span>
                 </>
               ) : (
-                <span className="text-sm font-medium text-slate-400">N/A</span>
+                <span className="text-sm font-medium text-slate-500 dark:text-slate-400">N/A</span>
               )}
             </span>
-            <p className="text-[11px] text-slate-400 mt-0.5">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
               {current.visibility !== null && current.visibility !== undefined
                 ? current.visibility < 3000
                   ? "Haze or Fog"
@@ -188,15 +188,15 @@ export function CurrentWeatherHero({ location, current, analysis, todayDaily, is
         </div>
 
         {/* Pressure & Sun */}
-        <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800/80 flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
+        <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
             <span className="text-xs font-medium">Sun Times</span>
-            <Sunrise className="w-4 h-4 text-orange-400" />
+            <Sunrise className="w-4 h-4 text-orange-500 dark:text-orange-400" />
           </div>
           <div>
-            <span className="text-xs font-bold text-white block">Rise: {current.sunrise ? current.sunrise.slice(11, 16) : "--:--"}</span>
-            <span className="text-xs font-bold text-slate-300 block mt-0.5">Set: {current.sunset ? current.sunset.slice(11, 16) : "--:--"}</span>
-            <p className="text-[10px] text-slate-400 mt-0.5">{current.pressure !== null && current.pressure !== undefined ? `${current.pressure} hPa` : "Pressure: N/A"}</p>
+            <span className="text-xs font-bold text-slate-900 dark:text-white block">Rise: {current.sunrise ? current.sunrise.slice(11, 16) : "--:--"}</span>
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block mt-0.5">Set: {current.sunset ? current.sunset.slice(11, 16) : "--:--"}</span>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{current.pressure !== null && current.pressure !== undefined ? `${current.pressure} hPa` : "Pressure: N/A"}</p>
           </div>
         </div>
       </div>

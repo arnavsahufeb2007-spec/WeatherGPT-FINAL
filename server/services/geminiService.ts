@@ -416,3 +416,34 @@ export function generateDeterministicFallback(context: GroundedWeatherContext): 
   return buildMultilingualDeterministicFallback(context);
 }
 
+export async function transcribeAudioWithGemini(
+  audioBase64: string,
+  mimeType = "audio/webm",
+  language?: string
+): Promise<string> {
+  const ai = getGenAI();
+  if (!ai) {
+    throw new Error("GEMINI_API_KEY is not configured");
+  }
+
+  const audioPart = {
+    inlineData: {
+      mimeType: mimeType || "audio/webm",
+      data: audioBase64,
+    },
+  };
+
+  const promptText = language
+    ? `Transcribe this spoken audio accurately in ${language}. Return ONLY the transcribed text without commentary.`
+    : "Transcribe this spoken audio accurately. Return ONLY the transcribed text without commentary.";
+
+  const response = await ai.models.generateContent({
+    model: "gemini-3.5-transcribe",
+    contents: { parts: [audioPart, { text: promptText }] },
+  });
+
+  return (response.text || "").trim();
+}
+
+export { getGenAI };
+
