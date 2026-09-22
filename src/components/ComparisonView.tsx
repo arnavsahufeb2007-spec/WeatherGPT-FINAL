@@ -83,38 +83,97 @@ export function ComparisonView({ isFahrenheit, currentLocation }: ComparisonView
   };
 
   return (
-    <div className="space-y-6">
-      {/* Comparison Selector */}
-      <div className="rounded-2xl bg-slate-900/90 border border-slate-800/90 p-6 shadow-xl space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <GitCompare className="w-5 h-5 text-sky-400" />
-            <h3 className="text-sm font-bold text-white tracking-wide uppercase">Location Weather Comparison</h3>
+    <div id="comparison-view" className="space-y-4 sm:space-y-5">
+      {/* Comparison Hero Banner with Telemetry HUD */}
+      <div className="relative rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 p-5 sm:p-6 overflow-hidden transition-colors shadow-lg">
+        <div className="absolute inset-0 z-0 pointer-events-none select-none">
+          <img
+            src="https://images.unsplash.com/photo-1534088568595-a066f410bcda?auto=format&fit=crop&w=1600&q=80"
+            alt="Multi-Horizon Sky"
+            className="w-full h-full object-cover object-center opacity-30 dark:opacity-25 light:opacity-20"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0F141B] via-[#171C23]/95 to-[#171C23]/60 dark:from-[#0F141B] dark:via-[#171C23]/95 dark:to-[#171C23]/60 light:from-white light:via-white/95 light:to-white/80" />
+        </div>
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1.5 max-w-xl">
+            <div className="inline-flex items-center gap-2">
+              <span className="text-[10px] font-mono uppercase font-bold text-[#8ECAE6] tracking-wider px-2 py-0.5 rounded-[3px] bg-[#0F141B]/80 border border-[#8ECAE6]/30">
+                MULTI-STATION COMPARISON • SYNOPTIC SATELLITE TELEMETRY
+              </span>
+              <span className="flex h-1.5 w-1.5 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400"></span>
+              </span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 font-mono tracking-tight">
+              Atmospheric Multi-City Comparison
+            </h2>
+            <p className="text-xs text-slate-300 dark:text-slate-300 light:text-slate-700 leading-relaxed">
+              Side-by-side physical meteorological comparison across 2 to 4 locations with delta temperature and precipitation differentials.
+            </p>
           </div>
-          <span className="text-xs text-slate-400">Deterministic Multi-City Atmospheric Comparison</span>
+
+          {/* Telemetry HUD */}
+          <div className="bg-[#0F141B]/80 dark:bg-[#0F141B]/80 light:bg-slate-100/90 backdrop-blur-md border border-[#30353D] dark:border-[#30353D] light:border-slate-300 p-3 rounded-[6px] hidden sm:flex flex-col gap-1.5 min-w-[210px] text-[11px] font-mono shrink-0 shadow-inner">
+            <div className="flex items-center justify-between text-slate-400 dark:text-slate-400 light:text-slate-600">
+              <span className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-400 light:text-slate-600">CORRELATION</span>
+              <span className="text-emerald-400 dark:text-emerald-400 light:text-emerald-600 font-semibold flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse"></span> ACTIVE
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-slate-300 dark:text-slate-300 light:text-slate-700">
+              <span className="text-[10px] text-slate-400 dark:text-slate-400 light:text-slate-600">INPUT NODES:</span>
+              <span className="text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700 font-semibold">{cityInputs.filter(c => c.trim()).length} / 4 LOCATIONS</span>
+            </div>
+            <div className="flex items-center justify-between text-slate-300 dark:text-slate-300 light:text-slate-700">
+              <span className="text-[10px] text-slate-400 dark:text-slate-400 light:text-slate-600">TIME WINDOW:</span>
+              <span className="text-slate-200 dark:text-slate-200 light:text-slate-900 font-semibold uppercase">{selectedDay}</span>
+            </div>
+            <div className="flex items-center justify-between text-slate-300 dark:text-slate-300 light:text-slate-700">
+              <span className="text-[10px] text-slate-400 dark:text-slate-400 light:text-slate-600">DELTA CALC:</span>
+              <span className="text-[#F4A261] dark:text-[#F4A261] light:text-amber-700 font-semibold">SYNOPTIC GFS</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Comparison Selector */}
+      <div className="rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 p-4 sm:p-5 transition-colors space-y-4 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+          <div className="flex items-center gap-2">
+            <GitCompare className="w-4 h-4 text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700" />
+            <h3 className="text-xs font-mono font-semibold uppercase tracking-wider text-slate-100 dark:text-slate-100 light:text-slate-900">
+              LOCATION WEATHER COMPARISON
+            </h3>
+          </div>
+          <span className="text-xs font-mono text-slate-400 dark:text-slate-400 light:text-slate-500">
+            Deterministic Multi-City Atmospheric Comparison
+          </span>
         </div>
 
         {/* Time Window Switcher */}
-        <div className="flex items-center gap-2 pt-1">
-          <Calendar className="w-4 h-4 text-slate-400" />
-          <span className="text-xs text-slate-300 font-medium mr-2">Target Forecast Window:</span>
-          <div className="inline-flex rounded-xl bg-slate-950 p-1 border border-slate-800">
+        <div className="flex flex-wrap items-center gap-2 pt-0.5">
+          <div className="flex items-center gap-1.5 text-xs font-mono text-slate-300 dark:text-slate-300 light:text-slate-700">
+            <Calendar className="w-3.5 h-3.5 text-slate-400 dark:text-slate-400 light:text-slate-500" />
+            <span>Target Forecast Window:</span>
+          </div>
+          <div className="inline-flex rounded-[4px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-100 p-1 border border-[#30353D] dark:border-[#30353D] light:border-slate-300">
             <button
               onClick={() => setSelectedDay("current")}
-              className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
+              className={`px-3 py-1 text-xs font-mono font-semibold rounded-[3px] transition-colors cursor-pointer ${
                 selectedDay === "current"
-                  ? "bg-sky-500 text-white shadow-sm"
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "bg-[#F4A261] text-[#0F141B] font-bold border border-[#F4A261]"
+                  : "text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-200 dark:hover:text-white light:hover:text-slate-900"
               }`}
             >
               Current Weather
             </button>
             <button
               onClick={() => setSelectedDay("tomorrow")}
-              className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
+              className={`px-3 py-1 text-xs font-mono font-semibold rounded-[3px] transition-colors cursor-pointer ${
                 selectedDay === "tomorrow"
-                  ? "bg-sky-500 text-white shadow-sm"
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "bg-[#F4A261] text-[#0F141B] font-bold border border-[#F4A261]"
+                  : "text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-200 dark:hover:text-white light:hover:text-slate-900"
               }`}
             >
               Tomorrow
@@ -123,21 +182,22 @@ export function ComparisonView({ isFahrenheit, currentLocation }: ComparisonView
         </div>
 
         {/* Inputs */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
           {cityInputs.map((city, idx) => (
             <div key={idx} className="relative flex items-center">
-              <MapPin className="w-4 h-4 text-sky-400 absolute left-3" />
+              <MapPin className="w-3.5 h-3.5 text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700 absolute left-2.5" />
               <input
                 type="text"
                 value={city}
                 onChange={(e) => updateCity(idx, e.target.value)}
                 placeholder={`City ${idx + 1}`}
-                className="w-full pl-9 pr-8 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
+                className="w-full pl-8 pr-8 py-2 rounded-[4px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-50 border border-[#30353D] dark:border-[#30353D] light:border-slate-300 text-xs font-mono text-white dark:text-white light:text-slate-900 placeholder-slate-500 focus:outline-none focus:border-[#8ECAE6] transition-colors"
               />
               {cityInputs.length > 2 && (
                 <button
                   onClick={() => removeCity(idx)}
-                  className="absolute right-2.5 text-slate-500 hover:text-rose-400 p-1"
+                  className="absolute right-2 text-slate-500 hover:text-rose-400 p-1 cursor-pointer transition-colors"
+                  title="Remove city"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -146,12 +206,12 @@ export function ComparisonView({ isFahrenheit, currentLocation }: ComparisonView
           ))}
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
           <div className="flex items-center gap-2">
             {cityInputs.length < 4 && (
               <button
                 onClick={addCity}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs font-medium text-slate-300 transition-colors"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-[4px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-100 hover:bg-[#252A32] dark:hover:bg-[#252A32] light:hover:bg-slate-200 border border-[#30353D] dark:border-[#30353D] light:border-slate-300 text-xs font-mono text-slate-300 dark:text-slate-300 light:text-slate-700 hover:text-white dark:hover:text-white light:hover:text-slate-950 transition-colors cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Add City</span>
@@ -162,22 +222,24 @@ export function ComparisonView({ isFahrenheit, currentLocation }: ComparisonView
           <button
             onClick={() => handleCompare()}
             disabled={loading || cityInputs.filter((c) => c.trim()).length < 2}
-            className="px-5 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-xs font-bold transition-all shadow-md shadow-sky-500/20 disabled:opacity-50 cursor-pointer"
+            className="w-full sm:w-auto px-4 py-2 rounded-[4px] bg-[#F4A261] hover:bg-[#E76F51] text-[#0F141B] border border-[#F4A261] text-xs font-mono font-bold transition-colors disabled:opacity-40 cursor-pointer shadow-sm"
           >
             {loading ? "Comparing Data..." : `Run Side-by-Side Comparison (${selectedDay === "tomorrow" ? "Tomorrow" : "Now"})`}
           </button>
         </div>
 
         {/* Preset suggestions */}
-        <div className="pt-2 border-t border-slate-800/80 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-          <span className="text-[11px] text-slate-400 uppercase font-semibold shrink-0">Presets:</span>
+        <div className="pt-2 border-t border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <span className="text-[11px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 uppercase font-semibold shrink-0">
+            Presets:
+          </span>
           {currentLocation?.name && (
             <button
               onClick={() => {
                 const next = [currentLocation.name, ""];
                 setCityInputs(next);
               }}
-              className="px-2.5 py-1 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 border border-sky-500/30 text-[11px] text-sky-300 font-semibold whitespace-nowrap transition-colors cursor-pointer"
+              className="px-2.5 py-1 rounded-[3px] bg-[#F4A261] hover:bg-[#E76F51] text-[#0F141B] font-bold text-[11px] font-mono whitespace-nowrap transition-colors cursor-pointer shadow-sm"
             >
               Compare {currentLocation.name}
             </button>
@@ -189,7 +251,7 @@ export function ComparisonView({ isFahrenheit, currentLocation }: ComparisonView
                 setCityInputs(p.cities);
                 handleCompare(p.cities);
               }}
-              className="px-2.5 py-1 rounded-lg bg-slate-950/80 hover:bg-slate-800 border border-slate-800 text-[11px] text-slate-300 whitespace-nowrap transition-colors cursor-pointer"
+              className="px-2.5 py-1 rounded-[3px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-100 hover:bg-[#252A32] dark:hover:bg-[#252A32] light:hover:bg-slate-200 border border-[#30353D] dark:border-[#30353D] light:border-slate-300 text-[11px] font-mono text-slate-300 dark:text-slate-300 light:text-slate-700 hover:text-white dark:hover:text-white light:hover:text-slate-950 whitespace-nowrap transition-colors cursor-pointer"
             >
               {p.label}
             </button>
@@ -198,7 +260,7 @@ export function ComparisonView({ isFahrenheit, currentLocation }: ComparisonView
       </div>
 
       {error && (
-        <div className="p-4 rounded-xl bg-rose-950/20 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+        <div className="p-3.5 rounded-[8px] bg-rose-950/40 dark:bg-rose-950/40 light:bg-rose-50 border border-rose-500/30 text-rose-200 dark:text-rose-200 light:text-rose-800 text-xs font-mono flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
           <span>{error}</span>
         </div>
@@ -206,11 +268,11 @@ export function ComparisonView({ isFahrenheit, currentLocation }: ComparisonView
 
       {/* Comparison Results */}
       {comparison && (
-        <div className="rounded-2xl bg-slate-900/90 border border-slate-800/90 p-6 shadow-xl space-y-6">
+        <div className="rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 p-4 sm:p-5 transition-colors space-y-4 sm:space-y-5 shadow-sm">
           {/* Failed Locations Alert if any */}
           {comparison.failedLocations && comparison.failedLocations.length > 0 && (
-            <div className="p-3.5 rounded-xl bg-amber-950/20 border border-amber-500/30 text-amber-300 text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0 text-amber-400" />
+            <div className="p-3.5 rounded-[6px] bg-amber-950/30 dark:bg-amber-950/30 light:bg-amber-50 border border-[#F4A261]/30 text-[#F4A261] dark:text-[#F4A261] light:text-amber-800 text-xs font-mono flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-[#F4A261]" />
               <span>
                 Note: Weather data could not be retrieved for: <strong>{comparison.failedLocations.join(", ")}</strong>.
               </span>
@@ -218,27 +280,29 @@ export function ComparisonView({ isFahrenheit, currentLocation }: ComparisonView
           )}
 
           {/* Synthesis & Recommendation */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="p-4 rounded-xl bg-slate-950 border border-slate-800/80 flex flex-col justify-between">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5">
+            <div className="p-3.5 sm:p-4 rounded-[6px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-50 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex flex-col justify-between shadow-sm">
               <div>
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-sky-400 mb-2">
+                <div className="flex items-center gap-1.5 text-xs font-mono font-semibold uppercase tracking-wider text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700 mb-1.5">
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>
                     Comparative Synthesis {comparison.targetDay ? `(${comparison.targetDay.toUpperCase()})` : ""}
                   </span>
                 </div>
-                <p className="text-xs text-slate-300 leading-relaxed">{comparison.comparativeSummary}</p>
+                <p className="text-xs text-slate-300 dark:text-slate-300 light:text-slate-700 leading-relaxed font-normal">
+                  {comparison.comparativeSummary}
+                </p>
               </div>
             </div>
 
             {comparison.recommendation && (
-              <div className="p-4 rounded-xl bg-sky-950/20 border border-sky-500/30 flex flex-col justify-between">
+              <div className="p-3.5 sm:p-4 rounded-[6px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-emerald-50/50 border border-[#30353D] dark:border-[#30353D] light:border-emerald-200 flex flex-col justify-between shadow-sm">
                 <div>
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-sky-300 mb-2">
-                    <ShieldCheck className="w-3.5 h-3.5 text-sky-400" />
+                  <div className="flex items-center gap-1.5 text-xs font-mono font-semibold uppercase tracking-wider text-emerald-400 dark:text-emerald-400 light:text-emerald-700 mb-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-400 light:text-emerald-600" />
                     <span>Weather-Based Recommendation</span>
                   </div>
-                  <p className="text-xs text-sky-100 leading-relaxed font-medium">
+                  <p className="text-xs text-slate-200 dark:text-slate-200 light:text-slate-800 leading-relaxed font-medium">
                     {comparison.recommendation}
                   </p>
                 </div>
@@ -247,109 +311,134 @@ export function ComparisonView({ isFahrenheit, currentLocation }: ComparisonView
           </div>
 
           {/* Side-by-side Location Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
             {comparison.locations.map((locRes, i) => {
               const tf = locRes.targetForecast;
               return (
-                <div key={i} className="rounded-xl bg-slate-950 p-5 border border-slate-800 flex flex-col justify-between">
+                <div
+                  key={i}
+                  className="rounded-[6px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-50 p-4 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex flex-col justify-between transition-colors shadow-sm"
+                >
                   <div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-start justify-between gap-2">
                       <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-base font-bold text-white">{locRes.location.name}</h4>
+                        <div className="flex items-center gap-1.5">
+                          <h4 className="text-sm sm:text-base font-bold text-slate-100 dark:text-slate-100 light:text-slate-900">
+                            {locRes.location.name}
+                          </h4>
                           {tf && (
-                            <span className="px-1.5 py-0.5 rounded bg-sky-950 border border-sky-500/30 text-[10px] font-bold text-sky-300 uppercase">
+                            <span className="px-1.5 py-0.5 rounded-[3px] bg-[#252A32] dark:bg-[#252A32] light:bg-sky-50 border border-[#8ECAE6]/30 dark:border-[#8ECAE6]/30 light:border-sky-300 text-[10px] font-mono font-bold text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700 uppercase">
                               {tf.targetDay}
                             </span>
                           )}
                         </div>
-                        <span className="text-xs text-slate-400">
+                        <span className="text-xs font-mono text-slate-400 dark:text-slate-400 light:text-slate-500">
                           {locRes.location.admin1 ? `${locRes.location.admin1}, ` : ""}
                           {locRes.location.country}
                         </span>
                       </div>
-                      <WeatherIcon code={tf ? tf.weatherCode : locRes.current.weatherCode} className="w-7 h-7" />
+                      <WeatherIcon code={tf ? tf.weatherCode : locRes.current.weatherCode} className="w-7 h-7 shrink-0 text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700" />
                     </div>
 
                     {tf ? (
                       /* Daily Forecast Display */
-                      <div className="mt-4">
+                      <div className="mt-3.5">
                         <div className="flex items-baseline gap-2">
-                          <span className="text-2xl font-extrabold text-white">
+                          <span className="text-xl font-bold font-mono text-white dark:text-white light:text-slate-950">
                             High {formatTemp(tf.tempMax)}
                           </span>
-                          <span className="text-xs text-slate-400">
+                          <span className="text-xs font-mono text-slate-400 dark:text-slate-400 light:text-slate-500">
                             Low {formatTemp(tf.tempMin)}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-xs font-medium text-slate-300">{tf.condition}</span>
+                          <span className="text-xs font-medium text-slate-300 dark:text-slate-300 light:text-slate-700">{tf.condition}</span>
                           {tf.isThunderstorm && (
-                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-500/20 border border-amber-500/30 text-[10px] font-semibold text-amber-300">
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-[3px] bg-amber-950/60 dark:bg-amber-950/60 light:bg-amber-100 border border-[#F4A261]/40 text-[10px] font-mono font-semibold text-[#F4A261] dark:text-[#F4A261] light:text-amber-800">
                               <Zap className="w-2.5 h-2.5" /> Thunderstorms
                             </span>
                           )}
                         </div>
 
                         {/* Forecast Metrics Table */}
-                        <div className="mt-4 pt-4 border-t border-slate-800/80 space-y-2 text-xs">
-                          <div className="flex justify-between text-slate-300">
-                            <span className="text-slate-400">Rain Probability</span>
-                            <span className="font-semibold text-blue-400">{tf.precipitationProbability}%</span>
+                        <div className="mt-3.5 pt-3 border-t border-[#30353D] dark:border-[#30353D] light:border-slate-200 space-y-1.5 text-xs font-mono">
+                          <div className="flex justify-between text-slate-300 dark:text-slate-300 light:text-slate-700">
+                            <span className="text-slate-400 dark:text-slate-400 light:text-slate-500">Rain Probability</span>
+                            <span className="font-semibold text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700">{tf.precipitationProbability}%</span>
                           </div>
-                          <div className="flex justify-between text-slate-300">
-                            <span className="text-slate-400">Expected Precipitation</span>
-                            <span className="font-semibold">{tf.rainSum} mm</span>
+                          <div className="flex justify-between text-slate-300 dark:text-slate-300 light:text-slate-700">
+                            <span className="text-slate-400 dark:text-slate-400 light:text-slate-500">Expected Precipitation</span>
+                            <span className="font-semibold text-slate-200 dark:text-slate-200 light:text-slate-800">{tf.rainSum} mm</span>
                           </div>
-                          <div className="flex justify-between text-slate-300">
-                            <span className="text-slate-400">Max Wind Speed</span>
-                            <span className="font-semibold">{tf.windSpeedMax} km/h</span>
+                          <div className="flex justify-between text-slate-300 dark:text-slate-300 light:text-slate-700">
+                            <span className="text-slate-400 dark:text-slate-400 light:text-slate-500">Max Wind Speed</span>
+                            <span className="font-semibold text-slate-200 dark:text-slate-200 light:text-slate-800">{tf.windSpeedMax} km/h</span>
                           </div>
-                          <div className="flex justify-between text-slate-300">
-                            <span className="text-slate-400">Max UV Index</span>
-                            <span className="font-semibold">{tf.uvIndexMax}</span>
+                          <div className="flex justify-between text-slate-300 dark:text-slate-300 light:text-slate-700">
+                            <span className="text-slate-400 dark:text-slate-400 light:text-slate-500">Max UV Index</span>
+                            <span className="font-semibold text-slate-200 dark:text-slate-200 light:text-slate-800">{tf.uvIndexMax}</span>
                           </div>
                         </div>
                       </div>
                     ) : (
                       /* Current Observations Display */
-                      <div className="mt-4">
+                      <div className="mt-3.5">
                         <div className="flex items-baseline gap-2">
-                          <span className="text-3xl font-extrabold text-white">{formatTemp(locRes.current.temperature)}</span>
-                          <span className="text-xs text-slate-400">Feels {formatTemp(locRes.current.feelsLike)}</span>
+                          <span className="text-2xl sm:text-3xl font-extrabold font-mono text-white dark:text-white light:text-slate-950">
+                            {formatTemp(locRes.current.temperature)}
+                          </span>
+                          <span className="text-xs font-mono text-slate-400 dark:text-slate-400 light:text-slate-500">
+                            Feels {formatTemp(locRes.current.feelsLike)}
+                          </span>
                         </div>
-                        <span className="text-xs font-medium text-slate-300 block mt-0.5">{locRes.current.condition}</span>
+                        <span className="text-xs font-medium text-slate-300 dark:text-slate-300 light:text-slate-700 block mt-0.5">
+                          {locRes.current.condition}
+                        </span>
 
                         {/* Current Metrics Table */}
-                        <div className="mt-4 pt-4 border-t border-slate-800/80 space-y-2 text-xs">
-                          <div className="flex justify-between text-slate-300">
-                            <span className="text-slate-400">Rain Probability</span>
-                            <span className="font-semibold text-blue-400">{locRes.current.precipitationProbability}%</span>
+                        <div className="mt-3.5 pt-3 border-t border-[#30353D] dark:border-[#30353D] light:border-slate-200 space-y-1.5 text-xs font-mono">
+                          <div className="flex justify-between text-slate-300 dark:text-slate-300 light:text-slate-700">
+                            <span className="text-slate-400 dark:text-slate-400 light:text-slate-500">Rain Probability</span>
+                            <span className="font-semibold text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700">
+                              {locRes.current.precipitationProbability}%
+                            </span>
                           </div>
-                          <div className="flex justify-between text-slate-300">
-                            <span className="text-slate-400">Humidity</span>
-                            <span className="font-semibold">{locRes.current.humidity !== null ? `${locRes.current.humidity}%` : "N/A"}</span>
+                          <div className="flex justify-between text-slate-300 dark:text-slate-300 light:text-slate-700">
+                            <span className="text-slate-400 dark:text-slate-400 light:text-slate-500">Humidity</span>
+                            <span className="font-semibold text-slate-200 dark:text-slate-200 light:text-slate-800">
+                              {locRes.current.humidity !== null ? `${locRes.current.humidity}%` : "N/A"}
+                            </span>
                           </div>
-                          <div className="flex justify-between text-slate-300">
-                            <span className="text-slate-400">Wind</span>
-                            <span className="font-semibold">{locRes.current.windSpeed} km/h</span>
+                          <div className="flex justify-between text-slate-300 dark:text-slate-300 light:text-slate-700">
+                            <span className="text-slate-400 dark:text-slate-400 light:text-slate-500">Wind</span>
+                            <span className="font-semibold text-slate-200 dark:text-slate-200 light:text-slate-800">
+                              {locRes.current.windSpeed} km/h
+                            </span>
                           </div>
-                          <div className="flex justify-between text-slate-300">
-                            <span className="text-slate-400">UV Index</span>
-                            <span className="font-semibold">{locRes.current.uvIndex}</span>
+                          <div className="flex justify-between text-slate-300 dark:text-slate-300 light:text-slate-700">
+                            <span className="text-slate-400 dark:text-slate-400 light:text-slate-500">UV Index</span>
+                            <span className="font-semibold text-slate-200 dark:text-slate-200 light:text-slate-800">
+                              {locRes.current.uvIndex}
+                            </span>
                           </div>
-                          <div className="flex justify-between text-slate-300">
-                            <span className="text-slate-400">Visibility</span>
-                            <span className="font-semibold">{locRes.current.visibility !== null && locRes.current.visibility !== undefined ? `${(locRes.current.visibility / 1000).toFixed(1)} km` : "N/A"}</span>
+                          <div className="flex justify-between text-slate-300 dark:text-slate-300 light:text-slate-700">
+                            <span className="text-slate-400 dark:text-slate-400 light:text-slate-500">Visibility</span>
+                            <span className="font-semibold text-slate-200 dark:text-slate-200 light:text-slate-800">
+                              {locRes.current.visibility !== null && locRes.current.visibility !== undefined
+                                ? `${(locRes.current.visibility / 1000).toFixed(1)} km`
+                                : "N/A"}
+                            </span>
                           </div>
                         </div>
                       </div>
                     )}
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-slate-900 flex items-center justify-between text-[11px]">
-                    <span className="text-slate-400">Outdoor Score:</span>
-                    <span className="font-bold text-sky-400">{locRes.analysis.outdoorSuitabilityScore}/100</span>
+                  <div className="mt-3.5 pt-2.5 border-t border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex items-center justify-between text-[11px] font-mono">
+                    <span className="text-slate-400 dark:text-slate-400 light:text-slate-500">Outdoor Score:</span>
+                    <span className="font-bold text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700">
+                      {locRes.analysis.outdoorSuitabilityScore}/100
+                    </span>
                   </div>
                 </div>
               );
@@ -358,12 +447,16 @@ export function ComparisonView({ isFahrenheit, currentLocation }: ComparisonView
 
           {/* Metric Differences */}
           <div>
-            <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3">Metric Deltas</h4>
+            <h4 className="text-xs font-mono font-semibold text-slate-300 dark:text-slate-300 light:text-slate-700 uppercase tracking-wider mb-2.5">
+              Metric Deltas
+            </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {comparison.metricDeltas.map((delta, i) => (
-                <div key={i} className="p-3.5 rounded-xl bg-slate-950 border border-slate-800/80">
-                  <span className="text-xs font-bold text-white block mb-1">{delta.metric}</span>
-                  <p className="text-xs text-slate-300">{delta.highlight}</p>
+                <div key={i} className="p-3 rounded-[4px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-50 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 shadow-sm">
+                  <span className="text-xs font-mono font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 block mb-0.5">
+                    {delta.metric}
+                  </span>
+                  <p className="text-xs text-slate-300 dark:text-slate-300 light:text-slate-600">{delta.highlight}</p>
                 </div>
               ))}
             </div>

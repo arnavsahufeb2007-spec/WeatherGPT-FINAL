@@ -96,15 +96,15 @@ export function LocationSearchDialog({ isOpen, onClose, onSelectLocation }: Loca
   return (
     <div
       id="location-search-modal"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0F141B]/80 backdrop-blur-sm animate-fade-in"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-xl rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[88vh]">
+      <div className="w-full max-w-xl rounded-[8px] bg-[#171C23] border border-[#30353D] shadow-2xl overflow-hidden flex flex-col max-h-[88vh]">
         {/* Header Search Bar */}
-        <div className="p-4 border-b border-slate-800 flex items-center gap-3 bg-slate-900/90">
-          <Search className="w-5 h-5 text-sky-400 shrink-0" />
+        <div className="p-3.5 border-b border-[#30353D] flex items-center gap-3 bg-[#171C23]">
+          <Search className="w-4 h-4 text-[#8ECAE6] shrink-0" />
           <input
             id="location-search-input"
             type="text"
@@ -112,13 +112,13 @@ export function LocationSearchDialog({ isOpen, onClose, onSelectLocation }: Loca
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search any city, town, state, or postal code worldwide..."
             autoFocus
-            className="flex-1 bg-transparent text-white text-sm focus:outline-none placeholder-slate-500 font-medium"
+            className="min-w-0 flex-1 bg-transparent text-slate-100 text-sm focus:outline-none placeholder-slate-500 font-medium"
           />
           {searchTerm && (
             <button
               id="clear-search-btn"
               onClick={() => setSearchTerm("")}
-              className="text-slate-500 hover:text-slate-300 p-1 rounded-md transition-colors"
+              className="text-slate-400 hover:text-slate-200 p-1 rounded-[3px] transition-colors cursor-pointer"
               title="Clear search"
             >
               <X className="w-4 h-4" />
@@ -127,7 +127,7 @@ export function LocationSearchDialog({ isOpen, onClose, onSelectLocation }: Loca
           <button
             id="close-search-dialog-btn"
             onClick={onClose}
-            className="text-slate-400 hover:text-white text-xs font-semibold px-2 py-1 rounded bg-slate-800/80 hover:bg-slate-700 transition-colors"
+            className="text-slate-400 hover:text-slate-200 text-xs font-mono px-2 py-0.5 rounded-[4px] bg-[#252A32] border border-[#30353D] hover:border-[#8ECAE6]/40 transition-colors cursor-pointer"
           >
             Esc
           </button>
@@ -138,9 +138,9 @@ export function LocationSearchDialog({ isOpen, onClose, onSelectLocation }: Loca
           {/* Loading State */}
           {isSearching && (
             <div className="py-12 flex flex-col items-center justify-center gap-3 text-slate-400">
-              <Loader2 className="w-6 h-6 text-sky-400 animate-spin" />
+              <Loader2 className="w-5 h-5 text-[#8ECAE6] animate-spin" />
               <div className="text-center">
-                <p className="text-xs font-medium text-slate-300">Searching global geocoding database...</p>
+                <p className="text-xs font-medium text-slate-200">Searching global geocoding database...</p>
                 <p className="text-[11px] text-slate-500">Retrieving coordinates & timezone from Open-Meteo</p>
               </div>
             </div>
@@ -148,9 +148,9 @@ export function LocationSearchDialog({ isOpen, onClose, onSelectLocation }: Loca
 
           {/* Error State */}
           {!isSearching && searchError && (
-            <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 space-y-3">
+            <div className="p-3.5 rounded-[6px] bg-rose-500/10 border border-rose-500/20 text-rose-300 space-y-2.5">
               <div className="flex items-start gap-2.5">
-                <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+                <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
                 <div>
                   <h4 className="text-xs font-semibold text-rose-200">Geocoding Search Error</h4>
                   <p className="text-xs text-rose-300/80 mt-1">{searchError}</p>
@@ -158,7 +158,7 @@ export function LocationSearchDialog({ isOpen, onClose, onSelectLocation }: Loca
               </div>
               <button
                 onClick={handleRetry}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 text-xs font-medium transition-colors"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 text-xs font-medium transition-colors cursor-pointer"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span>Retry Search</span>
@@ -170,12 +170,12 @@ export function LocationSearchDialog({ isOpen, onClose, onSelectLocation }: Loca
           {!isSearching && !searchError && results.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-2.5">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
                   Matching Locations ({results.length})
                 </span>
                 <span className="text-[11px] text-slate-500">Select your intended place</span>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {results.map((loc, i) => (
                   <button
                     key={`${loc.name}-${loc.latitude}-${loc.longitude}-${i}`}
@@ -184,19 +184,19 @@ export function LocationSearchDialog({ isOpen, onClose, onSelectLocation }: Loca
                       onSelectLocation(loc);
                       onClose();
                     }}
-                    className="w-full flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl bg-slate-950/70 hover:bg-slate-800/90 border border-slate-800 hover:border-sky-500/40 text-left transition-all group"
+                    className="w-full flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-[6px] bg-[#1B2027] hover:bg-[#252A32] border border-[#30353D] hover:border-[#8ECAE6]/50 text-left transition-colors group cursor-pointer"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-sky-500/20 transition-colors">
-                        <MapPin className="w-4 h-4 text-sky-400" />
+                      <div className="w-7 h-7 rounded-[4px] bg-[#252A32] border border-[#30353D] flex items-center justify-center shrink-0 mt-0.5">
+                        <MapPin className="w-3.5 h-3.5 text-[#8ECAE6]" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-semibold text-white group-hover:text-sky-300 transition-colors">
+                          <span className="text-sm font-semibold text-slate-100 group-hover:text-[#8ECAE6] transition-colors">
                             {loc.name}
                           </span>
                           {loc.countryCode && (
-                            <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-800 text-sky-400 border border-slate-700">
+                            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-[3px] bg-[#252A32] text-[#8ECAE6] border border-[#30353D]">
                               {loc.countryCode}
                             </span>
                           )}
@@ -218,9 +218,9 @@ export function LocationSearchDialog({ isOpen, onClose, onSelectLocation }: Loca
                     </div>
 
                     {/* Coordinates & Timezone details */}
-                    <div className="mt-2 sm:mt-0 sm:text-right flex sm:flex-col items-start sm:items-end justify-between sm:justify-center gap-1 shrink-0 pl-11 sm:pl-0">
+                    <div className="mt-2 sm:mt-0 sm:text-right flex sm:flex-col items-start sm:items-end justify-between sm:justify-center gap-1 shrink-0 pl-10 sm:pl-0">
                       <div className="flex items-center gap-1 text-[11px] font-mono text-slate-400">
-                        <Compass className="w-3 h-3 text-slate-500" />
+                        <Compass className="w-3 h-3 text-[#8ECAE6]" />
                         <span>
                           {loc.latitude >= 0 ? `${loc.latitude.toFixed(2)}°N` : `${Math.abs(loc.latitude).toFixed(2)}°S`},{" "}
                           {loc.longitude >= 0 ? `${loc.longitude.toFixed(2)}°E` : `${Math.abs(loc.longitude).toFixed(2)}°W`}
@@ -240,8 +240,8 @@ export function LocationSearchDialog({ isOpen, onClose, onSelectLocation }: Loca
           {/* Empty Search Results State */}
           {!isSearching && !searchError && searchTerm.trim() && results.length === 0 && (
             <div className="py-10 px-4 text-center space-y-3">
-              <div className="w-12 h-12 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center mx-auto text-slate-400">
-                <Globe className="w-6 h-6 text-slate-500" />
+              <div className="w-10 h-10 rounded-[6px] bg-[#1B2027] border border-[#30353D] flex items-center justify-center mx-auto text-slate-400">
+                <Globe className="w-5 h-5 text-slate-500" />
               </div>
               <h4 className="text-sm font-semibold text-slate-200">No matching locations found</h4>
               <p className="text-xs text-slate-400 max-w-sm mx-auto">
@@ -253,18 +253,18 @@ export function LocationSearchDialog({ isOpen, onClose, onSelectLocation }: Loca
 
           {/* Idle Initial State (Worldwide Search Prompt & Suggested Queries) */}
           {!isSearching && !searchError && !searchTerm.trim() && (
-            <div className="py-4 space-y-4">
-              <div className="p-3.5 rounded-xl bg-slate-950/50 border border-slate-800/80 flex items-start gap-3">
-                <HelpCircle className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
+            <div className="py-2 space-y-4">
+              <div className="p-3 rounded-[6px] bg-[#1B2027] border border-[#30353D] flex items-start gap-3">
+                <HelpCircle className="w-4 h-4 text-[#8ECAE6] shrink-0 mt-0.5" />
                 <div className="text-xs text-slate-400 leading-relaxed">
-                  <p className="text-slate-300 font-medium mb-0.5">Real-time Global Location Search</p>
+                  <p className="text-slate-200 font-semibold mb-0.5">Real-time Global Location Search</p>
                   Search for any city, town, state, region, or postal code worldwide. Multiple matching results will be
                   returned dynamically from the Open-Meteo Geocoding API.
                 </div>
               </div>
 
               <div>
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-2">
                   Try searching
                 </span>
                 <div className="flex flex-wrap gap-2">
@@ -272,7 +272,7 @@ export function LocationSearchDialog({ isOpen, onClose, onSelectLocation }: Loca
                     <button
                       key={example}
                       onClick={() => setSearchTerm(example)}
-                      className="px-2.5 py-1.5 rounded-lg bg-slate-950/70 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-xs text-slate-300 hover:text-white transition-colors"
+                      className="px-2.5 py-1 rounded-[4px] bg-[#1B2027] hover:bg-[#252A32] border border-[#30353D] hover:border-[#8ECAE6]/40 text-xs text-slate-300 hover:text-slate-100 transition-colors cursor-pointer"
                     >
                       {example}
                     </button>
@@ -284,7 +284,7 @@ export function LocationSearchDialog({ isOpen, onClose, onSelectLocation }: Loca
         </div>
 
         {/* Footer */}
-        <div className="p-3 border-t border-slate-800 bg-slate-950/50 flex items-center justify-between text-[11px] text-slate-500">
+        <div className="p-3 border-t border-[#30353D] bg-[#171C23] flex items-center justify-between text-[11px] text-slate-400">
           <span>Powered by Open-Meteo Geocoding API</span>
           <span>Dynamic worldwide resolution</span>
         </div>

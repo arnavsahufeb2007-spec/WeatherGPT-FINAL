@@ -54,47 +54,74 @@ export function ActivityExplorer({ location, current, hourly, daily, isFahrenhei
   const getSuitabilityColor = (s: string) => {
     switch (s) {
       case "excellent":
-        return "bg-emerald-500/20 text-emerald-300 border-emerald-500/40";
+        return "bg-emerald-950/40 text-emerald-300 border-emerald-500/30";
       case "good":
-        return "bg-sky-500/20 text-sky-300 border-sky-500/40";
+        return "bg-[#252A32] text-[#8ECAE6] border-[#8ECAE6]/40";
       case "fair":
-        return "bg-amber-500/20 text-amber-300 border-amber-500/40";
+        return "bg-amber-950/40 text-[#F4A261] border-amber-500/30";
       case "poor":
       case "unfavorable":
-        return "bg-rose-500/20 text-rose-300 border-rose-500/40";
+        return "bg-rose-950/40 text-rose-300 border-rose-500/30";
       default:
-        return "bg-slate-800 text-slate-300 border-slate-700";
+        return "bg-[#252A32] text-slate-300 border-[#30353D]";
     }
   };
 
   const getImpactIcon = (impact: "positive" | "negative" | "neutral") => {
     if (impact === "positive") return <CheckCircle2 className="w-4 h-4 text-emerald-400" />;
     if (impact === "negative") return <XCircle className="w-4 h-4 text-rose-400" />;
-    return <AlertCircle className="w-4 h-4 text-amber-400" />;
+    return <AlertCircle className="w-4 h-4 text-[#F4A261]" />;
   };
 
   return (
-    <div className="space-y-6">
+    <div id="activity-explorer" className="space-y-4 sm:space-y-5">
+      {/* Activity Intelligence Hero Banner */}
+      <div className="relative rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 p-5 sm:p-6 overflow-hidden transition-colors">
+        <div className="absolute inset-0 z-0 pointer-events-none select-none">
+          <img
+            src="https://images.unsplash.com/photo-1517649763962-0c623266ddc0?auto=format&fit=crop&w=1600&q=80"
+            alt="Outdoor sports activity"
+            className="w-full h-full object-cover object-center opacity-30 dark:opacity-25 light:opacity-20"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#171C23] via-[#171C23]/90 to-transparent dark:from-[#171C23] dark:via-[#171C23]/90 light:from-white light:via-white/90" />
+        </div>
+        <div className="relative z-10 space-y-1.5">
+          <span className="text-[10px] font-mono uppercase font-semibold text-[#8ECAE6] tracking-wider">
+            OUTDOOR FEASIBILITY • SPORT & LEISURE TELEMETRY
+          </span>
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 font-mono tracking-tight">
+            Activity Weather Intelligence
+          </h2>
+          <p className="text-xs text-slate-300 dark:text-slate-300 light:text-slate-700 max-w-xl leading-relaxed">
+            Deterministic outdoor suitability scoring, bio-comfort indices, optimal hourly windows, and activity gear advisories for {location.name}.
+          </p>
+        </div>
+      </div>
+
       {/* Header & Activity selector chips */}
-      <div className="rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800/90 p-5 shadow-lg">
-        <div className="flex items-center justify-between gap-2 mb-4">
+      <div className="rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 p-4 sm:p-5 transition-colors">
+        <div className="flex items-center justify-between gap-2 mb-3.5">
           <div className="flex items-center gap-2">
-            <Activity className="w-4 h-4 text-sky-500 dark:text-sky-400" />
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white tracking-wide uppercase">Activity Weather Intelligence</h3>
+            <Activity className="w-4 h-4 text-[#8ECAE6]" />
+            <h3 className="text-xs font-semibold text-slate-100 dark:text-slate-100 light:text-slate-900 tracking-wider uppercase font-mono">
+              SELECT SPORT / RECREATIONAL ACTIVITY
+            </h3>
           </div>
-          <span className="text-xs text-slate-500 dark:text-slate-400">Assessing {location.name}</span>
+          <span className="text-xs font-mono text-slate-400 dark:text-slate-400 light:text-slate-500">
+            Assessing {location.name}
+          </span>
         </div>
 
         {/* Activity Buttons */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
           {ACTIVITIES.map((act) => (
             <button
               key={act.id}
               onClick={() => setSelectedActivity(act.id)}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
                 selectedActivity === act.id
-                  ? "bg-sky-500 text-white shadow-md shadow-sky-500/20"
-                  : "bg-slate-50 dark:bg-slate-950/80 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+                  ? "bg-[#F4A261] text-[#0F141B] font-bold border border-[#F4A261]"
+                  : "bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-50 text-slate-300 dark:text-slate-300 light:text-slate-700 hover:bg-[#252A32] dark:hover:bg-[#252A32] light:hover:bg-slate-100 border border-[#30353D] dark:border-[#30353D] light:border-slate-300"
               }`}
             >
               <span>{act.icon}</span>
@@ -106,32 +133,38 @@ export function ActivityExplorer({ location, current, hourly, daily, isFahrenhei
 
       {/* Analysis Card */}
       {loading ? (
-        <div className="rounded-2xl bg-white/60 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-12 text-center text-slate-500 dark:text-slate-400 text-xs">
+        <div className="rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-slate-50 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 p-12 text-center text-slate-400 text-xs font-mono">
           Computing deterministic meteorological factors...
         </div>
       ) : analysis ? (
-        <div className="rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800/90 p-6 shadow-xl space-y-6">
+        <div className="rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 p-4 sm:p-6 space-y-5 transition-colors">
           {/* Top Verdict Row */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100 dark:border-slate-800/80">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#30353D] dark:border-[#30353D] light:border-slate-200">
             <div>
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider block">Suitability Verdict</span>
-              <div className="flex items-center gap-3 mt-1.5">
-                <span className="text-2xl font-black text-slate-900 dark:text-white">{analysis.activityName}</span>
-                <span className={`text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg border ${getSuitabilityColor(analysis.suitability)}`}>
+              <span className="text-[11px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 uppercase tracking-wider block">
+                Suitability Verdict
+              </span>
+              <div className="flex items-center gap-3 mt-1">
+                <span className="text-xl sm:text-2xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900">
+                  {analysis.activityName}
+                </span>
+                <span className={`text-xs font-mono font-semibold uppercase tracking-wider px-2 py-0.5 rounded-[3px] border ${getSuitabilityColor(analysis.suitability)}`}>
                   {analysis.suitability}
                 </span>
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
-              <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 min-w-[100px]">
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 uppercase font-semibold">Suitability Score</span>
-                <span className="text-2xl font-extrabold text-slate-900 dark:text-white mt-0.5">{analysis.suitabilityScore}<span className="text-xs font-normal text-slate-500 dark:text-slate-400">/100</span></span>
+            <div className="flex items-center gap-3">
+              <div className="flex flex-col items-center justify-center p-2.5 rounded-[4px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-50 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 min-w-[90px]">
+                <span className="text-[10px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 uppercase font-semibold">Score</span>
+                <span className="text-xl sm:text-2xl font-mono font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 mt-0.5">
+                  {analysis.suitabilityScore}<span className="text-xs font-normal text-slate-500">/100</span>
+                </span>
               </div>
 
-              <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 min-w-[90px]">
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 uppercase font-semibold">Risk Level</span>
-                <span className={`text-xs font-bold uppercase mt-1 ${analysis.riskLevel === "high" || analysis.riskLevel === "severe" ? "text-rose-500 dark:text-rose-400" : analysis.riskLevel === "moderate" ? "text-amber-500 dark:text-amber-400" : "text-emerald-500 dark:text-emerald-400"}`}>
+              <div className="flex flex-col items-center justify-center p-2.5 rounded-[4px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-50 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 min-w-[85px]">
+                <span className="text-[10px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 uppercase font-semibold">Risk Level</span>
+                <span className={`text-xs font-mono font-semibold uppercase mt-1 ${analysis.riskLevel === "high" || analysis.riskLevel === "severe" ? "text-rose-400" : analysis.riskLevel === "moderate" ? "text-[#F4A261]" : "text-emerald-400"}`}>
                   {analysis.riskLevel}
                 </span>
               </div>
@@ -140,11 +173,13 @@ export function ActivityExplorer({ location, current, hourly, daily, isFahrenhei
 
           {/* Primary Assessment Reasons */}
           <div>
-            <h4 className="text-xs font-bold text-slate-800 dark:text-slate-300 uppercase tracking-wider mb-2">Key Weather Observations</h4>
+            <h4 className="text-xs font-semibold text-slate-400 dark:text-slate-400 light:text-slate-600 uppercase tracking-wider mb-2 font-mono">
+              Key Weather Observations
+            </h4>
             <ul className="space-y-1.5">
               {analysis.primaryReasons.map((reason, i) => (
-                <li key={i} className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                  <span className="w-1.5 h-1.5 rounded-full bg-sky-500 dark:bg-sky-400 shrink-0 mt-1.5" />
+                <li key={i} className="flex items-start gap-2 text-xs text-slate-300 dark:text-slate-300 light:text-slate-700 leading-relaxed">
+                  <span className="w-1.5 h-1.5 rounded-[1px] bg-[#8ECAE6] shrink-0 mt-1.5" />
                   <span>{reason}</span>
                 </li>
               ))}
@@ -153,13 +188,15 @@ export function ActivityExplorer({ location, current, hourly, daily, isFahrenhei
 
           {/* Weather Factors Impact Grid */}
           <div>
-            <h4 className="text-xs font-bold text-slate-800 dark:text-slate-300 uppercase tracking-wider mb-3">Meteorological Factor Impact</h4>
+            <h4 className="text-xs font-semibold text-slate-400 dark:text-slate-400 light:text-slate-600 uppercase tracking-wider mb-2.5 font-mono">
+              Meteorological Factor Impact
+            </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
               {analysis.weatherFactors.map((f, i) => (
-                <div key={i} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800/80 flex items-center justify-between gap-2">
+                <div key={i} className="p-2.5 sm:p-3 rounded-[4px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-50 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex items-center justify-between gap-2">
                   <div>
-                    <span className="text-xs font-semibold text-slate-900 dark:text-white block">{f.factor}</span>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">{f.value}</span>
+                    <span className="text-xs font-medium text-slate-200 dark:text-slate-200 light:text-slate-900 block">{f.factor}</span>
+                    <span className="text-[11px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 block mt-0.5">{f.value}</span>
                   </div>
                   <div className="shrink-0">{getImpactIcon(f.impact)}</div>
                 </div>
@@ -169,23 +206,27 @@ export function ActivityExplorer({ location, current, hourly, daily, isFahrenhei
 
           {/* Best Time Window */}
           {analysis.bestTimeWindow && (
-            <div className="p-4 rounded-xl bg-sky-50 dark:bg-sky-950/20 border border-sky-200 dark:border-sky-500/20 flex items-start gap-3 text-xs text-sky-800 dark:text-sky-200">
-              <Clock className="w-4 h-4 text-sky-500 dark:text-sky-400 shrink-0 mt-0.5" />
+            <div className="p-3.5 rounded-[4px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-50 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex items-start gap-2.5 text-xs text-slate-200 dark:text-slate-200 light:text-slate-800">
+              <Clock className="w-4 h-4 text-[#8ECAE6] shrink-0 mt-0.5" />
               <div>
-                <strong className="block text-sky-900 dark:text-sky-300 font-semibold mb-0.5">Recommended Time Window</strong>
-                <span>{analysis.bestTimeWindow}</span>
+                <strong className="block text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-800 font-semibold font-mono text-xs mb-0.5">
+                  Recommended Time Window
+                </strong>
+                <span className="text-slate-300 dark:text-slate-300 light:text-slate-700">{analysis.bestTimeWindow}</span>
               </div>
             </div>
           )}
 
           {/* Practical Tips */}
           {analysis.tips && analysis.tips.length > 0 && (
-            <div className="pt-4 border-t border-slate-100 dark:border-slate-800/80">
-              <h4 className="text-xs font-bold text-slate-800 dark:text-slate-300 uppercase tracking-wider mb-2">Practical Action Tips</h4>
+            <div className="pt-4 border-t border-[#30353D] dark:border-[#30353D] light:border-slate-200">
+              <h4 className="text-xs font-semibold text-slate-400 dark:text-slate-400 light:text-slate-600 uppercase tracking-wider mb-2 font-mono">
+                Practical Action Tips
+              </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {analysis.tips.map((tip, i) => (
-                  <div key={i} className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/60 text-xs text-slate-600 dark:text-slate-300 flex items-start gap-2">
-                    <ChevronRight className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400 shrink-0 mt-0.5" />
+                  <div key={i} className="p-2.5 rounded-[4px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-50 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 text-xs text-slate-300 dark:text-slate-300 light:text-slate-700 flex items-start gap-2">
+                    <ChevronRight className="w-3.5 h-3.5 text-[#8ECAE6] shrink-0 mt-0.5" />
                     <span>{tip}</span>
                   </div>
                 ))}

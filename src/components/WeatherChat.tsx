@@ -490,19 +490,23 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
   };
 
   return (
-    <div className="flex flex-col h-[75vh] max-h-[750px] rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800/90 shadow-xl overflow-hidden">
+    <div id="weather-chat-container" className="flex flex-col h-[75vh] max-h-[750px] rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 shadow-sm overflow-hidden transition-colors">
       {/* Chat Header */}
-      <div className="px-5 py-3.5 bg-slate-50 dark:bg-slate-950/80 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+      <div className="px-4 sm:px-5 py-3 bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-50 border-b border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-sky-500/20 border border-sky-500/30 flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-sky-400" />
+          <div className="w-7 h-7 rounded-[4px] bg-[#252A32] dark:bg-[#252A32] light:bg-slate-200 border border-[#30353D] dark:border-[#30353D] light:border-slate-300 flex items-center justify-center text-[#8ECAE6]">
+            <Sparkles className="w-3.5 h-3.5 text-[#8ECAE6]" />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Conversational Intelligence</span>
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-xs font-semibold text-slate-100 dark:text-slate-100 light:text-slate-900 uppercase tracking-wider">
+                Conversational Intelligence
+              </span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
             </div>
-            <span className="text-[11px] text-slate-500 dark:text-slate-400">Context: {activeLocationName || "Worldwide"}</span>
+            <span className="text-[11px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500">
+              Context: {activeLocationName || "Worldwide"}
+            </span>
           </div>
         </div>
 
@@ -511,12 +515,12 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
           <button
             id="voice-languages-config-btn"
             onClick={() => setIsVoiceSettingsOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white text-xs font-medium transition-colors"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] bg-[#252A32] dark:bg-[#252A32] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-300 hover:border-slate-400 dark:hover:border-slate-500 text-slate-300 dark:text-slate-300 light:text-slate-700 text-xs font-medium transition-colors cursor-pointer"
             title="Configure separate input and output voice languages"
           >
-            <Sliders className="w-3.5 h-3.5 text-sky-400" />
+            <Sliders className="w-3.5 h-3.5 text-[#8ECAE6]" />
             <span className="hidden sm:inline">Voice Langs</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-sky-600 dark:text-sky-300 font-mono">
+            <span className="text-[10px] px-1.5 py-0.5 rounded-[2px] bg-[#171C23] dark:bg-[#171C23] light:bg-slate-100 text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700 font-mono">
               {voice.inputLanguage === "auto" ? "In: Auto" : `In: ${voice.inputLanguage.toUpperCase()}`} • {voice.outputLanguage === "auto" ? "Out: Auto" : `Out: ${voice.outputLanguage.toUpperCase()}`}
             </span>
           </button>
@@ -524,22 +528,22 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
           {/* Voice Auto-Speak Toggle */}
           <button
             onClick={voice.toggleAutoSpeak}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] text-xs font-medium border transition-colors cursor-pointer ${
               voice.autoSpeak
-                ? "bg-sky-500/10 border-sky-500/30 text-sky-600 dark:text-sky-400 hover:bg-sky-500/20"
-                : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-300"
+                ? "bg-[#252A32] dark:bg-[#252A32] light:bg-sky-50 border-[#8ECAE6]/40 text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-800 font-semibold"
+                : "bg-[#1B2027] dark:bg-[#1B2027] light:bg-white border-[#30353D] dark:border-[#30353D] light:border-slate-300 text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-200"
             }`}
             title="Toggle automatic speech output for answers"
           >
-            {voice.autoSpeak ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
-            <span className="hidden sm:inline">{voice.autoSpeak ? "Voice Output ON" : "Voice Output OFF"}</span>
+            {voice.autoSpeak ? <Volume2 className="w-3.5 h-3.5 text-[#8ECAE6]" /> : <VolumeX className="w-3.5 h-3.5" />}
+            <span className="hidden sm:inline">{voice.autoSpeak ? "Voice ON" : "Voice OFF"}</span>
           </button>
 
           {/* Active speech stop button if currently speaking */}
           {voice.isSpeaking && (
             <button
               onClick={voice.stopSpeaking}
-              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-500 dark:text-rose-400 hover:bg-rose-500/20 text-xs transition-colors"
+              className="flex items-center gap-1 px-2 py-1 rounded-[4px] bg-rose-950/40 dark:bg-rose-950/40 light:bg-rose-50 border border-rose-500/30 text-rose-400 dark:text-rose-400 light:text-rose-700 hover:bg-rose-900/30 text-xs transition-colors cursor-pointer"
               title="Stop voice playback"
             >
               <Square className="w-3 h-3 fill-rose-400" />
@@ -551,31 +555,31 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
           {onNewChat && (
             <button
               onClick={onNewChat}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-500/30 text-xs font-semibold transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] bg-[#252A32] dark:bg-[#252A32] light:bg-slate-100 hover:bg-[#30353D] text-slate-200 dark:text-slate-200 light:text-slate-800 border border-[#30353D] dark:border-[#30353D] light:border-slate-300 text-xs font-semibold transition-colors cursor-pointer"
               title="Start a new conversation session"
             >
-              <PlusCircle className="w-3.5 h-3.5" />
+              <PlusCircle className="w-3.5 h-3.5 text-[#8ECAE6]" />
               <span className="hidden sm:inline">New Chat</span>
             </button>
           )}
 
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 hidden md:block pl-2 border-l border-slate-200 dark:border-slate-800">
-            Active: <strong className="text-slate-800 dark:text-slate-200 capitalize">{langConfig.name}</strong>
+          <div className="text-[11px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 hidden md:block pl-2 border-l border-[#30353D] dark:border-[#30353D] light:border-slate-300">
+            Active: <strong className="text-slate-200 dark:text-slate-200 light:text-slate-800 capitalize font-sans">{langConfig.name}</strong>
           </div>
         </div>
       </div>
 
       {/* Active Conversation Session Indicator */}
       {activeConversationTitle && (
-        <div className="px-5 py-2 bg-sky-50 dark:bg-sky-950/40 border-b border-sky-200 dark:border-sky-500/20 flex items-center justify-between text-xs">
-          <div className="flex items-center gap-2 text-sky-700 dark:text-sky-300">
-            <History className="w-3.5 h-3.5" />
-            <span>Session: <strong className="text-slate-900 dark:text-white font-medium">{activeConversationTitle}</strong></span>
+        <div className="px-4 sm:px-5 py-2 bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-100 border-b border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2 text-slate-300 dark:text-slate-300 light:text-slate-700">
+            <History className="w-3.5 h-3.5 text-[#8ECAE6]" />
+            <span>Session: <strong className="text-slate-100 dark:text-slate-100 light:text-slate-900 font-medium">{activeConversationTitle}</strong></span>
           </div>
           {onNewChat && (
             <button
               onClick={onNewChat}
-              className="text-[11px] text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white underline cursor-pointer"
+              className="text-[11px] text-[#8ECAE6] hover:underline cursor-pointer"
             >
               Start New Chat
             </button>
@@ -589,66 +593,68 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
           const isUser = msg.sender === "user";
 
           return (
-            <div key={msg.id} className={`flex gap-3 ${isUser ? "justify-end" : "justify-start"}`}>
+            <div key={msg.id} className={`flex gap-2.5 sm:gap-3 ${isUser ? "justify-end" : "justify-start"}`}>
               {!isUser && (
-                <div className="w-7 h-7 rounded-lg bg-sky-500/20 border border-sky-500/30 flex items-center justify-center shrink-0 mt-0.5">
-                  <Bot className="w-4 h-4 text-sky-400" />
+                <div className="w-6 h-6 rounded-[4px] bg-[#1B2027] border border-[#30353D] flex items-center justify-center shrink-0 mt-0.5 text-[#8ECAE6]">
+                  <Bot className="w-3.5 h-3.5 text-[#8ECAE6]" />
                 </div>
               )}
 
-              <div className={`max-w-[85%] md:max-w-[75%] space-y-2`}>
+              <div className={`max-w-[88%] md:max-w-[78%] space-y-2`}>
                 <div
-                  className={`p-4 rounded-2xl text-xs sm:text-sm leading-relaxed ${
+                  className={`p-3.5 sm:p-4 rounded-[6px] text-xs sm:text-sm leading-relaxed ${
                     isUser
-                      ? "bg-sky-500 text-white rounded-tr-none shadow-md shadow-sky-500/10 font-medium"
-                      : "bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none shadow-sm"
+                      ? "bg-[#252A32] dark:bg-[#252A32] light:bg-slate-100 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 text-slate-100 dark:text-slate-100 light:text-slate-900 font-normal"
+                      : "bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 text-slate-200 dark:text-slate-200 light:text-slate-800"
                   }`}
                 >
                   <div className="whitespace-pre-line">{msg.text}</div>
 
                   {/* Attached Mini Cards if response included structured data */}
                   {!isUser && msg.data?.current && (
-                    <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs bg-slate-50 dark:bg-slate-900/60 p-2.5 rounded-xl">
+                    <div className="mt-3 pt-3 border-t border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-50 p-2.5 rounded-[4px] border border-[#30353D] dark:border-[#30353D] light:border-slate-200">
                       <div className="flex items-center gap-2">
-                        <WeatherIcon code={msg.data.current.weatherCode} className="w-6 h-6" />
+                        <WeatherIcon code={msg.data.current.weatherCode} className="w-5 h-5 shrink-0" />
                         <div>
-                          <span className="font-bold text-slate-900 dark:text-white block">
+                          <span className="font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 block font-mono">
                             {formatTemp(msg.data.current.temperature)} • {msg.data.current.condition}
                           </span>
-                          <span className="text-[11px] text-slate-500 dark:text-slate-400">Feels like {formatTemp(msg.data.current.feelsLike)}</span>
+                          <span className="text-[11px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500">
+                            Feels like {formatTemp(msg.data.current.feelsLike)}
+                          </span>
                         </div>
                       </div>
-                      <div className="text-right text-[11px] text-slate-600 dark:text-slate-300">
+                      <div className="text-right text-[11px] font-mono text-slate-300 dark:text-slate-300 light:text-slate-700">
                         <span>Rain Prob: {msg.data.current.precipitationProbability}%</span>
-                        <span className="block text-slate-500 dark:text-slate-400">
+                        <span className="block text-slate-400 dark:text-slate-400 light:text-slate-500">
                           {msg.data.current.rain > 0
                             ? `${msg.data.current.rain} mm rain`
-                            : "0.0 mm (No rain falling)"}
+                            : "0.0 mm (None)"}
                         </span>
                       </div>
                     </div>
                   )}
 
                   {!isUser && msg.data?.activity && (
-                    <div className="mt-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
+                    <div className="mt-2 p-2.5 rounded-[4px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-50 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex items-center justify-between text-xs">
                       <div>
-                        <span className="font-bold text-slate-900 dark:text-white">{msg.data.activity.activityName}</span>
-                        <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">Risk: {msg.data.activity.riskLevel}</span>
+                        <span className="font-bold text-slate-100 dark:text-slate-100 light:text-slate-900">{msg.data.activity.activityName}</span>
+                        <span className="text-[11px] text-slate-400 dark:text-slate-400 light:text-slate-500 block mt-0.5">Risk: {msg.data.activity.riskLevel}</span>
                       </div>
-                      <span className="font-extrabold text-sky-600 dark:text-sky-400 text-sm">
+                      <span className="font-mono font-bold text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700 text-sm">
                         {msg.data.activity.suitabilityScore}/100 ({msg.data.activity.suitability.toUpperCase()})
                       </span>
                     </div>
                   )}
 
                   {!isUser && msg.data?.travel && (
-                    <div className="mt-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-1.5 font-semibold text-slate-900 dark:text-white">
+                    <div className="mt-2 p-2.5 rounded-[4px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-50 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-1.5 font-semibold text-slate-100 dark:text-slate-100 light:text-slate-900">
                         <span>{msg.data.travel.origin.name}</span>
-                        <ArrowRight className="w-3 h-3 text-slate-400" />
+                        <ArrowRight className="w-3 h-3 text-slate-500" />
                         <span>{msg.data.travel.destination.name}</span>
                       </div>
-                      <span className="text-amber-500 dark:text-amber-400 font-bold uppercase text-[11px]">
+                      <span className="text-[#F4A261] font-mono font-bold uppercase text-[11px]">
                         {msg.data.travel.weatherRiskLevel} Risk ({msg.data.travel.totalDistanceKm} km)
                       </span>
                     </div>
@@ -657,28 +663,28 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
 
                 {/* Footnote status & Voice read aloud button */}
                 {!isUser && (
-                  <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 px-1">
+                  <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 px-1">
                     <div className="flex items-center gap-2">
                       <span>{new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                       <span>•</span>
-                      <span className="flex items-center gap-1">
-                        <ShieldCheck className="w-3 h-3 text-emerald-500 dark:text-emerald-400" />
-                        {msg.isAIGenerated ? "Grounded Gemini Interpretation" : "Deterministic Meteorological Engine"}
+                      <span className="flex items-center gap-1 font-sans">
+                        <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                        {msg.isAIGenerated ? "Grounded Gemini Interpretation" : "Deterministic Engine"}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 font-sans">
                       {/* Copy Message Button */}
                       <button
                         type="button"
                         onClick={() => handleCopyMessage(msg.id, msg.text)}
-                        className="flex items-center gap-1 px-2 py-0.5 rounded text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                        className="flex items-center gap-1 px-1.5 py-0.5 rounded-[3px] text-slate-400 hover:text-slate-200 dark:hover:text-slate-200 light:hover:text-slate-900 hover:bg-[#252A32] dark:hover:bg-[#252A32] light:hover:bg-slate-100 transition-colors cursor-pointer"
                         title={copiedMessageId === msg.id ? "Copied to clipboard!" : "Copy message"}
                       >
                         {copiedMessageId === msg.id ? (
                           <>
-                            <Check className="w-3 h-3 text-emerald-500" />
-                            <span className="text-[10px] text-emerald-500 font-medium">Copied</span>
+                            <Check className="w-3 h-3 text-emerald-400" />
+                            <span className="text-[10px] text-emerald-400 font-medium">Copied</span>
                           </>
                         ) : (
                           <>
@@ -692,17 +698,17 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
                       <button
                         type="button"
                         onClick={() => handleToggleSpeakMessage(msg.id, msg.text, msg.language || preferredLanguage)}
-                        className={`flex items-center gap-1 px-2 py-0.5 rounded transition-colors cursor-pointer ${
+                        className={`flex items-center gap-1 px-1.5 py-0.5 rounded-[3px] transition-colors cursor-pointer ${
                           currentlySpeakingMessageId === msg.id && voice.isSpeaking
-                            ? "bg-sky-500/20 text-sky-600 dark:text-sky-300 border border-sky-500/30"
-                            : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+                            ? "bg-[#252A32] text-[#8ECAE6] border border-[#8ECAE6]/40"
+                            : "text-slate-400 hover:text-slate-200 dark:hover:text-slate-200 light:hover:text-slate-900 hover:bg-[#252A32] dark:hover:bg-[#252A32] light:hover:bg-slate-100"
                         }`}
                         title={currentlySpeakingMessageId === msg.id && voice.isSpeaking ? "Stop reading aloud" : "Read response aloud"}
                       >
                         {currentlySpeakingMessageId === msg.id && voice.isSpeaking ? (
                           <>
-                            <Square className="w-3 h-3 fill-sky-400 text-sky-400" />
-                            <span className="text-[10px] font-medium text-sky-600 dark:text-sky-300">Stop</span>
+                            <Square className="w-3 h-3 fill-[#8ECAE6] text-[#8ECAE6]" />
+                            <span className="text-[10px] font-medium text-[#8ECAE6]">Stop</span>
                           </>
                         ) : (
                           <>
@@ -717,8 +723,8 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
               </div>
 
               {isUser && (
-                <div className="w-7 h-7 rounded-lg bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 flex items-center justify-center shrink-0 mt-0.5">
-                  <User className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+                <div className="w-6 h-6 rounded-[4px] bg-[#252A32] border border-[#30353D] flex items-center justify-center shrink-0 mt-0.5 text-slate-300">
+                  <User className="w-3.5 h-3.5 text-slate-300" />
                 </div>
               )}
             </div>
@@ -726,9 +732,9 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
         })}
 
         {isSending && (
-          <div className="flex gap-3 items-center text-xs text-slate-400">
-            <div className="w-7 h-7 rounded-lg bg-sky-500/20 border border-sky-500/30 flex items-center justify-center animate-pulse">
-              <Bot className="w-4 h-4 text-sky-400" />
+          <div className="flex gap-2.5 items-center text-xs text-slate-400 font-mono">
+            <div className="w-6 h-6 rounded-[4px] bg-[#1B2027] border border-[#30353D] flex items-center justify-center animate-pulse text-[#8ECAE6]">
+              <Bot className="w-3.5 h-3.5 text-[#8ECAE6]" />
             </div>
             <span>Analyzing verified weather observations & synthesizing answer...</span>
           </div>
@@ -739,14 +745,14 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
 
       {/* Voice Listening / Active Banner */}
       {voice.isListening && (
-        <div className="px-4 py-2.5 bg-rose-950/40 border-t border-rose-500/30 flex items-center justify-between text-xs animate-in fade-in duration-200">
+        <div className="px-4 py-2 bg-rose-950/30 border-t border-rose-500/30 flex items-center justify-between text-xs animate-in fade-in duration-200">
           <div className="flex items-center gap-2 overflow-hidden mr-2">
-            <span className="relative flex h-2.5 w-2.5 shrink-0">
+            <span className="relative flex h-2 w-2 shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
             </span>
             <span className="font-semibold text-rose-300 shrink-0">Listening ({langConfig.name}):</span>
-            <span className="text-white italic truncate">
+            <span className="text-slate-100 italic truncate font-mono text-[11px]">
               {voice.interimTranscript ? `"${voice.interimTranscript}"` : "Speak naturally now..."}
             </span>
           </div>
@@ -757,7 +763,7 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
               }
               voice.stopListening();
             }}
-            className="px-2.5 py-1 rounded-lg bg-rose-500 hover:bg-rose-600 text-white text-[11px] font-medium shrink-0 transition-colors"
+            className="px-2.5 py-1 rounded-[3px] bg-rose-900/60 hover:bg-rose-800 text-rose-200 border border-rose-500/30 text-[11px] font-medium shrink-0 transition-colors cursor-pointer"
           >
             Done Speaking
           </button>
@@ -766,9 +772,9 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
 
       {/* Voice Error Banner */}
       {voice.error && (
-        <div className="px-4 py-2 bg-amber-950/40 border-t border-amber-500/30 flex items-center justify-between text-xs text-amber-300">
+        <div className="px-4 py-2 bg-amber-950/30 border-t border-amber-500/30 flex items-center justify-between text-xs text-amber-300 font-mono">
           <div className="flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+            <AlertCircle className="w-3.5 h-3.5 text-[#F4A261] shrink-0" />
             <span>{voice.error.message}</span>
           </div>
           <div className="flex items-center gap-2 ml-2 shrink-0">
@@ -778,14 +784,14 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
                   voice.clearError();
                   voice.replayLast();
                 }}
-                className="px-2.5 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-200 text-[11px] font-semibold transition-colors cursor-pointer"
+                className="px-2 py-0.5 rounded-[3px] bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-200 text-[11px] font-semibold transition-colors cursor-pointer"
               >
                 Tap to Play
               </button>
             )}
             <button
               onClick={voice.clearError}
-              className="text-[11px] underline hover:text-white"
+              className="text-[11px] underline hover:text-white cursor-pointer"
             >
               Dismiss
             </button>
@@ -794,21 +800,21 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
       )}
 
       {/* Language Indicator & Suggested Query Chips */}
-      <div className="px-4 py-2 bg-slate-50 dark:bg-slate-950/60 border-t border-slate-200 dark:border-slate-800/60 flex items-center gap-2 overflow-x-auto scrollbar-none">
-        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-sky-500/10 border border-sky-500/20 text-[10px] text-sky-600 dark:text-sky-400 shrink-0 font-medium">
+      <div className="px-3.5 sm:px-4 py-2 bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-50 border-t border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex items-center gap-2 overflow-x-auto scrollbar-none">
+        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-[3px] bg-[#252A32] dark:bg-[#252A32] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 text-[10px] text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700 shrink-0 font-medium">
           <Globe className="w-3 h-3" />
           <span>{langConfig.name}</span>
           {langConfig.nativeName !== langConfig.name && (
-            <span className="text-slate-500 dark:text-slate-400 font-normal">({langConfig.nativeName})</span>
+            <span className="text-slate-400 font-normal">({langConfig.nativeName})</span>
           )}
         </div>
-        <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-semibold shrink-0">Try:</span>
+        <span className="text-[10px] font-mono text-slate-400 uppercase font-semibold shrink-0">Try:</span>
         {dynamicSuggestedQueries.map((q, i) => (
           <button
             key={i}
             onClick={() => handleSend(q)}
             disabled={isSending}
-            className="px-2.5 py-1 rounded-lg bg-white hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-[11px] text-slate-700 dark:text-slate-300 whitespace-nowrap transition-colors disabled:opacity-50 hover:text-slate-900 dark:hover:text-white"
+            className="px-2.5 py-1 rounded-[4px] bg-[#171C23] hover:bg-[#252A32] dark:bg-[#171C23] dark:hover:bg-[#252A32] light:bg-white light:hover:bg-slate-100 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 text-[11px] text-slate-300 dark:text-slate-300 light:text-slate-700 whitespace-nowrap transition-colors disabled:opacity-50 hover:text-slate-100 dark:hover:text-white cursor-pointer"
           >
             {q}
           </button>
@@ -816,25 +822,25 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
       </div>
 
       {/* Dual Voice Language Indicator Strip */}
-      <div className="px-4 py-1.5 bg-slate-100/80 dark:bg-slate-950/40 border-t border-slate-200 dark:border-slate-800/40 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+      <div className="px-3.5 sm:px-4 py-1.5 bg-[#171C23] dark:bg-[#171C23] light:bg-slate-100 border-t border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex items-center justify-between text-[11px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500">
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
-          <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium shrink-0">
+          <div className="flex items-center gap-1 text-emerald-400 font-medium shrink-0">
             <Mic className="w-3 h-3" />
             <span>
               Mic Input:{" "}
-              <strong className="text-emerald-700 dark:text-emerald-300">
+              <strong className="text-slate-200 dark:text-slate-200 light:text-slate-800">
                 {voice.inputLanguage === "auto"
                   ? `Auto (${inputLangConfig.name})`
                   : inputLangConfig.name}
               </strong>
             </span>
           </div>
-          <span className="text-slate-300 dark:text-slate-600">•</span>
-          <div className="flex items-center gap-1 text-sky-600 dark:text-sky-400 font-medium shrink-0">
+          <span className="text-[#30353D] dark:text-[#30353D] light:text-slate-300">•</span>
+          <div className="flex items-center gap-1 text-[#8ECAE6] font-medium shrink-0">
             <Volume2 className="w-3 h-3" />
             <span>
               Voice Output:{" "}
-              <strong className="text-sky-700 dark:text-sky-300">
+              <strong className="text-slate-200 dark:text-slate-200 light:text-slate-800">
                 {voice.outputLanguage === "auto"
                   ? `Auto (${outputLangConfig.name})`
                   : outputLangConfig.name}
@@ -845,14 +851,14 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
         <button
           type="button"
           onClick={() => setIsVoiceSettingsOpen(true)}
-          className="text-[11px] text-slate-500 hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-300 underline font-medium shrink-0 ml-2"
+          className="text-[11px] text-[#8ECAE6] hover:underline font-medium shrink-0 ml-2 cursor-pointer font-sans"
         >
           Change Voice Languages
         </button>
       </div>
 
       {/* Input Box */}
-      <div className="p-3.5 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800">
+      <div className="p-3 bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-50 border-t border-[#30353D] dark:border-[#30353D] light:border-slate-200">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -870,21 +876,21 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
                 : t.askPlaceholder || `Ask WeatherGPT in ${langConfig.name}...`
             }
             disabled={isSending}
-            className="flex-1 px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-sky-500 disabled:opacity-50"
+            className="flex-1 px-3.5 py-2 rounded-[4px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-300 text-xs sm:text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 placeholder-slate-500 focus:outline-none focus:border-[#8ECAE6] disabled:opacity-50 transition-colors"
           />
 
           {/* Live API Button (gemini-3.8-live) */}
           <button
             type="button"
             onClick={() => setIsLiveModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-500/15 to-blue-500/15 hover:from-cyan-500/25 hover:to-blue-500/25 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 text-xs font-semibold transition-all shadow-sm cursor-pointer shrink-0"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-[4px] bg-[#252A32] dark:bg-[#252A32] light:bg-white hover:bg-[#30353D] dark:hover:bg-[#30353D] light:hover:bg-slate-100 border border-[#30353D] dark:border-[#30353D] light:border-slate-300 text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700 text-xs font-semibold transition-colors shadow-sm cursor-pointer shrink-0"
             title="Real-time Duplex Voice Conversation (gemini-3.8-live)"
           >
-            <Zap className="w-3.5 h-3.5 text-cyan-500" />
+            <Zap className="w-3.5 h-3.5 text-[#8ECAE6]" />
             <span className="hidden sm:inline">Live Voice</span>
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+            <span className="flex h-1.5 w-1.5 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#8ECAE6] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#8ECAE6]"></span>
             </span>
           </button>
 
@@ -893,12 +899,12 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
             type="button"
             onClick={handleToggleVoiceInput}
             disabled={isSending}
-            className={`p-2.5 rounded-xl transition-all duration-200 disabled:opacity-50 ${
+            className={`p-2 rounded-[4px] transition-colors disabled:opacity-50 cursor-pointer border ${
               voice.isListening
-                ? "bg-rose-500 text-white shadow-lg shadow-rose-500/30 ring-2 ring-rose-400 animate-pulse"
+                ? "bg-rose-950/60 border-rose-500 text-rose-300 ring-1 ring-rose-400"
                 : voice.isSpeaking
-                ? "bg-sky-500/20 text-sky-500 dark:text-sky-400 border border-sky-500/40 hover:bg-sky-500/30"
-                : "bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+                ? "bg-[#252A32] text-[#8ECAE6] border-[#8ECAE6]/40"
+                : "bg-[#252A32] dark:bg-[#252A32] light:bg-white hover:bg-[#30353D] dark:hover:bg-[#30353D] light:hover:bg-slate-100 border-[#30353D] dark:border-[#30353D] light:border-slate-300 text-slate-300 dark:text-slate-300 light:text-slate-700"
             }`}
             title={
               voice.isListening
@@ -911,7 +917,7 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
             {voice.isListening ? (
               <MicOff className="w-4 h-4" />
             ) : voice.isSpeaking ? (
-              <Radio className="w-4 h-4 animate-spin" />
+              <Radio className="w-4 h-4 animate-spin text-[#8ECAE6]" />
             ) : (
               <Mic className="w-4 h-4" />
             )}
@@ -920,10 +926,10 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
           <button
             type="submit"
             disabled={isSending || !inputText.trim()}
-            className="p-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white transition-colors disabled:opacity-50"
+            className="p-2 rounded-[4px] bg-[#252A32] dark:bg-[#252A32] light:bg-slate-900 hover:bg-[#30353D] dark:hover:bg-[#30353D] light:hover:bg-slate-800 text-slate-100 dark:text-slate-100 light:text-white border border-[#30353D] dark:border-[#30353D] light:border-slate-800 transition-colors disabled:opacity-40 cursor-pointer"
             title="Send query"
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-4 h-4 text-[#8ECAE6]" />
           </button>
         </form>
       </div>

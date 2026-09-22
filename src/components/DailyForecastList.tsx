@@ -24,57 +24,92 @@ export function DailyForecastList({ daily, isFahrenheit }: DailyForecastListProp
   const tempRange = Math.max(1, globalMax - globalMin);
 
   return (
-    <div className="rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800/90 p-5 shadow-lg">
-      <div className="flex items-center gap-2 mb-4">
-        <Calendar className="w-4 h-4 text-sky-500 dark:text-sky-400" />
-        <h3 className="text-sm font-bold text-slate-900 dark:text-white tracking-wide uppercase">7-Day Extended Outlook</h3>
+    <div id="daily-forecast-list" className="rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 p-5 transition-colors">
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-[#8ECAE6]" />
+            <h3 className="text-xs font-semibold text-slate-100 dark:text-slate-100 light:text-slate-900 tracking-wider uppercase">
+              7-Day Extended Outlook
+            </h3>
+          </div>
+          <p className="text-[11px] font-mono text-slate-400 mt-0.5">
+            Deterministic physical model progression
+          </p>
+        </div>
+        <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-[3px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-100 text-slate-400 border border-[#30353D] dark:border-[#30353D] light:border-slate-300 shrink-0">
+          DETERMINISTIC
+        </span>
       </div>
 
-      <div className="divide-y divide-slate-100 dark:divide-slate-800/70">
+      <div className="divide-y divide-[#30353D] dark:divide-[#30353D] light:divide-slate-200">
         {daily.map((item, idx) => {
           const leftPercent = Math.max(0, ((item.tempMin - globalMin) / tempRange) * 100);
           const barWidth = Math.max(12, ((item.tempMax - item.tempMin) / tempRange) * 100);
+          const isToday = idx === 0;
 
           return (
-            <div key={item.date} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div
+              key={item.date}
+              className={`py-3 px-2 sm:px-3 rounded-[6px] my-1 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 transition-all duration-150 ${
+                isToday
+                  ? "bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-50 border border-[#F4A261]/50 shadow-sm"
+                  : "border border-transparent hover:bg-[#1B2027]/50 dark:hover:bg-[#1B2027]/50 light:hover:bg-slate-50/60"
+              }`}
+            >
               {/* Day & Condition */}
-              <div className="flex items-center gap-3 sm:w-48 shrink-0">
-                <WeatherIcon code={item.weatherCode} className="w-6 h-6" />
-                <div>
-                  <span className="text-sm font-semibold text-slate-900 dark:text-white block">
-                    {idx === 0 ? "Today" : idx === 1 ? "Tomorrow" : item.dayName}
+              <div className="flex items-center gap-2.5 sm:w-44 shrink-0">
+                <WeatherIcon code={item.weatherCode} className="w-5 h-5 shrink-0" />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className={`text-xs font-semibold block truncate ${
+                        isToday
+                          ? "text-[#F4A261] font-bold"
+                          : "text-slate-200 dark:text-slate-200 light:text-slate-900"
+                      }`}
+                    >
+                      {idx === 0 ? "Today" : idx === 1 ? "Tomorrow" : item.dayName}
+                    </span>
+                    {isToday && (
+                      <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded-[3px] bg-[#F4A261] text-[#0F141B] font-bold">
+                        Active
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[11px] text-slate-400 dark:text-slate-400 light:text-slate-500 capitalize block truncate">
+                    {item.condition}
                   </span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400 capitalize">{item.condition}</span>
                 </div>
               </div>
 
               {/* Rain & UV */}
-              <div className="flex items-center gap-4 text-xs sm:w-40 shrink-0">
-                <div className="flex items-center gap-1 text-blue-500 dark:text-blue-400 font-medium">
-                  <Droplets className="w-3.5 h-3.5" />
+              <div className="flex items-center gap-3 text-xs sm:w-40 shrink-0 font-mono">
+                <div className="flex items-center gap-1 text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700 font-medium">
+                  <Droplets className="w-3 h-3 shrink-0" />
                   <span>{item.precipitationProbabilityMax}%</span>
-                  {item.rainSum > 0 && <span className="text-slate-400 text-[11px]">({item.rainSum} mm)</span>}
+                  {item.rainSum > 0 && <span className="text-slate-400 text-[10px]">({item.rainSum}mm)</span>}
                 </div>
-                <div className="flex items-center gap-1 text-amber-500 dark:text-amber-400 font-medium">
-                  <Sun className="w-3.5 h-3.5" />
+                <div className="flex items-center gap-1 text-[#F4A261] dark:text-[#F4A261] light:text-amber-700 font-medium">
+                  <Sun className="w-3 h-3 shrink-0" />
                   <span>UV {item.uvIndexMax}</span>
                 </div>
               </div>
 
-              {/* Temperature Bar & Values */}
-              <div className="flex items-center gap-3 flex-1">
-                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 w-8 text-right">
+              {/* Temperature Bar & Min/Max Values */}
+              <div className="flex items-center gap-2.5 flex-1 min-w-[140px]">
+                <span className="text-xs font-mono font-semibold text-slate-400 dark:text-slate-400 light:text-slate-500 w-8 text-right shrink-0">
                   {formatTemp(item.tempMin)}°
                 </span>
 
-                <div className="relative h-2 flex-1 bg-slate-100 dark:bg-slate-950 rounded-full overflow-hidden">
+                <div className="relative h-1.5 flex-1 bg-[#252A32] dark:bg-[#252A32] light:bg-slate-200 rounded-[2px] overflow-hidden">
                   <div
-                    className="absolute top-0 bottom-0 rounded-full bg-gradient-to-r from-sky-400 to-amber-400"
+                    className="absolute top-0 bottom-0 rounded-[2px] bg-gradient-to-r from-[#8ECAE6] to-[#F4A261]"
                     style={{ left: `${leftPercent}%`, width: `${barWidth}%` }}
                   />
                 </div>
 
-                <span className="text-xs font-bold text-slate-900 dark:text-white w-8">
+                <span className="text-xs font-mono font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 w-8 shrink-0">
                   {formatTemp(item.tempMax)}°
                 </span>
               </div>

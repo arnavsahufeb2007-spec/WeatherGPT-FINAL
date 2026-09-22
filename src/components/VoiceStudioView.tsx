@@ -198,22 +198,75 @@ export function VoiceStudioView({
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div id="voice-studio" className="space-y-4 sm:space-y-5 max-w-4xl mx-auto">
+      {/* Voice Studio Hero Banner with Atmospheric HUD */}
+      <div className="relative rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 p-5 sm:p-6 overflow-hidden transition-colors shadow-lg">
+        <div className="absolute inset-0 z-0 pointer-events-none select-none">
+          <img
+            src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=1600&q=80"
+            alt="Acoustic Voice Studio"
+            className="w-full h-full object-cover object-center opacity-30 dark:opacity-25 light:opacity-20"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0F141B] via-[#171C23]/95 to-[#171C23]/60 dark:from-[#0F141B] dark:via-[#171C23]/95 dark:to-[#171C23]/60 light:from-white light:via-white/95 light:to-white/80" />
+        </div>
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1.5 max-w-xl">
+            <div className="inline-flex items-center gap-2">
+              <span className="text-[10px] font-mono uppercase font-bold text-[#8ECAE6] tracking-wider px-2 py-0.5 rounded-[3px] bg-[#0F141B]/80 border border-[#8ECAE6]/30">
+                VOICE DISPATCH • BIDIRECTIONAL ACOUSTIC STUDIO
+              </span>
+              <span className="flex h-1.5 w-1.5 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400"></span>
+              </span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 font-mono tracking-tight">
+              Hands-Free Voice Studio
+            </h2>
+            <p className="text-xs text-slate-300 dark:text-slate-300 light:text-slate-700 leading-relaxed">
+              Speak in your native Indian or international language and listen to natural meteorological audio with decoupled input and speech synthesis engines.
+            </p>
+          </div>
+
+          {/* Telemetry HUD Badge */}
+          <div className="bg-[#0F141B]/80 dark:bg-[#0F141B]/80 light:bg-slate-100/90 backdrop-blur-md border border-[#30353D] dark:border-[#30353D] light:border-slate-300 p-3 rounded-[6px] hidden sm:flex flex-col gap-1.5 min-w-[210px] text-[11px] font-mono shrink-0 shadow-inner">
+            <div className="flex items-center justify-between text-slate-400">
+              <span className="text-[10px] uppercase tracking-wider text-slate-400">DUPLEX AUDIO</span>
+              <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse"></span> ONLINE
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-slate-300">
+              <span className="text-[10px] text-slate-400">LATENCY:</span>
+              <span className="text-[#8ECAE6] font-semibold">&lt; 250ms</span>
+            </div>
+            <div className="flex items-center justify-between text-slate-300">
+              <span className="text-[10px] text-slate-400">AUDIO ENCODE:</span>
+              <span className="text-slate-200 font-semibold">48 kHz PCM</span>
+            </div>
+            <div className="flex items-center justify-between text-slate-300">
+              <span className="text-[10px] text-slate-400">TARGET:</span>
+              <span className="text-[#F4A261] font-semibold truncate max-w-[110px]">{currentLocation ? currentLocation.name : "Active GPS"}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Voice Error Banner */}
       {voice.error && (
-        <div className="rounded-2xl bg-amber-950/50 border border-amber-500/40 p-4 flex items-start justify-between gap-3 text-xs text-amber-200 shadow-lg">
+        <div className="rounded-[8px] bg-rose-950/40 light:bg-rose-50 border border-rose-500/30 light:border-rose-300 p-3.5 flex items-start justify-between gap-3 text-xs text-rose-200 light:text-rose-800 shadow-sm">
           <div className="flex items-start gap-2.5">
-            <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+            <AlertCircle className="w-4 h-4 text-rose-400 light:text-rose-600 shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <div className="font-semibold text-amber-300">{voice.error.message}</div>
+              <div className="font-semibold text-rose-300 light:text-rose-900 font-mono">{voice.error.message}</div>
               {voice.error.actionHint && (
-                <div className="text-[11px] text-amber-400/90">{voice.error.actionHint}</div>
+                <div className="text-[11px] font-mono text-rose-300/80 light:text-rose-700">{voice.error.actionHint}</div>
               )}
             </div>
           </div>
           <button
             onClick={voice.clearError}
-            className="text-[11px] text-amber-400 hover:text-white underline shrink-0 px-2 py-1 rounded hover:bg-amber-900/40 transition-colors cursor-pointer"
+            className="text-[11px] font-mono text-rose-300 light:text-rose-700 hover:text-white light:hover:text-rose-950 underline shrink-0 px-2 py-0.5 rounded-[3px] hover:bg-rose-900/40 light:hover:bg-rose-100 transition-colors cursor-pointer"
           >
             Dismiss
           </button>
@@ -221,21 +274,23 @@ export function VoiceStudioView({
       )}
 
       {/* Studio Header Banner */}
-      <div className="rounded-2xl bg-gradient-to-r from-sky-900/40 via-indigo-900/30 to-purple-900/40 border border-sky-500/20 p-6 shadow-xl relative overflow-hidden">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-sky-500/20 border border-sky-500/30 flex items-center justify-center shrink-0 shadow-lg shadow-sky-500/20">
-              <Mic className="w-6 h-6 text-sky-400" />
+      <div className="rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 p-4 sm:p-5 transition-colors shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-[4px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-100 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex items-center justify-center shrink-0">
+              <Mic className="w-5 h-5 text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-white tracking-tight">Hands-Free Voice Studio</h2>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30">
+                <h3 className="text-sm sm:text-base font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 tracking-tight font-mono">
+                  SPEECH ENGINE CHANNELS
+                </h3>
+                <span className="text-[10px] font-mono uppercase font-semibold tracking-wider px-1.5 py-0.5 rounded-[3px] bg-[#252A32] dark:bg-[#252A32] light:bg-sky-50 text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700 border border-[#8ECAE6]/30 dark:border-[#8ECAE6]/30 light:border-sky-300">
                   Decoupled
                 </span>
               </div>
-              <p className="text-xs text-slate-300 mt-0.5">
-                Speak in your native Indian or international language and listen to natural meteorological audio
+              <p className="text-xs font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 mt-0.5">
+                Target city: {currentLocation ? currentLocation.name : "Active Geolocation"}
               </p>
             </div>
           </div>
@@ -243,64 +298,64 @@ export function VoiceStudioView({
           <div className="flex items-center gap-2">
             <button
               onClick={() => setIsLiveModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-xs font-bold text-white shadow-lg shadow-cyan-500/20 transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-[#F4A261] hover:bg-[#F4A261]/90 text-xs font-mono font-bold text-[#0F141B] border border-[#F4A261] transition-colors cursor-pointer shadow-sm"
             >
-              <Zap className="w-4 h-4 text-cyan-200" />
+              <Zap className="w-3.5 h-3.5 text-[#0F141B]" />
               <span>Gemini Live (Voice Duplex)</span>
               <span className="flex h-2 w-2 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-200 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0F141B] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#0F141B]"></span>
               </span>
             </button>
 
             <button
               onClick={() => setIsModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 text-xs font-semibold text-white shadow-sm transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-100 hover:bg-[#252A32] dark:hover:bg-[#252A32] light:hover:bg-slate-200 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 text-xs font-mono font-semibold text-slate-200 dark:text-slate-200 light:text-slate-700 hover:text-white dark:hover:text-white light:hover:text-slate-950 transition-colors cursor-pointer"
             >
-              <Sliders className="w-4 h-4 text-sky-400" />
+              <Sliders className="w-3.5 h-3.5 text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700" />
               <span>Configure Voice & Dialects</span>
             </button>
           </div>
         </div>
 
         {/* Dual Language Indicator Badge */}
-        <div className="mt-4 pt-3 border-t border-slate-800/80 flex flex-wrap items-center gap-3 text-xs">
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 font-medium">
+        <div className="mt-4 pt-3 border-t border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex flex-wrap items-center gap-2.5 text-xs font-mono">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-[3px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-emerald-50 border border-[#30353D] dark:border-[#30353D] light:border-emerald-200 text-emerald-400 dark:text-emerald-400 light:text-emerald-700 font-medium">
             <Mic className="w-3.5 h-3.5" />
             <span>Spoken Input: <strong>{inputLangConfig.name}</strong></span>
           </div>
           <ArrowRight className="w-3.5 h-3.5 text-slate-500 hidden sm:inline" />
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-sky-500/10 border border-sky-500/25 text-sky-300 font-medium">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-[3px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-sky-50 border border-[#30353D] dark:border-[#30353D] light:border-sky-200 text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700 font-medium">
             <Volume2 className="w-3.5 h-3.5" />
             <span>Voice Output: <strong>{outputLangConfig.name}</strong></span>
           </div>
-          <div className="flex items-center gap-1.5 text-slate-400 ml-auto text-[11px]">
-            <span>Speed: <strong>{voice.settings.speechRate.toFixed(1)}x</strong></span>
+          <div className="flex items-center gap-2 text-slate-400 dark:text-slate-400 light:text-slate-500 ml-auto text-[11px]">
+            <span>Speed: <strong className="text-slate-200 dark:text-slate-200 light:text-slate-800">{voice.settings.speechRate.toFixed(1)}x</strong></span>
             <span>•</span>
-            <span>Auto-Speak: <strong>{voice.autoSpeak ? "Enabled" : "Muted"}</strong></span>
+            <span>Auto-Speak: <strong className="text-slate-200 dark:text-slate-200 light:text-slate-800">{voice.autoSpeak ? "Enabled" : "Muted"}</strong></span>
           </div>
         </div>
       </div>
 
       {/* Main Interactive Mic Stage */}
-      <div className="rounded-2xl bg-slate-900/80 dark:bg-slate-950/80 border border-slate-800 p-8 text-center flex flex-col items-center justify-center space-y-6 shadow-xl relative">
-        {/* Glow pulse when listening */}
+      <div className="rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 p-6 sm:p-8 text-center flex flex-col items-center justify-center space-y-5 transition-colors relative shadow-sm">
+        {/* Subtle halo when listening or speaking */}
         {voice.isListening && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-64 h-64 rounded-full bg-emerald-500/15 animate-ping duration-1000" />
-            <div className="w-48 h-48 rounded-full bg-emerald-500/20 animate-pulse duration-700" />
+            <div className="w-48 h-48 rounded-full border border-rose-500/20 bg-rose-500/5 animate-ping duration-1000" />
+            <div className="w-36 h-36 rounded-full border border-rose-500/30 bg-rose-500/10 animate-pulse duration-700" />
           </div>
         )}
 
         {voice.isSpeaking && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-64 h-64 rounded-full bg-sky-500/15 animate-pulse duration-500" />
+            <div className="w-48 h-48 rounded-full border border-[#8ECAE6]/20 bg-[#8ECAE6]/5 animate-pulse duration-500" />
           </div>
         )}
 
         {/* Dynamic Status Text */}
         <div className="space-y-1">
-          <div className="text-sm font-semibold text-slate-300">
+          <div className="text-sm font-semibold font-mono text-slate-200 dark:text-slate-200 light:text-slate-800">
             {voice.isListening
               ? `Listening in ${inputLangConfig.name}... Speak now`
               : voice.isSpeaking
@@ -309,7 +364,7 @@ export function VoiceStudioView({
               ? "Synthesizing weather intelligence..."
               : "Tap microphone to begin speaking"}
           </div>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs font-mono text-slate-400 dark:text-slate-400 light:text-slate-500">
             {currentLocation ? `Target City: ${currentLocation.name}` : "Search city or use current GPS"}
           </p>
         </div>
@@ -318,38 +373,38 @@ export function VoiceStudioView({
         <div className="relative z-10">
           <button
             onClick={handleToggleMic}
-            className={`w-28 h-28 rounded-full flex items-center justify-center shadow-2xl transition-all duration-200 transform active:scale-95 cursor-pointer ${
+            className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center transition-all duration-300 transform active:scale-95 cursor-pointer shadow-xl ${
               voice.isListening
-                ? "bg-rose-500 hover:bg-rose-600 text-white ring-8 ring-rose-500/30 scale-105 animate-pulse"
+                ? "bg-rose-950/90 dark:bg-rose-950/90 light:bg-rose-600 hover:bg-rose-900 dark:hover:bg-rose-900 light:hover:bg-rose-700 text-rose-200 dark:text-rose-200 light:text-white border-2 border-rose-500/80 ring-8 ring-rose-500/20 animate-pulse shadow-rose-950/50"
                 : voice.isSpeaking
-                ? "bg-amber-500 hover:bg-amber-600 text-white ring-8 ring-amber-500/30"
+                ? "bg-[#F4A261] text-[#0F141B] border-2 border-[#F4A261] ring-8 ring-[#F4A261]/20 shadow-[#F4A261]/30 hover:bg-[#F4A261]/90"
                 : isProcessing
-                ? "bg-indigo-600 text-white animate-spin"
-                : "bg-sky-500 hover:bg-sky-400 text-white ring-8 ring-sky-500/20 hover:scale-105"
+                ? "bg-[#252A32] dark:bg-[#252A32] light:bg-slate-200 text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700 border-2 border-[#8ECAE6]/60 animate-spin"
+                : "bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-100 hover:bg-[#252A32] dark:hover:bg-[#252A32] light:hover:bg-slate-200 text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700 border-2 border-[#8ECAE6]/50 dark:border-[#8ECAE6]/50 light:border-sky-400 hover:border-[#8ECAE6] dark:hover:border-[#8ECAE6] light:hover:border-sky-600 hover:scale-105 shadow-md"
             }`}
             title={voice.isListening ? "Tap to finish speaking" : "Tap to speak"}
           >
             {voice.isListening ? (
-              <Square className="w-10 h-10 fill-white" />
+              <Square className="w-7 h-7 sm:w-8 sm:h-8 fill-current" />
             ) : voice.isSpeaking ? (
-              <Square className="w-10 h-10 fill-white" />
+              <Square className="w-7 h-7 sm:w-8 sm:h-8 fill-current" />
             ) : (
-              <Mic className="w-12 h-12" />
+              <Mic className="w-8 h-8 sm:w-9 sm:h-9" />
             )}
           </button>
         </div>
 
         {/* Interim Speech Transcript Box */}
         {voice.interimTranscript && (
-          <div className="p-3 px-6 rounded-xl bg-slate-950/80 border border-slate-700 text-slate-200 text-sm italic font-medium animate-pulse max-w-md">
+          <div className="p-2.5 px-4 rounded-[4px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-100 border border-[#30353D] dark:border-[#30353D] light:border-slate-300 text-slate-200 dark:text-slate-200 light:text-slate-800 text-xs sm:text-sm font-mono italic max-w-md shadow-inner">
             "{voice.interimTranscript}"
           </div>
         )}
 
         {/* Spoken Query Suggestions */}
-        <div className="w-full pt-2">
-          <div className="text-xs font-semibold text-slate-400 mb-2 flex items-center justify-center gap-1.5">
-            <HelpCircle className="w-3.5 h-3.5 text-sky-400" />
+        <div className="w-full pt-1">
+          <div className="text-xs font-semibold text-slate-400 dark:text-slate-400 light:text-slate-500 mb-2 flex items-center justify-center gap-1.5 font-mono">
+            <HelpCircle className="w-3.5 h-3.5 text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700" />
             <span>Try speaking these queries in {inputLangConfig.name}:</span>
           </div>
           <div className="flex flex-wrap justify-center gap-2">
@@ -358,7 +413,7 @@ export function VoiceStudioView({
                 key={i}
                 onClick={() => handleSendVoiceQuery(prompt)}
                 disabled={isProcessing || voice.isListening}
-                className="px-3 py-1.5 rounded-xl bg-slate-950/60 hover:bg-slate-800 border border-slate-800 hover:border-sky-500/40 text-xs text-slate-300 hover:text-white transition-all text-left"
+                className="px-2.5 py-1.5 rounded-[4px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-50 hover:bg-[#252A32] dark:hover:bg-[#252A32] light:hover:bg-slate-100 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 hover:border-[#8ECAE6]/40 dark:hover:border-[#8ECAE6]/40 light:hover:border-slate-400 text-xs font-mono text-slate-300 dark:text-slate-300 light:text-slate-700 hover:text-white dark:hover:text-white light:hover:text-slate-950 transition-colors text-left cursor-pointer disabled:opacity-40"
               >
                 "{prompt}"
               </button>
@@ -368,42 +423,42 @@ export function VoiceStudioView({
       </div>
 
       {/* Transcript History Feed */}
-      <div className="rounded-2xl bg-slate-900/70 dark:bg-slate-950/70 border border-slate-800 p-5 space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
-            <MessageSquare className="w-4 h-4 text-sky-400" />
+      <div className="rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 p-4 sm:p-5 space-y-4 transition-colors shadow-sm">
+        <div className="flex items-center justify-between border-b border-[#30353D] dark:border-[#30353D] light:border-slate-200 pb-3">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-100 dark:text-slate-100 light:text-slate-900 flex items-center gap-2 font-mono">
+            <MessageSquare className="w-4 h-4 text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700" />
             <span>Voice Conversation Transcript</span>
           </h3>
           <button
             onClick={() => setMessages([])}
-            className="text-[11px] text-slate-400 hover:text-white transition-colors"
+            className="text-[11px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 hover:text-slate-200 dark:hover:text-slate-200 light:hover:text-slate-800 transition-colors cursor-pointer"
           >
             Clear History
           </button>
         </div>
 
-        <div className="space-y-3 max-h-72 overflow-y-auto pr-1 scrollbar-thin">
+        <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1 scrollbar-thin">
           {messages.map((m) => (
             <div
               key={m.id}
-              className={`p-3.5 rounded-xl text-xs leading-relaxed flex flex-col gap-1 ${
+              className={`p-3 rounded-[6px] text-xs leading-relaxed flex flex-col gap-1 ${
                 m.sender === "user"
-                  ? "bg-sky-500/15 border border-sky-500/30 text-white ml-8"
-                  : "bg-slate-950/70 border border-slate-800 text-slate-300 mr-8"
+                  ? "bg-[#252A32] dark:bg-[#252A32] light:bg-sky-50 border border-[#30353D] dark:border-[#30353D] light:border-sky-200 text-slate-100 dark:text-slate-100 light:text-slate-900 ml-6 sm:ml-8"
+                  : "bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-50 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 text-slate-200 dark:text-slate-200 light:text-slate-800 mr-6 sm:mr-8"
               }`}
             >
-              <div className="flex items-center justify-between text-[10px] text-slate-400">
-                <span className="font-semibold text-slate-300">
+              <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500">
+                <span className="font-semibold text-slate-300 dark:text-slate-300 light:text-slate-700">
                   {m.sender === "user" ? "You (Spoken)" : "WeatherGPT Audio"}
                 </span>
                 <span>{m.timestamp}</span>
               </div>
-              <p className="text-slate-200">{m.text}</p>
+              <p className="text-slate-200 dark:text-slate-200 light:text-slate-800">{m.text}</p>
               {m.sender === "assistant" && (
                 <div className="pt-1 flex justify-end">
                   <button
                     onClick={() => voice.speak(m.text, m.language || voice.effectiveOutputLanguage, true)}
-                    className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-sky-400 text-[10px] font-medium"
+                    className="flex items-center gap-1 px-2 py-0.5 rounded-[3px] bg-[#252A32] dark:bg-[#252A32] light:bg-slate-200 hover:bg-[#30353D] dark:hover:bg-[#30353D] light:hover:bg-slate-300 text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700 border border-[#30353D] dark:border-[#30353D] light:border-slate-300 text-[10px] font-mono font-medium cursor-pointer transition-colors"
                   >
                     <Volume2 className="w-3 h-3" />
                     <span>Replay Audio</span>

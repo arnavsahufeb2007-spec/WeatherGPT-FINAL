@@ -43,72 +43,72 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+    <div id="auth-modal" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 animate-in fade-in duration-200">
       <div
-        className="w-full max-w-md bg-slate-900 text-slate-100 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden"
+        className="w-full max-w-md bg-[#171C23] text-slate-100 border border-[#30353D] rounded-[8px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-5 border-b border-slate-800 bg-slate-950/60 flex items-center justify-between">
+        <div className="p-4 sm:p-5 border-b border-[#30353D] bg-[#1B2027] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center shadow-md shadow-sky-500/20">
-              <Sparkles className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-[6px] bg-[#252A32] border border-[#30353D] flex items-center justify-center text-[#8ECAE6]">
+              <Sparkles className="w-4 h-4 text-[#8ECAE6]" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white">WeatherGPT Account</h3>
-              <p className="text-xs text-slate-400">Cloud history, sync & preferences</p>
+              <h3 className="text-sm sm:text-base font-bold font-mono text-slate-100">WeatherGPT Account</h3>
+              <p className="text-xs font-mono text-slate-400">Cloud history, sync & preferences</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-1.5 rounded-[4px] text-slate-400 hover:text-white hover:bg-[#252A32] transition-colors cursor-pointer"
             aria-label="Close modal"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-5">
+        <div className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
           {error && (
-            <div className="p-3.5 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-200 text-xs flex items-start gap-2.5">
+            <div className="p-3 rounded-[6px] bg-rose-950/40 border border-rose-500/30 text-rose-200 text-xs font-mono flex items-start gap-2.5">
               <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
               <div className="flex-1 leading-relaxed">{error}</div>
             </div>
           )}
 
           {!supabaseConfigured && (
-            <div className="p-3.5 rounded-xl bg-amber-950/40 border border-amber-500/30 text-amber-200 text-xs flex items-start gap-2.5">
-              <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            <div className="p-3 rounded-[6px] bg-amber-950/40 border border-amber-500/30 text-amber-200 text-xs font-mono flex items-start gap-2.5">
+              <ShieldCheck className="w-4 h-4 text-[#F4A261] shrink-0 mt-0.5" />
               <div className="flex-1 leading-relaxed">
-                Supabase database is not yet linked. Set <code className="bg-amber-950 px-1 py-0.5 rounded text-amber-300 font-mono">VITE_SUPABASE_URL</code> and <code className="bg-amber-950 px-1 py-0.5 rounded text-amber-300 font-mono">VITE_SUPABASE_ANON_KEY</code> in your environment to enable real Google OAuth cloud sync. You can continue seamlessly in Guest mode right now.
+                Supabase database is not yet linked. Set <code className="bg-[#1B2027] border border-[#30353D] px-1 py-0.5 rounded-[3px] text-[#F4A261] font-mono">VITE_SUPABASE_URL</code> and <code className="bg-[#1B2027] border border-[#30353D] px-1 py-0.5 rounded-[3px] text-[#F4A261] font-mono">VITE_SUPABASE_ANON_KEY</code> in your environment to enable real Google OAuth cloud sync. You can continue seamlessly in Guest mode right now.
               </div>
             </div>
           )}
 
           <div className="text-center space-y-1.5">
-            <h4 className="text-sm font-semibold text-white">Sign In with Google</h4>
-            <p className="text-xs text-slate-400">
+            <h4 className="text-xs sm:text-sm font-semibold font-mono text-slate-100">Sign In with Google</h4>
+            <p className="text-xs font-mono text-slate-400 leading-relaxed">
               Connect your verified Google account via Supabase Auth. Your meteorological data and conversation history are protected by PostgreSQL Row Level Security (RLS).
             </p>
           </div>
 
-          <div className="space-y-3 pt-1">
+          <div className="space-y-2.5 pt-1">
             {/* Google OAuth Button */}
             <button
               type="button"
               onClick={handleGoogleSignIn}
               disabled={isLoading}
-              className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-semibold text-sm shadow-md shadow-white/5 transition-all cursor-pointer disabled:opacity-60"
+              className="w-full flex items-center justify-center gap-2.5 py-2.5 px-4 rounded-[4px] bg-white hover:bg-slate-100 text-slate-900 font-mono font-semibold text-xs transition-colors cursor-pointer disabled:opacity-60"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin text-slate-700" />
+                  <Loader2 className="w-4 h-4 animate-spin text-slate-700" />
                   <span>Connecting to Google...</span>
                 </>
               ) : (
                 <>
-                  <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                     <path
                       fill="#4285F4"
                       d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -135,7 +135,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
             <button
               type="button"
               onClick={handleContinueAsGuest}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-medium border border-slate-700/80 transition-colors cursor-pointer"
+              className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-[4px] bg-[#1B2027] hover:bg-[#252A32] text-slate-300 hover:text-white text-xs font-mono border border-[#30353D] transition-colors cursor-pointer"
             >
               <span>Continue as Guest (No Cloud Sync)</span>
             </button>
@@ -143,7 +143,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
         </div>
 
         {/* Footer */}
-        <div className="p-3.5 bg-slate-950/70 border-t border-slate-800 text-center text-[11px] text-slate-400">
+        <div className="p-3 bg-[#1B2027] border-t border-[#30353D] text-center text-[10px] font-mono text-slate-400">
           PostgreSQL Row Level Security • Strict Data Privacy
         </div>
       </div>

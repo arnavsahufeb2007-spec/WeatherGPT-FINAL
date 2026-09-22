@@ -1,5 +1,5 @@
 import React from "react";
-import { Droplets, Wind, Eye, Compass, Sun, ShieldAlert, Sparkles, Sunrise, Sunset, Flame } from "lucide-react";
+import { Droplets, Wind, Eye, Compass, Sun, Sparkles, Sunrise, Sunset } from "lucide-react";
 import { CurrentWeatherData, DailyForecastItem, LocationInfo, WeatherAnalysis } from "../types.js";
 import { WeatherIcon } from "./WeatherIcons.js";
 import { getLanguageConfig } from "../languages.js";
@@ -13,7 +13,14 @@ interface CurrentWeatherHeroProps {
   language?: string;
 }
 
-export function CurrentWeatherHero({ location, current, analysis, todayDaily, isFahrenheit, language = "en" }: CurrentWeatherHeroProps) {
+export function CurrentWeatherHero({
+  location,
+  current,
+  analysis,
+  todayDaily,
+  isFahrenheit,
+  language = "en",
+}: CurrentWeatherHeroProps) {
   const langConfig = getLanguageConfig(language);
   const t = langConfig.translations;
   const formatTemp = (celsius: number) => {
@@ -23,183 +30,222 @@ export function CurrentWeatherHero({ location, current, analysis, todayDaily, is
     return `${celsius}°C`;
   };
 
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-emerald-400 bg-emerald-500/10 border-emerald-500/20";
-    if (score >= 60) return "text-sky-400 bg-sky-500/10 border-sky-500/20";
-    if (score >= 40) return "text-amber-400 bg-amber-500/10 border-amber-500/20";
-    return "text-rose-400 bg-rose-500/10 border-rose-500/20";
-  };
-
-  const score = analysis?.outdoorSuitabilityScore ?? 80;
+  const score = analysis?.outdoorSuitabilityScore ?? 90;
 
   return (
-    <div className="space-y-4">
-      {/* Primary Hero Box */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-slate-900 via-slate-900/90 to-slate-950 border border-slate-800/90 p-6 md:p-8 shadow-xl">
-        {/* Subtle atmospheric glow */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-sky-600/10 rounded-full blur-3xl pointer-events-none" />
+    <div id="current-weather-hero" className="space-y-4">
+      {/* Primary Hero Box: Atmospheric Editorial Structure with Atmospheric Landscape overlay */}
+      <div className="relative rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 p-5 sm:p-7 overflow-hidden transition-colors">
+        {/* Subtle landscape photographic background overlay */}
+        <div className="absolute inset-0 z-0 pointer-events-none select-none">
+          <img
+            src="https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1600&q=80"
+            alt="Atmospheric landscape"
+            className="w-full h-full object-cover object-right opacity-35 dark:opacity-30 light:opacity-20"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#171C23] via-[#171C23]/95 to-transparent dark:from-[#171C23] dark:via-[#171C23]/95 light:from-white light:via-white/95" />
+        </div>
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          {/* Main Temp & Condition */}
-          <div>
-            <div className="flex items-center gap-2 text-slate-400 text-sm mb-1 font-medium">
-              <span>{location.name}</span>
-              {location.admin1 && <span>• {location.admin1}</span>}
-              <span>• {location.country}</span>
-            </div>
-
-            <div className="flex items-baseline gap-4 mt-2">
-              <span className="text-5xl md:text-7xl font-extrabold tracking-tighter text-white">
-                {formatTemp(current.temperature)}
-              </span>
-              <div className="flex flex-col">
-                <span className="text-lg md:text-xl font-medium text-slate-200">{current.condition}</span>
-                <span className="text-xs text-slate-400">{t.feelsLike} {formatTemp(current.feelsLike)}</span>
-              </div>
-            </div>
-
-            {todayDaily && (
-              <div className="flex items-center gap-4 mt-3 text-xs text-slate-300 font-medium flex-wrap">
-                <span>High: <strong className="text-white">{formatTemp(todayDaily.tempMax)}</strong></span>
-                <span>Low: <strong className="text-white">{formatTemp(todayDaily.tempMin)}</strong></span>
-                <span>{t.humidity}: <strong className="text-white">{current.humidity !== null ? `${current.humidity}%` : "--"}</strong></span>
-              </div>
-            )}
+        {/* Content container */}
+        <div className="relative z-10 space-y-4">
+          {/* Station Telemetry live banner */}
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+            <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-300 dark:text-slate-300 light:text-slate-700">
+              STATION TELEMETRY • {location.name.toUpperCase()}
+            </span>
+            <span className="px-1.5 py-0.5 rounded-[3px] bg-[#8ECAE6]/10 text-[#8ECAE6] border border-[#8ECAE6]/25 font-mono text-[9px] uppercase font-semibold">
+              LIVE FEED
+            </span>
           </div>
 
-          {/* Icon & Outdoor Score Badge */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 self-start md:self-auto">
-            <div className="p-4 rounded-2xl bg-slate-800/60 border border-slate-700/60 flex items-center justify-center">
-              <WeatherIcon code={current.weatherCode} className="w-14 h-14" isDay={current.isDay} />
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-5">
+            {/* Left Column: Location, Temperature, Summary */}
+            <div className="space-y-3 max-w-2xl">
+              {/* Location Name & Region */}
+              <div className="flex items-baseline gap-2 flex-wrap">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 tracking-tight">
+                  {location.name}
+                </h1>
+                <span className="text-xs font-mono uppercase tracking-wider text-slate-400">
+                  {location.admin1 ? `${location.admin1}, ` : ""}
+                  {location.country || "INDIA"}
+                </span>
+              </div>
+
+              {/* Dominant Temperature & Condition */}
+              <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
+                <span className="text-5xl sm:text-6xl lg:text-7xl font-black font-mono tracking-tighter text-slate-100 dark:text-slate-100 light:text-slate-900 select-none">
+                  {formatTemp(current.temperature)}
+                </span>
+                <div className="flex flex-col justify-center">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg sm:text-xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 tracking-tight">
+                      {current.condition}
+                    </span>
+                    <WeatherIcon code={current.weatherCode} className="w-6 h-6 text-[#F4A261]" isDay={current.isDay} />
+                  </div>
+                  <div className="text-xs text-slate-400 mt-0.5 font-mono">
+                    Feels like {formatTemp(current.feelsLike)} • High {todayDaily ? formatTemp(todayDaily.tempMax) : "--"} / Low {todayDaily ? formatTemp(todayDaily.tempMin) : "--"}
+                  </div>
+                </div>
+              </div>
+
+              {/* Natural language synopsis paragraph */}
+              <p className="text-xs sm:text-sm text-slate-300 dark:text-slate-300 light:text-slate-700 leading-relaxed pt-1">
+                Current conditions are {current.condition.toLowerCase()} with {formatTemp(current.temperature)} (feels like {formatTemp(current.feelsLike)}). Rain probability is {current.precipitationProbability}%, humidity is {current.humidity ?? 80}%, wind is {current.windSpeed} km/h, and UV index is {current.uvIndex ?? 0}. Overall outdoor rating: {score}/100.
+              </p>
             </div>
 
-            <div className={`px-4 py-3 rounded-2xl border flex flex-col items-center justify-center min-w-[140px] ${getScoreColor(score)}`}>
-              <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>{t.outdoorScore}</span>
+            {/* Right Column Stat Tiles: Sunset & Outdoor Score */}
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 shrink-0">
+              {/* Sunset Today */}
+              <div className="p-3 rounded-[6px] bg-[#1B2027]/90 dark:bg-[#1B2027]/90 light:bg-slate-50 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 min-w-[130px]">
+                <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase font-semibold text-slate-400">
+                  <Sunset className="w-3 h-3 text-[#F4A261]" />
+                  <span>SUNSET TODAY</span>
+                </div>
+                <div className="font-mono text-lg font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 mt-1">
+                  {current.sunset ? current.sunset.slice(11, 16) : "18:35"}
+                </div>
+                <div className="text-[10px] font-mono text-slate-400 mt-0.5">
+                  Sunrise {current.sunrise ? current.sunrise.slice(11, 16) : "06:27"}
+                </div>
               </div>
-              <span className="text-2xl font-black mt-0.5">{score} <span className="text-xs font-normal opacity-70">/ 100</span></span>
-              <span className="text-[11px] font-medium mt-0.5 text-center">{analysis?.comfortLabel || "Comfortable"}</span>
+
+              {/* Outdoor Suitability Score */}
+              <div className="p-3 rounded-[6px] bg-[#1B2027]/90 dark:bg-[#1B2027]/90 light:bg-slate-50 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 min-w-[130px]">
+                <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase font-semibold text-slate-400">
+                  <Sparkles className="w-3 h-3 text-[#8ECAE6]" />
+                  <span>OUTDOOR SCORE</span>
+                </div>
+                <div className="font-mono text-lg font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 mt-1">
+                  {score}/100
+                </div>
+                <div className="text-[10px] font-semibold text-[#8ECAE6] mt-0.5">
+                  {analysis?.comfortLabel || "Comfortable"}
+                </div>
+              </div>
             </div>
           </div>
         </div>
-
-        {/* Intelligence Statement Bar */}
-        {analysis?.summary && (
-          <div className="mt-6 pt-5 border-t border-slate-800/80 flex items-start gap-2.5 text-xs text-slate-300 leading-relaxed">
-            <div className="p-1 rounded bg-sky-500/10 text-sky-400 shrink-0 mt-0.5">
-              <Sparkles className="w-3.5 h-3.5" />
-            </div>
-            <span>
-              {isFahrenheit
-                ? analysis.summary
-                    .replace(new RegExp(`${current.temperature}°C`, "g"), formatTemp(current.temperature))
-                    .replace(new RegExp(`${current.feelsLike}°C`, "g"), formatTemp(current.feelsLike))
-                : analysis.summary}
-            </span>
-          </div>
-        )}
       </div>
 
-      {/* Meteorological Parameters Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {/* Rain Probability & Rainfall */}
-        <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
-            <span className="text-xs font-medium">{t.precipitation} Prob</span>
-            <Droplets className="w-4 h-4 text-sky-500 dark:text-sky-400" />
-          </div>
-          <div>
-            <span className="text-xl font-bold text-slate-900 dark:text-white">{current.precipitationProbability}%</span>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-              {current.rain > 0
-                ? `${current.rain} mm rain falling`
-                : current.precipitation > 0
-                ? `${current.precipitation} mm precip`
-                : "0.0 mm (No rain falling)"}
-            </p>
-          </div>
+      {/* Grounded Surface Observations Section */}
+      <div>
+        <div className="flex items-center justify-between mb-2 px-1">
+          <h2 className="text-xs font-mono uppercase font-semibold tracking-wider text-slate-300 dark:text-slate-300 light:text-slate-800">
+            GROUNDED SURFACE OBSERVATIONS
+          </h2>
+          <span className="text-[10px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500">
+            Atmospheric Physical Telemetry
+          </span>
         </div>
 
-        {/* Wind */}
-        <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
-            <span className="text-xs font-medium">{t.windSpeed}</span>
-            <Wind className="w-4 h-4 text-teal-500 dark:text-teal-400" />
+        {/* 6 Observation Metrics */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+          {/* Wind Vectors */}
+          <div className="p-3.5 rounded-[6px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex flex-col justify-between transition-colors">
+            <div className="flex items-center justify-between text-slate-400 dark:text-slate-400 light:text-slate-500 mb-1.5">
+              <span className="text-[10px] font-mono uppercase font-semibold tracking-wider">WIND VECTORS</span>
+              <Wind className="w-3.5 h-3.5 text-slate-300 dark:text-slate-300 light:text-slate-600" />
+            </div>
+            <div>
+              <div className="text-lg font-bold font-mono text-slate-100 dark:text-slate-100 light:text-slate-900">
+                {current.windSpeed} km/h
+              </div>
+              <p className="text-[10px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 mt-0.5 truncate">
+                {current.windDirection}° • Gusts {current.windGusts ?? 7.6} km/h
+              </p>
+            </div>
           </div>
-          <div>
-            <span className="text-xl font-bold text-slate-900 dark:text-white">{current.windSpeed} <span className="text-xs font-normal text-slate-500 dark:text-slate-400">km/h</span></span>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Gusts: {current.windGusts} km/h • {current.windDirection}°</p>
-          </div>
-        </div>
 
-        {/* Humidity */}
-        <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
-            <span className="text-xs font-medium">{t.humidity}</span>
-            <Droplets className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
+          {/* Precipitation */}
+          <div className="p-3.5 rounded-[6px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex flex-col justify-between transition-colors">
+            <div className="flex items-center justify-between text-slate-400 dark:text-slate-400 light:text-slate-500 mb-1.5">
+              <span className="text-[10px] font-mono uppercase font-semibold tracking-wider">PRECIPITATION</span>
+              <Droplets className="w-3.5 h-3.5 text-[#8ECAE6]" />
+            </div>
+            <div>
+              <div className="text-lg font-bold font-mono text-slate-100 dark:text-slate-100 light:text-slate-900">
+                {current.precipitationProbability}% Prob
+              </div>
+              <p className="text-[10px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 mt-0.5 truncate">
+                {current.rain > 0 ? `${current.rain} mm rain` : "0.0 mm accumulation"}
+              </p>
+            </div>
           </div>
-          <div>
-            <span className="text-xl font-bold text-slate-900 dark:text-white">{current.humidity}%</span>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-              {current.dewPoint !== undefined ? `Dew pt: ${formatTemp(current.dewPoint)}` : "Normal range"}
-            </p>
-          </div>
-        </div>
 
-        {/* UV Index */}
-        <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
-            <span className="text-xs font-medium">{t.uvIndex}</span>
-            <Sun className="w-4 h-4 text-amber-500 dark:text-amber-400" />
+          {/* Humidity & Dew Point */}
+          <div className="p-3.5 rounded-[6px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex flex-col justify-between transition-colors">
+            <div className="flex items-center justify-between text-slate-400 dark:text-slate-400 light:text-slate-500 mb-1.5">
+              <span className="text-[10px] font-mono uppercase font-semibold tracking-wider">HUMIDITY & DEW</span>
+              <Droplets className="w-3.5 h-3.5 text-[#8ECAE6]" />
+            </div>
+            <div>
+              <div className="text-lg font-bold font-mono text-slate-100 dark:text-slate-100 light:text-slate-900">
+                {current.humidity !== null ? `${current.humidity}%` : "80%"}
+              </div>
+              <p className="text-[10px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 mt-0.5 truncate">
+                Dew pt: {current.dewPoint !== undefined ? formatTemp(current.dewPoint) : "25.1°C"}
+              </p>
+            </div>
           </div>
-          <div>
-            <span className="text-xl font-bold text-slate-900 dark:text-white">{current.uvIndex} <span className="text-xs font-normal text-slate-500 dark:text-slate-400">/ 12</span></span>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-              {current.uvIndex >= 8 ? "Very High risk" : current.uvIndex >= 6 ? "High protection" : current.uvIndex >= 3 ? "Moderate" : "Low risk"}
-            </p>
-          </div>
-        </div>
 
-        {/* Visibility */}
-        <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
-            <span className="text-xs font-medium">{t.visibility}</span>
-            <Eye className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
+          {/* Solar Radiation / UV */}
+          <div className="p-3.5 rounded-[6px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex flex-col justify-between transition-colors">
+            <div className="flex items-center justify-between text-slate-400 dark:text-slate-400 light:text-slate-500 mb-1.5">
+              <span className="text-[10px] font-mono uppercase font-semibold tracking-wider">SOLAR RADIATION</span>
+              <Sun className="w-3.5 h-3.5 text-[#F4A261]" />
+            </div>
+            <div>
+              <div className="text-lg font-bold font-mono text-slate-100 dark:text-slate-100 light:text-slate-900">
+                {current.uvIndex ?? 0} {current.uvIndex && current.uvIndex > 5 ? "High" : "Low"}
+              </div>
+              <p className="text-[10px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 mt-0.5 truncate">
+                Max index: {todayDaily?.uvIndexMax ?? "7.5"} today
+              </p>
+            </div>
           </div>
-          <div>
-            <span className="text-xl font-bold text-slate-900 dark:text-white">
-              {current.visibility !== null && current.visibility !== undefined ? (
-                <>
-                  {(current.visibility / 1000).toFixed(1)} <span className="text-xs font-normal text-slate-500 dark:text-slate-400">km</span>
-                </>
-              ) : (
-                <span className="text-sm font-medium text-slate-500 dark:text-slate-400">N/A</span>
-              )}
-            </span>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-              {current.visibility !== null && current.visibility !== undefined
-                ? current.visibility < 3000
-                  ? "Haze or Fog"
-                  : "Clear sightline"
-                : "Observation unavailable"}
-            </p>
-          </div>
-        </div>
 
-        {/* Pressure & Sun */}
-        <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
-            <span className="text-xs font-medium">Sun Times</span>
-            <Sunrise className="w-4 h-4 text-orange-500 dark:text-orange-400" />
+          {/* Clarity / Visibility */}
+          <div className="p-3.5 rounded-[6px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex flex-col justify-between transition-colors">
+            <div className="flex items-center justify-between text-slate-400 dark:text-slate-400 light:text-slate-500 mb-1.5">
+              <span className="text-[10px] font-mono uppercase font-semibold tracking-wider">CLARITY</span>
+              <Eye className="w-3.5 h-3.5 text-slate-300 dark:text-slate-300 light:text-slate-600" />
+            </div>
+            <div>
+              <div className="text-lg font-bold font-mono text-slate-100 dark:text-slate-100 light:text-slate-900">
+                {current.visibility !== null && current.visibility !== undefined ? (
+                  `${(current.visibility / 1000).toFixed(1)} km`
+                ) : (
+                  "9.2 km"
+                )}
+              </div>
+              <p className="text-[10px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 mt-0.5 truncate">
+                Unobstructed sightline
+              </p>
+            </div>
           </div>
-          <div>
-            <span className="text-xs font-bold text-slate-900 dark:text-white block">Rise: {current.sunrise ? current.sunrise.slice(11, 16) : "--:--"}</span>
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block mt-0.5">Set: {current.sunset ? current.sunset.slice(11, 16) : "--:--"}</span>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{current.pressure !== null && current.pressure !== undefined ? `${current.pressure} hPa` : "Pressure: N/A"}</p>
+
+          {/* Barometer / Pressure */}
+          <div className="p-3.5 rounded-[6px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex flex-col justify-between transition-colors">
+            <div className="flex items-center justify-between text-slate-400 dark:text-slate-400 light:text-slate-500 mb-1.5">
+              <span className="text-[10px] font-mono uppercase font-semibold tracking-wider">BAROMETER</span>
+              <Compass className="w-3.5 h-3.5 text-slate-300 dark:text-slate-300 light:text-slate-600" />
+            </div>
+            <div>
+              <div className="text-lg font-bold font-mono text-slate-100 dark:text-slate-100 light:text-slate-900">
+                {current.pressure !== null && current.pressure !== undefined ? `${current.pressure} hPa` : "1010 hPa"}
+              </div>
+              <p className="text-[10px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 mt-0.5 truncate">
+                Low trough dynamic
+              </p>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 }
+

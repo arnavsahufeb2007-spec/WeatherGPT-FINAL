@@ -384,8 +384,8 @@ export default function App() {
   return (
     <div
       className={`min-h-screen ${
-        isDark ? "bg-[#080f1a] text-slate-100" : "bg-slate-50 text-slate-900"
-      } flex flex-col selection:bg-sky-500 selection:text-white transition-colors`}
+        isDark ? "bg-[#0F141B] text-slate-100" : "bg-[#F8FAFC] text-slate-900"
+      } flex flex-col selection:bg-[#8ECAE6]/30 selection:text-white transition-colors`}
     >
       {/* Device Mode Preview Switcher Top Bar */}
       <DevicePreviewBar
@@ -435,7 +435,7 @@ export default function App() {
 
             {/* Error Banner */}
             {error && (
-              <div className="mx-4 lg:mx-8 mt-4 p-4 rounded-2xl bg-rose-950/40 border border-rose-500/30 flex items-center justify-between text-xs text-rose-300">
+              <div className="mx-4 lg:mx-8 mt-4 p-3.5 rounded-[6px] bg-rose-950/30 border border-rose-500/30 flex items-center justify-between text-xs text-rose-300">
                 <div className="flex items-center gap-2.5">
                   <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
                   <span>{error}</span>
@@ -456,35 +456,35 @@ export default function App() {
             <main className="flex-1 max-w-6xl w-full mx-auto px-4 lg:px-8 py-6">
               {/* No Location Welcome Hero */}
               {!currentLocation && !loading && (
-                <div className="py-16 text-center max-w-xl mx-auto space-y-6">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-sky-500/20 to-indigo-600/20 border border-sky-500/30 flex items-center justify-center mx-auto shadow-lg shadow-sky-500/10">
-                    <Globe className="w-8 h-8 text-sky-400" />
+                <div className="py-16 text-center max-w-xl mx-auto space-y-5">
+                  <div className="w-12 h-12 rounded-[6px] bg-[#171C23] border border-[#30353D] flex items-center justify-center mx-auto text-[#8ECAE6]">
+                    <Globe className="w-6 h-6 text-[#8ECAE6]" />
                   </div>
-                  <div className="space-y-2">
-                    <h2 className="text-2xl font-bold tracking-tight text-white dark:text-white light:text-slate-900">
+                  <div className="space-y-1.5">
+                    <h2 className="text-xl font-bold tracking-tight text-slate-100 dark:text-slate-100 light:text-slate-900">
                       Welcome to WeatherGPT
                     </h2>
-                    <p className="text-sm text-slate-400 dark:text-slate-400 light:text-slate-600 leading-relaxed">
+                    <p className="text-xs text-slate-400 dark:text-slate-400 light:text-slate-600 leading-relaxed max-w-md mx-auto">
                       Search and select any city worldwide to access verified weather observations, deterministic
                       forecasts, and conversational AI insights.
                     </p>
                   </div>
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2">
                     <button
                       id="welcome-search-location-btn"
                       onClick={() => setIsLocationSearchOpen(true)}
-                      className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-sm font-semibold shadow-lg shadow-sky-500/25 transition-all cursor-pointer"
+                      className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-[4px] bg-[#252A32] dark:bg-[#252A32] light:bg-slate-900 hover:bg-[#30353D] dark:hover:bg-[#30353D] light:hover:bg-slate-800 text-slate-100 dark:text-slate-100 light:text-white border border-[#30353D] dark:border-[#30353D] light:border-slate-800 text-xs font-semibold transition-colors cursor-pointer"
                     >
-                      <Search className="w-4 h-4" />
+                      <Search className="w-3.5 h-3.5 text-[#8ECAE6]" />
                       <span>Search Location Worldwide</span>
                     </button>
                     <button
                       id="welcome-use-gps-btn"
                       onClick={handleUseGeolocation}
                       disabled={isDetectingLocation}
-                      className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-slate-900 dark:bg-slate-900 light:bg-slate-200 hover:bg-slate-800 border border-slate-800 dark:border-slate-800 light:border-slate-300 text-slate-200 dark:text-slate-200 light:text-slate-800 text-sm font-medium transition-colors cursor-pointer"
+                      className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-[4px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-100 hover:bg-[#252A32] dark:hover:bg-[#252A32] light:hover:bg-slate-200 border border-[#30353D] dark:border-[#30353D] light:border-slate-300 text-slate-300 dark:text-slate-300 light:text-slate-800 text-xs font-medium transition-colors cursor-pointer"
                     >
-                      <Navigation className={`w-4 h-4 text-sky-400 ${isDetectingLocation ? "animate-spin" : ""}`} />
+                      <Navigation className={`w-3.5 h-3.5 text-[#8ECAE6] ${isDetectingLocation ? "animate-spin" : ""}`} />
                       <span>Use Current GPS</span>
                     </button>
                   </div>
@@ -533,12 +533,12 @@ export default function App() {
 
               {/* 2. FORECAST SECTION: Detailed Hourly Chart, 7-Day List, Advisories */}
               {currentSection === "forecast" && (
-                <div className="space-y-6">
+                <div className="space-y-4">
                   {currentWeather && currentLocation ? (
                     <>
                       {advisories.length > 0 && (
                         <div>
-                          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                          <h3 className="text-xs font-semibold text-slate-400 dark:text-slate-400 light:text-slate-600 uppercase tracking-wider mb-2 font-mono">
                             Active Meteorological Advisories
                           </h3>
                           <AdvisoriesCard advisories={advisories} />
@@ -550,13 +550,13 @@ export default function App() {
                       <DailyForecastList daily={dailyForecast} isFahrenheit={isFahrenheit} />
                     </>
                   ) : (
-                    <div className="py-16 text-center text-slate-400 text-sm">
+                    <div className="py-16 text-center text-slate-400 text-xs">
                       {loading ? (
                         "Loading verified forecast data..."
                       ) : (
                         <button
                           onClick={() => setIsLocationSearchOpen(true)}
-                          className="text-sky-400 underline font-medium"
+                          className="text-[#8ECAE6] hover:underline font-medium cursor-pointer"
                         >
                           Select a location to view hourly and 7-day forecast
                         </button>
@@ -568,7 +568,7 @@ export default function App() {
 
               {/* 3. AI INSIGHTS SECTION: Activity Weather Intelligence, Comfort, and Suitability */}
               {currentSection === "insights" && (
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-5">
                   {currentWeather && currentLocation ? (
                     <ActivityExplorer
                       location={currentLocation}
@@ -578,13 +578,13 @@ export default function App() {
                       isFahrenheit={isFahrenheit}
                     />
                   ) : (
-                    <div className="py-16 text-center text-slate-400 text-sm">
+                    <div className="py-16 text-center text-slate-400 text-xs font-mono">
                       {loading ? (
                         "Evaluating meteorological suitability..."
                       ) : (
                         <button
                           onClick={() => setIsLocationSearchOpen(true)}
-                          className="text-sky-400 underline font-medium"
+                          className="text-[#8ECAE6] hover:underline font-medium cursor-pointer"
                         >
                           Select a location to evaluate outdoor activities
                         </button>
@@ -596,14 +596,14 @@ export default function App() {
 
               {/* 4. TRAVEL SECTION: Travel & Route Weather Intelligence */}
               {currentSection === "travel" && (
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-5">
                   <TravelPlanner isFahrenheit={isFahrenheit} currentLocation={currentLocation} />
                 </div>
               )}
 
               {/* 5. VOICE SECTION: Dedicated Multilingual Hands-Free Voice Studio */}
               {currentSection === "voice" && (
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-5">
                   <VoiceStudioView
                     currentLocation={currentLocation}
                     preferredLanguage={preferredLanguage}
@@ -617,7 +617,7 @@ export default function App() {
 
               {/* 6. EXPLORE SECTION: Curated Hubs & Side-by-Side Comparison */}
               {currentSection === "explore" && (
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-5">
                   <ExploreView
                     currentLocation={currentLocation}
                     onSelectLocation={handleSelectLocation}
@@ -629,7 +629,7 @@ export default function App() {
 
               {/* 7. CLOUD HISTORY SECTION: Search, Restore, and Manage Sessions */}
               {currentSection === "history" && (
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-5">
                   <HistoryView
                     currentUser={currentUser}
                     activeConversationId={activeConversationId}
@@ -642,7 +642,7 @@ export default function App() {
 
               {/* 8. SETTINGS SECTION: Profile, Appearance, Units, Languages, Voice Dialects */}
               {currentSection === "settings" && (
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-5">
                   <SettingsView
                     currentUser={currentUser}
                     onOpenAuth={() => setCurrentSection("auth")}
@@ -677,7 +677,7 @@ export default function App() {
 
               {/* 8. AUTH SECTION: Dedicated Modern Login & Sign Up Page */}
               {currentSection === "auth" && (
-                <div className="py-2 sm:py-6">
+                <div className="space-y-4 sm:space-y-5">
                   <AuthPage
                     onSuccess={(user) => {
                       setCurrentUser(user);
@@ -690,16 +690,18 @@ export default function App() {
             </main>
 
             {/* Desktop / Laptop Subtle Footer */}
-            <footer className="mt-auto border-t border-slate-900/60 dark:border-slate-900/60 light:border-slate-200 bg-slate-950/40 dark:bg-slate-950/40 light:bg-slate-100/60 py-4 text-center text-xs text-slate-400 px-4">
-              <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-400 light:text-slate-500">
-                  <Sparkles className="w-3.5 h-3.5 text-sky-400" />
-                  <span>WeatherGPT • Deterministic Meteorological Intelligence</span>
+            <footer className="mt-auto border-t border-[#30353D] dark:border-[#30353D] light:border-slate-200 bg-[#171C23] dark:bg-[#171C23] light:bg-white py-3 text-center text-xs text-slate-400 px-4 transition-colors">
+              <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-slate-400 dark:text-slate-400 light:text-slate-600 text-xs">
+                  <Globe className="w-3.5 h-3.5 text-[#8ECAE6]" />
+                  <span>Atmospheric intelligence distilled from verified Open-Meteo & NOAA METAR telemetry</span>
                 </div>
-                <div className="flex items-center gap-3 text-[11px] text-slate-400 dark:text-slate-400 light:text-slate-500">
-                  <span>Open-Meteo & OSRM</span>
+                <div className="flex items-center gap-2 text-[11px] font-mono text-slate-500 dark:text-slate-400 light:text-slate-600">
+                  <span>OSRM Route Models</span>
                   <span>•</span>
-                  <span>30+ Indian & World Languages</span>
+                  <span>39+ Indian & Global Dialects</span>
+                  <span>•</span>
+                  <span>Strict Data Privacy</span>
                 </div>
               </div>
             </footer>

@@ -168,25 +168,82 @@ export function ExploreView({
   );
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      {/* Header Banner */}
-      <div className="rounded-2xl bg-gradient-to-r from-sky-900/30 via-slate-900 to-indigo-950/40 border border-slate-800 p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div id="explore-view" className="space-y-4 sm:space-y-5 max-w-6xl mx-auto">
+      {/* Explore Hero Banner with Telemetry HUD */}
+      <div className="relative rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 p-5 sm:p-6 overflow-hidden transition-colors shadow-lg">
+        <div className="absolute inset-0 z-0 pointer-events-none select-none">
+          <img
+            src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1600&q=80"
+            alt="Global Atmospheric Satellite View"
+            className="w-full h-full object-cover object-center opacity-30 dark:opacity-25 light:opacity-20"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0F141B] via-[#171C23]/95 to-[#171C23]/60 dark:from-[#0F141B] dark:via-[#171C23]/95 dark:to-[#171C23]/60 light:from-white light:via-white/95 light:to-white/80" />
+        </div>
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1.5 max-w-xl">
+            <div className="inline-flex items-center gap-2">
+              <span className="text-[10px] font-mono uppercase font-bold text-[#8ECAE6] tracking-wider px-2 py-0.5 rounded-[3px] bg-[#0F141B]/80 border border-[#8ECAE6]/30">
+                SYNOPTIC RADAR • GLOBAL & INDIAN METRO CORRIDORS
+              </span>
+              <span className="flex h-1.5 w-1.5 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400"></span>
+              </span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 font-mono tracking-tight">
+              Explore & Compare Weather
+            </h2>
+            <p className="text-xs text-slate-300 dark:text-slate-300 light:text-slate-700 leading-relaxed">
+              Discover deterministic physical weather patterns across Indian regional hubs, global metropolitan centers, and compare atmospheric parameters side-by-side.
+            </p>
+          </div>
+
+          {/* Telemetry HUD */}
+          <div className="bg-[#0F141B]/80 dark:bg-[#0F141B]/80 light:bg-slate-100/90 backdrop-blur-md border border-[#30353D] dark:border-[#30353D] light:border-slate-300 p-3 rounded-[6px] hidden sm:flex flex-col gap-1.5 min-w-[210px] text-[11px] font-mono shrink-0 shadow-inner">
+            <div className="flex items-center justify-between text-slate-400">
+              <span className="text-[10px] uppercase tracking-wider text-slate-400">SATELLITE ORBIT</span>
+              <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse"></span> INSAT-3D
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-slate-300">
+              <span className="text-[10px] text-slate-400">METRO HUBS:</span>
+              <span className="text-[#8ECAE6] font-semibold">{FEATURED_HUBS.length} STATIONS</span>
+            </div>
+            <div className="flex items-center justify-between text-slate-300">
+              <span className="text-[10px] text-slate-400">DATA SYNC:</span>
+              <span className="text-slate-200 font-semibold">HOURLY DELTA</span>
+            </div>
+            <div className="flex items-center justify-between text-slate-300">
+              <span className="text-[10px] text-slate-400">GRID PRECISION:</span>
+              <span className="text-[#F4A261] font-semibold">0.05° RESOLUTION</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Sub-bar */}
+      <div className="rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 p-4 sm:p-5 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
         <div>
           <div className="flex items-center gap-2">
-            <Compass className="w-5 h-5 text-sky-400" />
-            <h2 className="text-xl font-bold text-white tracking-tight">Explore & Compare Weather</h2>
+            <Compass className="w-4 h-4 text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700" />
+            <h3 className="text-xs font-semibold text-slate-100 dark:text-slate-100 light:text-slate-900 uppercase font-mono tracking-wider">
+              REGIONAL & WORLD TELEMETRY
+            </h3>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
-            Discover meteorological patterns across major Indian hubs, global capitals, and compare destinations side by side
+          <p className="text-xs font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 mt-0.5">
+            Switch between curated metropolitan hubs or compare multi-city microclimates
           </p>
         </div>
 
         {/* Tab switch between Hubs and Comparison View */}
-        <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+        <div className="inline-flex items-center gap-1 bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-100 p-1 rounded-[4px] border border-[#30353D] dark:border-[#30353D] light:border-slate-300 shrink-0 self-start md:self-auto">
           <button
             onClick={() => setActiveTab("hubs")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-              activeTab === "hubs" ? "bg-sky-500 text-white shadow-sm" : "text-slate-400 hover:text-white"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[3px] text-xs font-mono transition-colors cursor-pointer ${
+              activeTab === "hubs"
+                ? "bg-[#F4A261] text-[#0F141B] font-bold border border-[#F4A261]"
+                : "text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-200 dark:hover:text-white light:hover:text-slate-900 font-medium"
             }`}
           >
             <Globe className="w-3.5 h-3.5" />
@@ -194,8 +251,10 @@ export function ExploreView({
           </button>
           <button
             onClick={() => setActiveTab("compare")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-              activeTab === "compare" ? "bg-sky-500 text-white shadow-sm" : "text-slate-400 hover:text-white"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[3px] text-xs font-mono transition-colors cursor-pointer ${
+              activeTab === "compare"
+                ? "bg-[#F4A261] text-[#0F141B] font-bold border border-[#F4A261]"
+                : "text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-200 dark:hover:text-white light:hover:text-slate-900 font-medium"
             }`}
           >
             <GitCompare className="w-3.5 h-3.5" />
@@ -205,22 +264,24 @@ export function ExploreView({
       </div>
 
       {activeTab === "hubs" ? (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-5">
           {/* Active Resolved Location Info Banner */}
           {currentLocation && (
-            <div className="p-4 rounded-2xl bg-sky-950/30 border border-sky-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="p-3.5 sm:p-4 rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors shadow-sm">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-sky-500/20 border border-sky-500/30 flex items-center justify-center text-sky-400 shrink-0">
-                  <MapPin className="w-5 h-5" />
+                <div className="w-9 h-9 rounded-[4px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-100 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex items-center justify-center text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700 shrink-0">
+                  <MapPin className="w-4 h-4" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-white">{currentLocation.name}</span>
-                    <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md bg-sky-500/20 text-sky-300">
+                    <span className="text-sm font-bold text-slate-100 dark:text-slate-100 light:text-slate-900">
+                      {currentLocation.name}
+                    </span>
+                    <span className="text-[10px] font-mono font-semibold uppercase px-1.5 py-0.5 rounded-[3px] bg-[#252A32] dark:bg-[#252A32] light:bg-sky-50 text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700 border border-[#8ECAE6]/30 dark:border-[#8ECAE6]/30 light:border-sky-300">
                       Active Location
                     </span>
                   </div>
-                  <p className="text-xs text-slate-300 mt-0.5">
+                  <p className="text-xs font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 mt-0.5 break-words">
                     {currentLocation.admin1 ? `${currentLocation.admin1}, ` : ""}
                     {currentLocation.country} • Timezone: {currentLocation.timezone || "Local"} • Coordinates: {currentLocation.latitude.toFixed(2)}°, {currentLocation.longitude.toFixed(2)}°
                   </p>
@@ -228,7 +289,7 @@ export function ExploreView({
               </div>
               <button
                 onClick={onOpenLocationSearch}
-                className="px-3 py-1.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 text-xs font-semibold self-start sm:self-auto transition-colors cursor-pointer"
+                className="px-3 py-1.5 rounded-[4px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-100 hover:bg-[#252A32] dark:hover:bg-[#252A32] light:hover:bg-slate-200 border border-[#30353D] dark:border-[#30353D] light:border-slate-300 text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700 text-xs font-mono font-medium self-start sm:self-auto transition-colors cursor-pointer shrink-0"
               >
                 Change Location
               </button>
@@ -237,27 +298,33 @@ export function ExploreView({
 
           {/* Filter Chips & Global Search Trigger */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-1.5 bg-slate-900/60 p-1 rounded-xl border border-slate-800">
+            <div className="inline-flex items-center gap-1 bg-[#171C23] dark:bg-[#171C23] light:bg-slate-100 p-1 rounded-[4px] border border-[#30353D] dark:border-[#30353D] light:border-slate-300 overflow-x-auto no-scrollbar max-w-full self-start">
               <button
                 onClick={() => setHubCategory("all")}
-                className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                  hubCategory === "all" ? "bg-sky-500 text-white" : "text-slate-400 hover:text-white"
+                className={`px-3 py-1 rounded-[3px] text-xs font-mono transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                  hubCategory === "all"
+                    ? "bg-[#F4A261] text-[#0F141B] font-bold border border-[#F4A261]"
+                    : "text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-200 dark:hover:text-white light:hover:text-slate-900"
                 }`}
               >
                 All Metros ({FEATURED_HUBS.length})
               </button>
               <button
                 onClick={() => setHubCategory("india")}
-                className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                  hubCategory === "india" ? "bg-sky-500 text-white" : "text-slate-400 hover:text-white"
+                className={`px-3 py-1 rounded-[3px] text-xs font-mono transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                  hubCategory === "india"
+                    ? "bg-[#F4A261] text-[#0F141B] font-bold border border-[#F4A261]"
+                    : "text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-200 dark:hover:text-white light:hover:text-slate-900"
                 }`}
               >
                 India Hubs
               </button>
               <button
                 onClick={() => setHubCategory("world")}
-                className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                  hubCategory === "world" ? "bg-sky-500 text-white" : "text-slate-400 hover:text-white"
+                className={`px-3 py-1 rounded-[3px] text-xs font-mono transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                  hubCategory === "world"
+                    ? "bg-[#F4A261] text-[#0F141B] font-bold border border-[#F4A261]"
+                    : "text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-200 dark:hover:text-white light:hover:text-slate-900"
                 }`}
               >
                 Global Metros
@@ -266,15 +333,15 @@ export function ExploreView({
 
             <button
               onClick={onOpenLocationSearch}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-sky-500/50 text-xs font-medium text-slate-200 hover:text-white transition-colors"
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-[4px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-300 hover:border-[#8ECAE6]/50 dark:hover:border-[#8ECAE6]/50 light:hover:border-sky-500 text-xs font-mono text-slate-200 dark:text-slate-200 light:text-slate-700 hover:text-white dark:hover:text-white light:hover:text-slate-900 transition-colors cursor-pointer self-start sm:self-auto shrink-0 shadow-sm"
             >
-              <Search className="w-3.5 h-3.5 text-sky-400" />
+              <Search className="w-3.5 h-3.5 text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700" />
               <span>Search Any City Worldwide</span>
             </button>
           </div>
 
           {/* Grid of Hub Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
             {filteredHubs.map((hub) => {
               const isCurrent =
                 currentLocation &&
@@ -284,38 +351,46 @@ export function ExploreView({
               return (
                 <div
                   key={hub.name}
-                  className={`p-4 rounded-2xl border transition-all flex flex-col justify-between ${
+                  className={`p-4 rounded-[8px] border transition-all duration-200 flex flex-col justify-between ${
                     isCurrent
-                      ? "bg-sky-500/10 border-sky-500/50 ring-1 ring-sky-500/30"
-                      : "bg-slate-900/60 hover:bg-slate-900 border-slate-800 hover:border-slate-700 shadow-md"
+                      ? "bg-[#1B2027] dark:bg-[#1B2027] light:bg-amber-50/50 border-2 border-[#F4A261] ring-2 ring-[#F4A261]/20 shadow-md"
+                      : "bg-[#171C23] dark:bg-[#171C23] light:bg-white hover:bg-[#1B2027] dark:hover:bg-[#1B2027] light:hover:bg-slate-50 border-[#30353D] dark:border-[#30353D] light:border-slate-200 hover:border-[#8ECAE6]/40 dark:hover:border-[#8ECAE6]/40 light:hover:border-sky-300 shadow-sm"
                   }`}
                 >
                   <div className="space-y-2">
                     <div className="flex items-start justify-between">
                       <div>
                         <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-sm text-white">{hub.name}</span>
-                          <span className="text-[10px] uppercase font-bold text-sky-400 bg-sky-500/10 px-1.5 py-0.2 rounded border border-sky-500/20">
+                          <span className="font-bold text-sm text-slate-100 dark:text-slate-100 light:text-slate-900">
+                            {hub.name}
+                          </span>
+                          <span className={`text-[10px] font-mono uppercase font-bold px-1.5 py-0.5 rounded-[3px] border ${
+                            isCurrent
+                              ? "bg-[#F4A261] text-[#0F141B] border-[#F4A261]"
+                              : "text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700 bg-[#252A32] dark:bg-[#252A32] light:bg-sky-50 border-[#8ECAE6]/30 dark:border-[#8ECAE6]/30 light:border-sky-300"
+                          }`}>
                             {hub.countryCode}
                           </span>
                         </div>
-                        <div className="text-xs text-slate-400">
+                        <div className="text-xs font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 mt-0.5">
                           {hub.admin1 ? `${hub.admin1}, ` : ""}
                           {hub.country}
                         </div>
                       </div>
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700/80">
+                      <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-[3px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-100 text-slate-300 dark:text-slate-300 light:text-slate-700 border border-[#30353D] dark:border-[#30353D] light:border-slate-200">
                         {hub.tag}
                       </span>
                     </div>
 
-                    <p className="text-[11px] text-slate-400 leading-relaxed line-clamp-2">
+                    <p className="text-[11px] text-slate-400 dark:text-slate-400 light:text-slate-600 leading-relaxed line-clamp-2">
                       {hub.desc}
                     </p>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between">
-                    <span className="text-[10px] text-slate-400">Timezone: {hub.timezone}</span>
+                  <div className="mt-3.5 pt-3 border-t border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex items-center justify-between">
+                    <span className="text-[10px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500">
+                      Timezone: {hub.timezone}
+                    </span>
                     <button
                       onClick={() =>
                         onSelectLocation({
@@ -328,10 +403,10 @@ export function ExploreView({
                           timezone: hub.timezone,
                         })
                       }
-                      className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors ${
+                      className={`flex items-center gap-1 text-xs font-mono font-semibold px-2.5 py-1 rounded-[4px] transition-colors cursor-pointer ${
                         isCurrent
-                          ? "bg-sky-500 text-white"
-                          : "text-sky-400 hover:text-white hover:bg-sky-500/20"
+                          ? "bg-[#F4A261] text-[#0F141B] font-bold border border-[#F4A261]"
+                          : "text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700 hover:bg-[#252A32] dark:hover:bg-[#252A32] light:hover:bg-sky-50 hover:text-white dark:hover:text-white light:hover:text-sky-950 border border-transparent hover:border-[#30353D] dark:hover:border-[#30353D] light:hover:border-sky-200"
                       }`}
                     >
                       <span>{isCurrent ? "Active City" : "View Weather"}</span>

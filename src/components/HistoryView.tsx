@@ -108,23 +108,72 @@ export function HistoryView({
 
   if (isGuest) {
     return (
-      <div className="max-w-3xl mx-auto py-8 px-4 space-y-6 animate-in fade-in duration-200">
-        <div className="p-8 rounded-2xl bg-slate-900 border border-slate-800 text-center space-y-4 shadow-xl">
-          <div className="w-14 h-14 rounded-2xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center mx-auto">
-            <History className="w-7 h-7" />
+      <div id="history-view" className="max-w-3xl mx-auto py-6 sm:py-8 px-4 space-y-4 sm:space-y-6 animate-in fade-in duration-200">
+        {/* Scenic Hero Banner with Telemetry HUD */}
+        <div className="relative rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 p-5 sm:p-6 overflow-hidden transition-colors shadow-lg">
+          <div className="absolute inset-0 z-0 pointer-events-none select-none">
+            <img
+              src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1600&q=80"
+              alt="Atmospheric Mist Valley"
+              className="w-full h-full object-cover object-center opacity-30 dark:opacity-25 light:opacity-20"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#0F141B] via-[#171C23]/95 to-[#171C23]/60 dark:from-[#0F141B] dark:via-[#171C23]/95 dark:to-[#171C23]/60 light:from-white light:via-white/95 light:to-white/80" />
           </div>
-          <div className="space-y-1">
-            <h2 className="text-xl font-bold text-white">Cloud Conversation History</h2>
-            <p className="text-sm text-slate-400 max-w-md mx-auto">
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1.5 max-w-xl">
+              <div className="inline-flex items-center gap-2">
+                <span className="text-[10px] font-mono uppercase font-bold text-[#8ECAE6] tracking-wider px-2 py-0.5 rounded-[3px] bg-[#0F141B]/80 border border-[#8ECAE6]/30">
+                  CLOUD ARCHIVE • POSTGRESQL ROW LEVEL SECURITY
+                </span>
+                <span className="flex h-1.5 w-1.5 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400"></span>
+                </span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 font-mono tracking-tight">
+                Cloud Conversation History
+              </h2>
+              <p className="text-xs text-slate-300 dark:text-slate-300 light:text-slate-700 leading-relaxed">
+                Synchronize your meteorological inquiries, route corridor analyses, and forecast dialogues across all your devices securely.
+              </p>
+            </div>
+
+            {/* Telemetry HUD */}
+            <div className="bg-[#0F141B]/80 dark:bg-[#0F141B]/80 light:bg-slate-100/90 backdrop-blur-md border border-[#30353D] dark:border-[#30353D] light:border-slate-300 p-3 rounded-[6px] hidden sm:flex flex-col gap-1.5 min-w-[210px] text-[11px] font-mono shrink-0 shadow-inner">
+              <div className="flex items-center justify-between text-slate-400">
+                <span className="text-[10px] uppercase tracking-wider text-slate-400">VAULT STATE</span>
+                <span className="text-slate-300 font-semibold">GUEST MODE</span>
+              </div>
+              <div className="flex items-center justify-between text-slate-300">
+                <span className="text-[10px] text-slate-400">RLS SECURITY:</span>
+                <span className="text-emerald-400 font-semibold">STANDBY</span>
+              </div>
+              <div className="flex items-center justify-between text-slate-300">
+                <span className="text-[10px] text-slate-400">SYNC PROTOCOL:</span>
+                <span className="text-[#8ECAE6] font-semibold">SUPABASE OAUTH</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6 sm:p-8 rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 text-center space-y-4 transition-colors">
+          <div className="w-12 h-12 rounded-[6px] bg-[#1B2027] border border-[#30353D] text-[#8ECAE6] flex items-center justify-center mx-auto">
+            <History className="w-6 h-6" />
+          </div>
+          <div className="space-y-1.5">
+            <h3 className="text-base sm:text-lg font-bold font-mono tracking-tight text-slate-100 dark:text-slate-100 light:text-slate-900">
+              Sign In to Access Cloud Records
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
               Sign in with Google to enable cloud synchronization. Your weather queries, route analyses, and forecast chats will be preserved securely with PostgreSQL Row Level Security (RLS).
             </p>
           </div>
-          <div className="pt-2 flex justify-center">
+          <div className="pt-1.5 flex justify-center">
             <button
               onClick={onRequestAuth}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-semibold text-sm shadow-lg shadow-sky-500/20 transition-all cursor-pointer"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-[4px] bg-[#F4A261] hover:bg-[#E76F51] text-[#0F141B] font-mono font-bold text-xs transition-colors cursor-pointer shadow-sm"
             >
-              <LogIn className="w-4 h-4" />
+              <LogIn className="w-4 h-4 text-[#0F141B]" />
               <span>Sign In with Google</span>
             </button>
           </div>
@@ -134,30 +183,85 @@ export function HistoryView({
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-6 px-4 space-y-6 animate-in fade-in duration-200">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div id="history-view" className="max-w-4xl mx-auto py-4 sm:py-6 px-4 space-y-4 sm:space-y-5 animate-in fade-in duration-200">
+      {/* Cloud History Hero Banner with Telemetry HUD */}
+      <div className="relative rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 p-5 sm:p-6 overflow-hidden transition-colors shadow-lg">
+        <div className="absolute inset-0 z-0 pointer-events-none select-none">
+          <img
+            src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1600&q=80"
+            alt="Atmospheric Mist Valley"
+            className="w-full h-full object-cover object-center opacity-30 dark:opacity-25 light:opacity-20"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0F141B] via-[#171C23]/95 to-[#171C23]/60 dark:from-[#0F141B] dark:via-[#171C23]/95 dark:to-[#171C23]/60 light:from-white light:via-white/95 light:to-white/80" />
+        </div>
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1.5 max-w-xl">
+            <div className="inline-flex items-center gap-2">
+              <span className="text-[10px] font-mono uppercase font-bold text-[#8ECAE6] tracking-wider px-2 py-0.5 rounded-[3px] bg-[#0F141B]/80 border border-[#8ECAE6]/30">
+                CLOUD ARCHIVE • POSTGRESQL ROW LEVEL SECURITY
+              </span>
+              <span className="flex h-1.5 w-1.5 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400"></span>
+              </span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 font-mono tracking-tight">
+              Weather Chat History
+            </h2>
+            <p className="text-xs text-slate-300 dark:text-slate-300 light:text-slate-700 leading-relaxed">
+              Synchronized cloud sessions • PostgreSQL Row Level Security encrypted data store.
+            </p>
+          </div>
+
+          {/* Telemetry HUD */}
+          <div className="bg-[#0F141B]/80 dark:bg-[#0F141B]/80 light:bg-slate-100/90 backdrop-blur-md border border-[#30353D] dark:border-[#30353D] light:border-slate-300 p-3 rounded-[6px] hidden sm:flex flex-col gap-1.5 min-w-[210px] text-[11px] font-mono shrink-0 shadow-inner">
+            <div className="flex items-center justify-between text-slate-400">
+              <span className="text-[10px] uppercase tracking-wider text-slate-400">VAULT STATE</span>
+              <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse"></span> SYNCHRONIZED
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-slate-300">
+              <span className="text-[10px] text-slate-400">ENCRYPTION:</span>
+              <span className="text-[#8ECAE6] font-semibold">POSTGRES RLS</span>
+            </div>
+            <div className="flex items-center justify-between text-slate-300">
+              <span className="text-[10px] text-slate-400">RECORDS:</span>
+              <span className="text-slate-200 font-semibold">{conversations.length} SAVED SESSIONS</span>
+            </div>
+            <div className="flex items-center justify-between text-slate-300">
+              <span className="text-[10px] text-slate-400">USER ID:</span>
+              <span className="text-[#F4A261] font-semibold truncate max-w-[110px]">{currentUser?.email || "Authenticated"}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Action Sub-header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400">
-              <History className="w-5 h-5" />
+            <div className="p-2 rounded-[6px] bg-[#1B2027] border border-[#30353D] text-[#8ECAE6]">
+              <History className="w-4 h-4" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white tracking-tight">Weather Chat History</h1>
-              <p className="text-xs text-slate-400">
-                Synchronized cloud sessions • PostgreSQL Row Level Security
+              <h3 className="text-sm font-bold font-mono text-slate-100 dark:text-slate-100 light:text-slate-900 tracking-tight uppercase">
+                SAVED CONVERSATIONS
+              </h3>
+              <p className="text-xs font-mono text-slate-400">
+                User: {currentUser?.email || "Authenticated User"}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={onNewChat}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-semibold text-xs shadow-md shadow-sky-500/20 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-[#F4A261] hover:bg-[#E76F51] text-[#0F141B] font-mono font-bold text-xs transition-colors cursor-pointer shadow-sm"
           >
-            <PlusCircle className="w-4 h-4" />
+            <PlusCircle className="w-3.5 h-3.5" />
             <span>New Chat</span>
           </button>
 
@@ -165,7 +269,7 @@ export function HistoryView({
             <button
               type="button"
               onClick={() => setConfirmClearAll(true)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800/80 hover:bg-rose-950/40 text-slate-300 hover:text-rose-300 border border-slate-700/80 hover:border-rose-500/30 text-xs font-medium transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-[#1B2027] hover:bg-rose-950/40 text-slate-300 hover:text-rose-300 border border-[#30353D] hover:border-rose-500/40 text-xs font-mono transition-colors cursor-pointer"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>Clear All</span>
@@ -173,20 +277,20 @@ export function HistoryView({
           )}
 
           {confirmClearAll && (
-            <div className="flex items-center gap-2 bg-rose-950/70 border border-rose-500/40 px-3 py-1.5 rounded-xl">
-              <span className="text-xs text-rose-200 font-medium">Clear all conversations?</span>
+            <div className="flex flex-wrap items-center gap-2 bg-rose-950/60 border border-rose-500/40 px-3 py-1.5 rounded-[4px] font-mono">
+              <span className="text-xs text-rose-200">Clear all conversations?</span>
               <button
                 type="button"
                 onClick={handleClearAll}
                 disabled={isClearingAll}
-                className="text-xs px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold cursor-pointer"
+                className="text-xs px-2.5 py-0.5 rounded-[3px] bg-rose-600 hover:bg-rose-500 text-white font-bold cursor-pointer"
               >
                 {isClearingAll ? "Clearing..." : "Yes, Delete"}
               </button>
               <button
                 type="button"
                 onClick={() => setConfirmClearAll(false)}
-                className="text-xs px-2 py-1 rounded-lg bg-slate-800 text-slate-300 hover:text-white cursor-pointer"
+                className="text-xs px-2 py-0.5 rounded-[3px] bg-[#1B2027] border border-[#30353D] text-slate-300 hover:text-white cursor-pointer"
               >
                 Cancel
               </button>
@@ -198,47 +302,49 @@ export function HistoryView({
       {/* Search & Filter Bar */}
       <form onSubmit={handleSearch} className="flex gap-2">
         <div className="relative flex-1">
-          <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+          <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-3" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search conversations by title or topic..."
-            className="w-full bg-slate-900 border border-slate-800 focus:border-sky-500 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-sky-500 transition-all"
+            className="w-full bg-[#1B2027] border border-[#30353D] focus:border-[#8ECAE6] rounded-[4px] pl-9 pr-4 py-2 text-xs font-mono text-slate-100 placeholder-slate-500 focus:outline-none transition-colors"
           />
         </div>
         <button
           type="submit"
           disabled={isLoading}
-          className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700/80 transition-colors flex items-center gap-1.5 cursor-pointer"
+          className="px-3.5 py-2 rounded-[4px] bg-[#1B2027] hover:bg-[#252A32] text-slate-200 text-xs font-mono font-semibold border border-[#30353D] transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
         >
-          {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+          {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin text-[#8ECAE6]" /> : <RefreshCw className="w-3.5 h-3.5" />}
           <span>Search</span>
         </button>
       </form>
 
       {/* Error state */}
       {error && (
-        <div className="p-3.5 rounded-xl bg-rose-950/50 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 shrink-0" />
+        <div className="p-3 rounded-[6px] bg-rose-950/40 border border-rose-500/30 text-rose-200 text-xs font-mono flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
           <span>{error}</span>
         </div>
       )}
 
       {/* Loading state */}
       {isLoading && (
-        <div className="py-12 flex flex-col items-center justify-center gap-3 text-slate-400">
-          <Loader2 className="w-6 h-6 animate-spin text-sky-400" />
+        <div className="py-10 flex flex-col items-center justify-center gap-2 text-slate-400 font-mono">
+          <Loader2 className="w-5 h-5 animate-spin text-[#8ECAE6]" />
           <p className="text-xs">Loading conversation history...</p>
         </div>
       )}
 
       {/* Conversation List */}
       {!isLoading && conversations.length === 0 && (
-        <div className="p-12 rounded-2xl bg-slate-900/60 border border-slate-800/80 text-center space-y-3">
-          <MessageSquare className="w-10 h-10 text-slate-600 mx-auto" />
-          <h3 className="text-base font-semibold text-white">No Conversations Found</h3>
-          <p className="text-xs text-slate-400 max-w-sm mx-auto">
+        <div className="p-8 sm:p-10 rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 text-center space-y-3 transition-colors">
+          <MessageSquare className="w-8 h-8 text-slate-600 mx-auto" />
+          <h3 className="text-sm sm:text-base font-bold font-mono text-slate-100 dark:text-slate-100 light:text-slate-900">
+            No Conversations Found
+          </h3>
+          <p className="text-xs font-mono text-slate-400 max-w-sm mx-auto">
             {searchQuery
               ? "No conversations match your search query. Try a different search term."
               : "You haven't started any conversations yet. Start a new weather chat to see it saved here automatically."}
@@ -246,9 +352,9 @@ export function HistoryView({
           <div className="pt-2">
             <button
               onClick={onNewChat}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-xs font-semibold shadow-md shadow-sky-500/20 transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-[4px] bg-[#252A32] hover:bg-[#30353D] text-[#8ECAE6] border border-[#8ECAE6]/40 text-xs font-mono font-semibold transition-colors cursor-pointer"
             >
-              <PlusCircle className="w-4 h-4" />
+              <PlusCircle className="w-3.5 h-3.5" />
               <span>Start Weather Chat</span>
             </button>
           </div>
@@ -256,7 +362,7 @@ export function HistoryView({
       )}
 
       {!isLoading && conversations.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {conversations.map((conv) => {
             const isActive = activeConversationId === conv.id;
             const updatedDate = new Date(conv.updated_at).toLocaleDateString("en-US", {
@@ -270,20 +376,20 @@ export function HistoryView({
               <div
                 key={conv.id}
                 onClick={() => onSelectConversation(conv)}
-                className={`group p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between ${
+                className={`group p-3.5 sm:p-4 rounded-[8px] border transition-all duration-200 cursor-pointer flex flex-col justify-between ${
                   isActive
-                    ? "bg-sky-950/30 border-sky-500/50 shadow-lg shadow-sky-500/5"
-                    : "bg-slate-900/90 border-slate-800 hover:border-slate-700 hover:bg-slate-900"
+                    ? "bg-[#1B2027] border-2 border-[#F4A261] ring-2 ring-[#F4A261]/20 shadow-md"
+                    : "bg-[#171C23] dark:bg-[#171C23] light:bg-white border-[#30353D] dark:border-[#30353D] light:border-slate-200 hover:bg-[#1B2027] dark:hover:bg-[#1B2027] light:hover:bg-slate-50 hover:border-[#8ECAE6]/50 shadow-sm"
                 }`}
               >
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="text-sm font-bold text-white group-hover:text-sky-300 transition-colors line-clamp-1">
+                    <h3 className="text-sm font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 group-hover:text-[#8ECAE6] transition-colors line-clamp-1">
                       {conv.title || "Weather Discussion"}
                     </h3>
                     <div className="flex items-center gap-1 shrink-0">
                       {isActive && (
-                        <span className="px-2 py-0.5 rounded-full bg-sky-500/20 border border-sky-500/30 text-sky-300 text-[10px] font-semibold">
+                        <span className="px-1.5 py-0.5 rounded-[3px] bg-[#F4A261] border border-[#F4A261] text-[#0F141B] text-[10px] font-mono font-bold">
                           Active
                         </span>
                       )}
@@ -291,7 +397,7 @@ export function HistoryView({
                         type="button"
                         onClick={(e) => handleDelete(e, conv.id)}
                         disabled={deletingId === conv.id}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-slate-800 transition-colors opacity-80 group-hover:opacity-100 cursor-pointer"
+                        className="p-1 rounded-[3px] text-slate-500 hover:text-rose-400 hover:bg-[#252A32] transition-colors opacity-80 group-hover:opacity-100 cursor-pointer"
                         title="Delete conversation"
                       >
                         {deletingId === conv.id ? (
@@ -304,19 +410,19 @@ export function HistoryView({
                   </div>
 
                   {conv.location_name && (
-                    <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                      <MapPin className="w-3 h-3 text-sky-400 shrink-0" />
+                    <div className="flex items-center gap-1.5 text-xs font-mono text-slate-400">
+                      <MapPin className="w-3 h-3 text-[#8ECAE6] shrink-0" />
                       <span className="truncate">{conv.location_name}</span>
                     </div>
                   )}
                 </div>
 
-                <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+                <div className="pt-2.5 mt-2.5 border-t border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex items-center justify-between text-[11px] font-mono text-slate-400">
                   <div className="flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
                     <span>{updatedDate}</span>
                   </div>
-                  <span className="text-sky-400 font-semibold group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+                  <span className="text-[#8ECAE6] font-semibold group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
                     Open <ExternalLink className="w-3 h-3" />
                   </span>
                 </div>

@@ -92,10 +92,10 @@ export function GeminiLiveModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in">
       <div className="relative w-full max-w-xl bg-slate-900 border border-slate-700/70 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/90">
-          <div className="flex items-center gap-3">
-            <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500/20 to-blue-600/20 border border-cyan-500/30 text-cyan-400">
-              <Zap className="w-5 h-5" />
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-800 bg-slate-900/90">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="relative flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-cyan-500/20 to-blue-600/20 border border-cyan-500/30 text-cyan-400 shrink-0">
+              <Zap className="w-4 h-4 sm:w-5 sm:h-5" />
               {isConnected && (
                 <span className="absolute -top-1 -right-1 flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
@@ -103,16 +103,16 @@ export function GeminiLiveModal({
                 </span>
               )}
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-semibold text-white tracking-wide">
+                <h3 className="text-sm sm:text-base font-semibold text-white tracking-wide truncate">
                   Gemini Live • Voice Assistant
                 </h3>
-                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
+                <span className="hidden sm:inline-block px-2 py-0.5 text-xs font-medium rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
                   gemini-3.8-live
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-400 truncate">
                 {currentLocationName ? `Live weather context for ${currentLocationName}` : "Real-time duplex conversational weather intelligence"}
               </p>
             </div>
@@ -120,7 +120,7 @@ export function GeminiLiveModal({
 
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-1.5 sm:p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0"
             title="Close Live Session"
           >
             <X className="w-5 h-5" />
