@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ActivityAnalysis, ActivityType, CurrentWeatherData, DailyForecastItem, HourlyForecastItem, LocationInfo } from "../types.js";
 import { analyzeActivityAPI } from "../services/api.js";
 import { Activity, Clock, CheckCircle2, AlertCircle, XCircle, Sparkles, ChevronRight, Shield } from "lucide-react";
+import { DiurnalPhase, DiurnalPhaseConfig } from "../services/diurnalTheme.js";
 
 interface ActivityExplorerProps {
   location: LocationInfo;
@@ -9,6 +10,8 @@ interface ActivityExplorerProps {
   hourly?: HourlyForecastItem[];
   daily?: DailyForecastItem[];
   isFahrenheit: boolean;
+  diurnalPhase?: DiurnalPhase;
+  diurnalConfig?: DiurnalPhaseConfig;
 }
 
 const ACTIVITIES: { id: ActivityType; label: string; icon: string }[] = [
@@ -24,7 +27,7 @@ const ACTIVITIES: { id: ActivityType; label: string; icon: string }[] = [
   { id: "outdoor_events", label: "Events", icon: "🎪" },
 ];
 
-export function ActivityExplorer({ location, current, hourly, daily, isFahrenheit }: ActivityExplorerProps) {
+export function ActivityExplorer({ location, current, hourly, daily, isFahrenheit, diurnalPhase, diurnalConfig }: ActivityExplorerProps) {
   const [selectedActivity, setSelectedActivity] = useState<ActivityType>("cricket");
   const [analysis, setAnalysis] = useState<ActivityAnalysis | null>(null);
   const [loading, setLoading] = useState(false);
@@ -76,23 +79,55 @@ export function ActivityExplorer({ location, current, hourly, daily, isFahrenhei
   return (
     <div id="activity-explorer" className="space-y-4 sm:space-y-5">
       {/* Activity Intelligence Hero Banner */}
-      <div className="relative rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 p-5 sm:p-6 overflow-hidden transition-colors">
+      <div
+        data-atmospheric-banner="true"
+        className="hero-atmospheric-card atmospheric-hero-card relative rounded-[8px] bg-[#0F141B] border border-[#30353D] p-5 sm:p-6 overflow-hidden transition-colors shadow-md"
+        style={diurnalConfig ? { borderColor: `${diurnalConfig.accentColor}40` } : undefined}
+      >
         <div className="absolute inset-0 z-0 pointer-events-none select-none">
           <img
-            src="https://images.unsplash.com/photo-1517649763962-0c623266ddc0?auto=format&fit=crop&w=1600&q=80"
-            alt="Outdoor sports activity"
-            className="w-full h-full object-cover object-center opacity-30 dark:opacity-25 light:opacity-20"
+            key={diurnalConfig?.backgrounds.insights.photoUrl || "standard"}
+            src={
+              diurnalConfig?.backgrounds.insights.photoUrl ||
+              "https://images.unsplash.com/photo-1517649763962-0c623266ddc0?auto=format&fit=crop&w=1600&q=80"
+            }
+            alt={diurnalConfig?.backgrounds.insights.photoAlt || "Outdoor sports activity"}
+            className="w-full h-full object-cover object-center opacity-75 dark:opacity-70 transition-opacity duration-700"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#171C23] via-[#171C23]/90 to-transparent dark:from-[#171C23] dark:via-[#171C23]/90 light:from-white light:via-white/90" />
+          <div
+            className="absolute inset-0 transition-colors duration-700"
+            style={{
+              background: diurnalConfig
+                ? "linear-gradient(90deg, rgba(13,19,26,0.94) 0%, rgba(13,19,26,0.80) 55%, rgba(13,19,26,0.25) 100%)"
+                : "linear-gradient(90deg, rgba(15,20,27,0.95) 0%, rgba(23,28,35,0.90) 60%, rgba(23,28,35,0.40) 100%)",
+            }}
+          />
         </div>
         <div className="relative z-10 space-y-1.5">
-          <span className="text-[10px] font-mono uppercase font-semibold text-[#8ECAE6] tracking-wider">
-            OUTDOOR FEASIBILITY • SPORT & LEISURE TELEMETRY
-          </span>
-          <h2 className="text-xl sm:text-2xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 font-mono tracking-tight">
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className="text-[10px] font-mono uppercase font-semibold tracking-wider transition-colors duration-500"
+              style={{ color: diurnalConfig ? diurnalConfig.accentColor : "#8ECAE6" }}
+            >
+              OUTDOOR FEASIBILITY • {diurnalConfig ? diurnalConfig.stationTelemetrySub : "SPORT & LEISURE TELEMETRY"}
+            </span>
+            {diurnalConfig && (
+              <span
+                className="inline-flex items-center gap-1 text-[9px] font-mono uppercase font-bold px-2 py-0.5 rounded-[4px] backdrop-blur-sm transition-all"
+                style={{
+                  backgroundColor: `${diurnalConfig.accentColor}25`,
+                  color: diurnalConfig.accentColor,
+                  border: `1px solid ${diurnalConfig.accentColor}50`,
+                }}
+              >
+                {diurnalConfig.solarStatusBadge}
+              </span>
+            )}
+          </div>
+          <h2 className="text-xl sm:text-2xl font-bold text-white font-mono tracking-tight">
             Activity Weather Intelligence
           </h2>
-          <p className="text-xs text-slate-300 dark:text-slate-300 light:text-slate-700 max-w-xl leading-relaxed">
+          <p className="text-xs text-slate-200 max-w-xl leading-relaxed">
             Deterministic outdoor suitability scoring, bio-comfort indices, optimal hourly windows, and activity gear advisories for {location.name}.
           </p>
         </div>

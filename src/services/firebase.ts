@@ -9,9 +9,9 @@ import {
 } from "firebase/auth";
 import {
   getFirestore,
+  initializeFirestore,
   doc,
   getDoc,
-  getDocFromServer,
   setDoc,
   deleteDoc,
   collection,
@@ -75,24 +75,27 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
 // 1. Initialize Firebase App & Services
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
-export const db: Firestore = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 
-// 2. Validate Connection to Firestore on startup
+// Initialize Firestore with experimentalAutoDetectLongPolling for stable connectivity across all web & iframe environments
+let firestoreDb: Firestore;
+try {
+  firestoreDb = initializeFirestore(app, {
+    experimentalAutoDetectLongPolling: true,
+  }, firebaseConfig.firestoreDatabaseId);
+} catch {
+  firestoreDb = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+}
+export const db: Firestore = firestoreDb;
+
+// 2. Validate Connection to Firestore (on-demand helper, non-blocking)
 export async function testFirestoreConnection(): Promise<boolean> {
   try {
-    await getDocFromServer(doc(db, "test", "connection"));
-    return true;
-  } catch (error) {
-    if (error instanceof Error && error.message.includes("the client is offline")) {
-      console.warn("Please check your Firebase configuration: Client is offline.");
-    }
-    // We catch and return false rather than throwing so startup is not broken
+    const snap = await getDoc(doc(db, "test", "connection"));
+    return snap.exists();
+  } catch {
     return false;
   }
 }
-
-// Automatically test connection asynchronously
-testFirestoreConnection().catch(() => {});
 
 // 3. Google Sign-In with Firebase Auth
 export async function signInWithGoogleFirebase(): Promise<{ success: boolean; user?: FirebaseUser; error?: string }> {

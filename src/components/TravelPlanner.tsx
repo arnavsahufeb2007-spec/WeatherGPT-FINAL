@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { LocationInfo, TravelAnalysis } from "../types.js";
 import { analyzeTravelAPI } from "../services/api.js";
-import { Car, Bike, Bus, Train, Plane, MapPin, ArrowRight, Clock, AlertTriangle, ShieldCheck, Info } from "lucide-react";
+import { Car, Bike, Bus, Train, Plane, MapPin, ArrowRight, Clock, AlertTriangle, ShieldCheck, Info, Sunrise, Sun, Sunset, Sparkles, Moon } from "lucide-react";
 import { WeatherIcon } from "./WeatherIcons.js";
+import { DiurnalPhase, DiurnalPhaseConfig } from "../services/diurnalTheme.js";
 
 interface TravelPlannerProps {
   isFahrenheit: boolean;
   currentLocation?: LocationInfo | null;
+  diurnalPhase?: DiurnalPhase;
+  diurnalConfig?: DiurnalPhaseConfig;
 }
 
-export function TravelPlanner({ isFahrenheit, currentLocation }: TravelPlannerProps) {
+export function TravelPlanner({ isFahrenheit, currentLocation, diurnalPhase, diurnalConfig }: TravelPlannerProps) {
   const [origin, setOrigin] = useState(() => currentLocation?.name || "");
   const [destination, setDestination] = useState("");
   const [mode, setMode] = useState<"car" | "bike" | "bus" | "train" | "flight">("car");
@@ -48,23 +51,55 @@ export function TravelPlanner({ isFahrenheit, currentLocation }: TravelPlannerPr
   return (
     <div id="travel-planner" className="space-y-4 sm:space-y-5">
       {/* Route Intelligence Hero Banner */}
-      <div className="relative rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 p-5 sm:p-6 overflow-hidden transition-colors">
+      <div
+        data-atmospheric-banner="true"
+        className="hero-atmospheric-card atmospheric-hero-card relative rounded-[8px] bg-[#0F141B] border border-[#30353D] p-5 sm:p-6 overflow-hidden transition-colors shadow-md"
+        style={diurnalConfig ? { borderColor: `${diurnalConfig.accentColor}40` } : undefined}
+      >
         <div className="absolute inset-0 z-0 pointer-events-none select-none">
           <img
-            src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1600&q=80"
-            alt="Scenic Highway"
-            className="w-full h-full object-cover object-center opacity-30 dark:opacity-25 light:opacity-20"
+            key={diurnalConfig?.backgrounds.travel.photoUrl || "standard"}
+            src={
+              diurnalConfig?.backgrounds.travel.photoUrl ||
+              "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1600&q=80"
+            }
+            alt={diurnalConfig?.backgrounds.travel.photoAlt || "Scenic Highway"}
+            className="w-full h-full object-cover object-center opacity-75 dark:opacity-70 transition-opacity duration-700"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#171C23] via-[#171C23]/90 to-transparent dark:from-[#171C23] dark:via-[#171C23]/90 light:from-white light:via-white/90" />
+          <div
+            className="absolute inset-0 transition-colors duration-700"
+            style={{
+              background: diurnalConfig
+                ? "linear-gradient(90deg, rgba(13,19,26,0.94) 0%, rgba(13,19,26,0.80) 55%, rgba(13,19,26,0.25) 100%)"
+                : "linear-gradient(90deg, rgba(15,20,27,0.95) 0%, rgba(23,28,35,0.90) 60%, rgba(23,28,35,0.40) 100%)",
+            }}
+          />
         </div>
         <div className="relative z-10 space-y-1.5">
-          <span className="text-[10px] font-mono uppercase font-semibold text-[#8ECAE6] tracking-wider">
-            ROUTE METEOROLOGICAL DISPATCH • CORRIDOR SURVEILLANCE
-          </span>
-          <h2 className="text-xl sm:text-2xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 font-mono tracking-tight">
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className="text-[10px] font-mono uppercase font-semibold tracking-wider transition-colors duration-500"
+              style={{ color: diurnalConfig ? diurnalConfig.accentColor : "#8ECAE6" }}
+            >
+              ROUTE METEOROLOGICAL DISPATCH • {diurnalConfig ? diurnalConfig.stationTelemetrySub : "CORRIDOR SURVEILLANCE"}
+            </span>
+            {diurnalConfig && (
+              <span
+                className="inline-flex items-center gap-1 text-[9px] font-mono uppercase font-bold px-2 py-0.5 rounded-[4px] backdrop-blur-sm transition-all"
+                style={{
+                  backgroundColor: `${diurnalConfig.accentColor}25`,
+                  color: diurnalConfig.accentColor,
+                  border: `1px solid ${diurnalConfig.accentColor}50`,
+                }}
+              >
+                {diurnalConfig.solarStatusBadge}
+              </span>
+            )}
+          </div>
+          <h2 className="text-xl sm:text-2xl font-bold text-white font-mono tracking-tight">
             Route Weather Intelligence
           </h2>
-          <p className="text-xs text-slate-300 dark:text-slate-300 light:text-slate-700 max-w-xl leading-relaxed">
+          <p className="text-xs text-slate-200 max-w-xl leading-relaxed">
             Real-time highway corridors, transit checkpoints, and deterministic weather forecasts along your trajectory.
           </p>
         </div>
@@ -193,7 +228,16 @@ export function TravelPlanner({ isFahrenheit, currentLocation }: TravelPlannerPr
           <button
             onClick={() => handleAnalyze()}
             disabled={loading || !origin.trim() || !destination.trim()}
-            className="w-full sm:w-auto px-4 py-2 rounded-[4px] bg-[#F4A261] hover:bg-[#E76F51] text-[#0F141B] font-semibold border border-[#F4A261] text-xs transition-colors disabled:opacity-40 cursor-pointer shadow-sm"
+            style={
+              diurnalConfig
+                ? {
+                    backgroundColor: diurnalConfig.accentColor,
+                    borderColor: diurnalConfig.accentColor,
+                    color: "#0F141B",
+                  }
+                : undefined
+            }
+            className="w-full sm:w-auto px-4 py-2 rounded-[4px] bg-[#F4A261] hover:brightness-110 text-[#0F141B] font-semibold border border-[#F4A261] text-xs transition-colors disabled:opacity-40 cursor-pointer shadow-sm"
           >
             {loading ? "Analyzing Corridor..." : "Assess Route Weather"}
           </button>

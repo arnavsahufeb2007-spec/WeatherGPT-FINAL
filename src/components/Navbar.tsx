@@ -1,5 +1,6 @@
 import React from "react";
 import { Sparkles, MapPin, Navigation, MessageSquare, CloudSun, Activity, Car, GitCompare } from "lucide-react";
+import { WeatherGptLogo } from "./WeatherGptLogo.js";
 import { LocationInfo } from "../types.js";
 import { LanguageSelector } from "./LanguageSelector.js";
 import { getLanguageConfig } from "../languages.js";
@@ -38,8 +39,8 @@ export function Navbar({
         {/* Brand & Active Location */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-500/20">
-              <Sparkles className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-[8px] bg-[#171C23] border border-[#30353D] flex items-center justify-center p-1 shadow-lg shadow-sky-500/10">
+              <WeatherGptLogo size={32} />
             </div>
             <div>
               <div className="flex items-center gap-1.5">

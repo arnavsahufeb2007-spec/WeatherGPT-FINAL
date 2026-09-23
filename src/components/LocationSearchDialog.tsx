@@ -48,8 +48,9 @@ export function LocationSearchDialog({ isOpen, onClose, onSelectLocation }: Loca
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Debounced dynamic search against Open-Meteo Geocoding API
+  // Debounced dynamic search against Open-Meteo Geocoding API with race condition protection
   useEffect(() => {
+    let isActive = true;
     const trimmed = searchTerm.trim();
     if (!trimmed) {
       setResults([]);
@@ -64,17 +65,45 @@ export function LocationSearchDialog({ isOpen, onClose, onSelectLocation }: Loca
     const timer = setTimeout(async () => {
       try {
         const data = await searchLocationsAPI(trimmed, 10);
-        setResults(data);
+        if (isActive) {
+          setResults(data);
+        }
       } catch (err: any) {
-        console.error("Open-Meteo geocoding search failed:", err);
-        setSearchError(err.message || "Failed to search locations. Please check connection.");
+        if (isActive) {
+          console.error("Open-Meteo geocoding search failed:", err);
+          setSearchError(err.message || "Failed to search locations. Please check connection.");
+        }
       } finally {
-        setIsSearching(false);
+        if (isActive) {
+          setIsSearching(false);
+        }
       }
-    }, 320);
+    }, 120);
 
-    return () => clearTimeout(timer);
+    return () => {
+      isActive = false;
+      clearTimeout(timer);
+    };
   }, [searchTerm]);
+
+  const handleImmediateSearch = async () => {
+    const trimmed = searchTerm.trim();
+    if (!trimmed) return;
+    setIsSearching(true);
+    setSearchError(null);
+    try {
+      const data = await searchLocationsAPI(trimmed, 10);
+      setResults(data);
+      if (data.length > 0) {
+        onSelectLocation(data[0]);
+        onClose();
+      }
+    } catch (err: any) {
+      setSearchError(err.message || "Failed to search locations. Please check connection.");
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   const handleRetry = async () => {
     const trimmed = searchTerm.trim();
@@ -110,6 +139,17 @@ export function LocationSearchDialog({ isOpen, onClose, onSelectLocation }: Loca
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                if (results.length > 0) {
+                  onSelectLocation(results[0]);
+                  onClose();
+                } else if (searchTerm.trim() && !isSearching) {
+                  handleImmediateSearch();
+                }
+              }
+            }}
             placeholder="Search any city, town, state, or postal code worldwide..."
             autoFocus
             className="min-w-0 flex-1 bg-transparent text-slate-100 text-sm focus:outline-none placeholder-slate-500 font-medium"
@@ -198,6 +238,11 @@ export function LocationSearchDialog({ isOpen, onClose, onSelectLocation }: Loca
                           {loc.countryCode && (
                             <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-[3px] bg-[#252A32] text-[#8ECAE6] border border-[#30353D]">
                               {loc.countryCode}
+                            </span>
+                          )}
+                          {loc.featureCode === "ADM1" && (
+                            <span className="text-[10px] font-sans px-1.5 py-0.2 rounded-[3px] bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                              State / Region
                             </span>
                           )}
                         </div>

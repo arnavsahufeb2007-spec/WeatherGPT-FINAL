@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { X, Sparkles, ShieldCheck, AlertCircle, Loader2 } from "lucide-react";
+import { WeatherGptLogo } from "./WeatherGptLogo.js";
 import { authService, UserProfile } from "../services/auth.js";
 import { isSupabaseConfigured } from "../services/supabase.js";
 
@@ -51,8 +52,8 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-[#30353D] bg-[#1B2027] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-[6px] bg-[#252A32] border border-[#30353D] flex items-center justify-center text-[#8ECAE6]">
-              <Sparkles className="w-4 h-4 text-[#8ECAE6]" />
+            <div className="w-9 h-9 rounded-[6px] bg-[#1B2027] border border-[#30353D] flex items-center justify-center p-1 shadow-sm shrink-0">
+              <WeatherGptLogo size={28} />
             </div>
             <div>
               <h3 className="text-sm sm:text-base font-bold font-mono text-slate-100">WeatherGPT Account</h3>

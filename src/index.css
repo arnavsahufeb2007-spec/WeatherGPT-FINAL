@@ -92,29 +92,186 @@
   border-color: #e2e8f0 !important;
 }
 
-.light h1, .light h2, .light h3, .light h4 {
-  color: #0f172a !important;
+.light h1:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light h2:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light h3:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light h4:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light h5:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light h6:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *) {
+  color: #090D14 !important;
 }
 
-.light .text-slate-100,
-.light .text-slate-200 {
-  color: #1e293b !important;
+.light .text-slate-50:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *):not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-indigo-600 *):not(.bg-rose-500 *):not(.bg-emerald-500 *):not(.bg-blue-600 *):not(.bg-slate-900 *):not(.bg-black *),
+.light .text-slate-100:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *):not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-indigo-600 *):not(.bg-rose-500 *):not(.bg-emerald-500 *):not(.bg-blue-600 *):not(.bg-slate-900 *):not(.bg-black *),
+.light .text-slate-200:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *):not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-indigo-600 *):not(.bg-rose-500 *):not(.bg-emerald-500 *):not(.bg-blue-600 *):not(.bg-slate-900 *):not(.bg-black *) {
+  color: #0F172A !important;
 }
 
-.light .text-slate-300 {
+.light .text-slate-300:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *):not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-indigo-600 *):not(.bg-rose-500 *):not(.bg-emerald-500 *):not(.bg-blue-600 *):not(.bg-slate-900 *):not(.bg-black *),
+.light .text-gray-300:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *):not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-indigo-600 *):not(.bg-rose-500 *):not(.bg-emerald-500 *):not(.bg-blue-600 *):not(.bg-slate-900 *):not(.bg-black *),
+.light .text-zinc-300:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *):not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-indigo-600 *):not(.bg-rose-500 *):not(.bg-emerald-500 *):not(.bg-blue-600 *):not(.bg-slate-900 *):not(.bg-black *) {
+  color: #1E293B !important;
+}
+
+.light .text-slate-400:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *):not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-indigo-600 *):not(.bg-rose-500 *):not(.bg-emerald-500 *):not(.bg-blue-600 *):not(.bg-slate-900 *):not(.bg-black *),
+.light .text-gray-400:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *):not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-indigo-600 *):not(.bg-rose-500 *):not(.bg-emerald-500 *):not(.bg-blue-600 *):not(.bg-slate-900 *):not(.bg-black *),
+.light .text-zinc-400:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *):not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-indigo-600 *):not(.bg-rose-500 *):not(.bg-emerald-500 *):not(.bg-blue-600 *):not(.bg-slate-900 *):not(.bg-black *) {
   color: #334155 !important;
 }
 
-.light .text-slate-400 {
-  color: #64748b !important;
+.light .text-slate-500:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *):not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-indigo-600 *):not(.bg-rose-500 *):not(.bg-emerald-500 *):not(.bg-blue-600 *):not(.bg-slate-900 *):not(.bg-black *),
+.light .text-gray-500:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *):not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-indigo-600 *):not(.bg-rose-500 *):not(.bg-emerald-500 *):not(.bg-blue-600 *):not(.bg-slate-900 *):not(.bg-black *),
+.light .text-zinc-500:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *):not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-indigo-600 *):not(.bg-rose-500 *):not(.bg-emerald-500 *):not(.bg-blue-600 *):not(.bg-slate-900 *):not(.bg-black *) {
+  color: #334155 !important;
 }
 
-.light .text-slate-500 {
-  color: #64748b !important;
+.light .text-slate-600:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *) {
+  color: #1E293B !important;
+}
+
+/* High-contrast brand, metric, and status accent text colors in Light View */
+.light .text-\[\#8ECAE6\]:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-sky-300:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-sky-400:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-cyan-300:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-cyan-400:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *) {
+  color: #0369a1 !important;
+}
+
+.light .text-\[\#F4A261\]:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-\[\#FFB703\]:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-\[\#FDB813\]:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-amber-300:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-amber-400:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-yellow-300:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-yellow-400:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *) {
+  color: #b45309 !important;
+}
+
+.light .text-\[\#E76F51\]:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-orange-300:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-orange-400:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *) {
+  color: #c2410c !important;
+}
+
+.light .text-\[\#2A9D8F\]:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-emerald-300:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-emerald-400:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-green-300:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-green-400:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *) {
+  color: #047857 !important;
+}
+
+.light .text-\[\#E63946\]:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-rose-300:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-rose-400:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-red-300:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-red-400:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *) {
+  color: #be123c !important;
+}
+
+.light .text-\[\#C77DFF\]:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-purple-300:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-purple-400:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-violet-300:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-violet-400:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *) {
+  color: #7e22ce !important;
+}
+
+/* Atmospheric Hero Card: maintain high-contrast light-on-dark typography in both Light & Dark themes across all pages */
+#hero-atmospheric-card,
+.hero-atmospheric-card,
+.atmospheric-hero-card,
+.atmospheric-banner,
+[data-atmospheric-banner="true"] {
+  background-color: #0F141B !important;
+  border-color: #252A32 !important;
+  color: #FFFFFF !important;
+}
+
+.light #hero-atmospheric-card,
+.light .hero-atmospheric-card,
+.light .atmospheric-hero-card,
+.light .atmospheric-banner,
+.light [data-atmospheric-banner="true"] {
+  background-color: #0F141B !important;
+  border-color: #30353D !important;
+  color: #FFFFFF !important;
+}
+
+/* Hero title & main figures (location name, big temperature, condition, key metrics, page headings) */
+.light #hero-atmospheric-card h1,
+.light #hero-atmospheric-card h2,
+.light .hero-atmospheric-card h1,
+.light .hero-atmospheric-card h2,
+.light .atmospheric-hero-card h1,
+.light .atmospheric-hero-card h2,
+.light .atmospheric-banner h1,
+.light .atmospheric-banner h2,
+.light [data-atmospheric-banner="true"] h1,
+.light [data-atmospheric-banner="true"] h2,
+.light #hero-atmospheric-card .hero-primary-text,
+.light .hero-atmospheric-card .hero-primary-text,
+.light #hero-atmospheric-card .text-slate-100,
+.light .hero-atmospheric-card .text-slate-100,
+.light .atmospheric-hero-card .text-slate-100,
+.light [data-atmospheric-banner="true"] .text-slate-100,
+.light #hero-atmospheric-card .text-white,
+.light .hero-atmospheric-card .text-white,
+.light .atmospheric-hero-card .text-white,
+.light [data-atmospheric-banner="true"] .text-white {
+  color: #FFFFFF !important;
+}
+
+/* Secondary labels & summary synopsis (meteorological paragraph, station telemetry, comfort rating) */
+.light #hero-atmospheric-card p,
+.light .hero-atmospheric-card p,
+.light .atmospheric-hero-card p,
+.light .atmospheric-banner p,
+.light [data-atmospheric-banner="true"] p,
+.light #hero-atmospheric-card .hero-secondary-text,
+.light .hero-atmospheric-card .hero-secondary-text,
+.light #hero-atmospheric-card .text-slate-200,
+.light .hero-atmospheric-card .text-slate-200,
+.light .atmospheric-hero-card .text-slate-200,
+.light [data-atmospheric-banner="true"] .text-slate-200,
+.light #hero-atmospheric-card .text-slate-300,
+.light .hero-atmospheric-card .text-slate-300,
+.light .atmospheric-hero-card .text-slate-300,
+.light [data-atmospheric-banner="true"] .text-slate-300 {
+  color: #E2E8F0 !important;
+}
+
+/* Sub-labels & metadata (feels like, sunset/sunrise labels, outdoor score caption) */
+.light #hero-atmospheric-card .hero-muted-text,
+.light .hero-atmospheric-card .hero-muted-text,
+.light #hero-atmospheric-card .text-slate-400,
+.light .hero-atmospheric-card .text-slate-400,
+.light .atmospheric-hero-card .text-slate-400,
+.light [data-atmospheric-banner="true"] .text-slate-400 {
+  color: #CBD5E1 !important;
+}
+
+/* Atmospheric sky & amber brand accents */
+.light #hero-atmospheric-card .hero-accent-sky,
+.light .hero-atmospheric-card .hero-accent-sky {
+  color: #8ECAE6 !important;
+}
+
+.light #hero-atmospheric-card .hero-accent-amber,
+.light .hero-atmospheric-card .hero-accent-amber {
+  color: #F4A261 !important;
+}
+
+/* Glass subcards & badges inside dark atmospheric hero */
+.light #hero-atmospheric-card .hero-surface-badge,
+.light .hero-atmospheric-card .hero-surface-badge {
+  background-color: rgba(20, 24, 31, 0.85) !important;
+  border-color: #252A32 !important;
 }
 
 /* Fix text-white in light mode so content remains clearly readable on light backgrounds */
-.light .text-white:not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-indigo-600 *):not(.bg-rose-500 *):not(.bg-emerald-500 *):not(.bg-blue-600 *):not(.bg-amber-500 *):not(.bg-sky-500):not(.bg-sky-600):not(.bg-rose-500):not(.bg-emerald-500) {
+.light .text-white:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *):not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-indigo-600 *):not(.bg-rose-500 *):not(.bg-emerald-500 *):not(.bg-blue-600 *):not(.bg-amber-500 *):not(.bg-sky-500):not(.bg-sky-600):not(.bg-rose-500):not(.bg-emerald-500) {
   color: #0f172a !important;
 }
 
@@ -163,3 +320,137 @@
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(100, 116, 139, 0.7);
 }
+
+/* Diurnal Full-Page Permanent Atmospheric Theme System */
+[data-diurnal-theme="true"] aside#desktop-sidebar,
+[data-diurnal-trial="true"] aside#desktop-sidebar {
+  background-color: rgba(14, 18, 25, 0.65) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-right-color: var(--diurnal-border, rgba(56, 189, 248, 0.25)) !important;
+}
+
+[data-diurnal-theme="true"] aside#desktop-sidebar > div,
+[data-diurnal-trial="true"] aside#desktop-sidebar > div,
+[data-diurnal-theme="true"] aside#desktop-sidebar .bg-\[\#0F141B\],
+[data-diurnal-trial="true"] aside#desktop-sidebar .bg-\[\#0F141B\],
+[data-diurnal-theme="true"] aside#desktop-sidebar .bg-\[\#171C23\],
+[data-diurnal-trial="true"] aside#desktop-sidebar .bg-\[\#171C23\] {
+  background-color: transparent !important;
+}
+
+[data-diurnal-theme="true"] header,
+[data-diurnal-trial="true"] header {
+  background-color: rgba(15, 20, 28, 0.68) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-bottom-color: var(--diurnal-border, rgba(56, 189, 248, 0.25)) !important;
+}
+
+[data-diurnal-theme="true"] nav#mobile-bottom-nav,
+[data-diurnal-trial="true"] nav#mobile-bottom-nav {
+  background-color: rgba(15, 20, 28, 0.80) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-top-color: var(--diurnal-border, rgba(56, 189, 248, 0.25)) !important;
+}
+
+[data-diurnal-theme="true"] footer,
+[data-diurnal-trial="true"] footer {
+  background-color: rgba(15, 20, 28, 0.60) !important;
+  backdrop-filter: blur(16px) !important;
+  border-top-color: var(--diurnal-border, rgba(56, 189, 248, 0.25)) !important;
+}
+
+/* Make all content cards translucent frosted glass so the solar photographic atmosphere shines through */
+[data-diurnal-theme="true"] main .bg-\[\#171C23\],
+[data-diurnal-trial="true"] main .bg-\[\#171C23\],
+[data-diurnal-theme="true"] main .bg-\[\#1B2027\],
+[data-diurnal-trial="true"] main .bg-\[\#1B2027\],
+[data-diurnal-theme="true"] main .bg-\[\#0F141B\],
+[data-diurnal-trial="true"] main .bg-\[\#0F141B\],
+[data-diurnal-theme="true"] main .bg-slate-900,
+[data-diurnal-trial="true"] main .bg-slate-950,
+[data-diurnal-theme="true"] main div[class*="bg-[#171C23]"],
+[data-diurnal-trial="true"] main div[class*="bg-[#171C23]"],
+[data-diurnal-theme="true"] main div[class*="bg-[#1B2027]"],
+[data-diurnal-trial="true"] main div[class*="bg-[#1B2027]"] {
+  background-color: var(--diurnal-card-bg, rgba(20, 26, 36, 0.72)) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-color: var(--diurnal-border, rgba(255, 255, 255, 0.12)) !important;
+}
+
+/* Light mode support */
+.light [data-diurnal-theme="true"] aside#desktop-sidebar,
+.light[data-diurnal-theme="true"] aside#desktop-sidebar,
+.light [data-diurnal-trial="true"] aside#desktop-sidebar,
+.light[data-diurnal-trial="true"] aside#desktop-sidebar {
+  background-color: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-right-color: var(--diurnal-border, rgba(56, 189, 248, 0.35)) !important;
+}
+
+.light [data-diurnal-theme="true"] aside#desktop-sidebar > div,
+.light[data-diurnal-theme="true"] aside#desktop-sidebar > div,
+.light [data-diurnal-trial="true"] aside#desktop-sidebar > div,
+.light[data-diurnal-trial="true"] aside#desktop-sidebar > div,
+.light [data-diurnal-theme="true"] aside#desktop-sidebar .bg-white,
+.light[data-diurnal-theme="true"] aside#desktop-sidebar .bg-white,
+.light [data-diurnal-trial="true"] aside#desktop-sidebar .bg-white,
+.light[data-diurnal-trial="true"] aside#desktop-sidebar .bg-white {
+  background-color: transparent !important;
+}
+
+.light [data-diurnal-theme="true"] header,
+.light[data-diurnal-theme="true"] header,
+.light [data-diurnal-trial="true"] header,
+.light[data-diurnal-trial="true"] header {
+  background-color: rgba(255, 255, 255, 0.78) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-bottom-color: var(--diurnal-border, rgba(56, 189, 248, 0.35)) !important;
+}
+
+.light [data-diurnal-theme="true"] nav#mobile-bottom-nav,
+.light[data-diurnal-theme="true"] nav#mobile-bottom-nav,
+.light [data-diurnal-trial="true"] nav#mobile-bottom-nav,
+.light[data-diurnal-trial="true"] nav#mobile-bottom-nav {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-top-color: var(--diurnal-border, rgba(56, 189, 248, 0.35)) !important;
+}
+
+.light [data-diurnal-theme="true"] footer,
+.light[data-diurnal-theme="true"] footer,
+.light [data-diurnal-trial="true"] footer,
+.light[data-diurnal-trial="true"] footer {
+  background-color: rgba(255, 255, 255, 0.70) !important;
+  backdrop-filter: blur(16px) !important;
+  border-top-color: var(--diurnal-border, rgba(56, 189, 248, 0.35)) !important;
+}
+
+.light [data-diurnal-theme="true"] main .bg-white:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]),
+.light[data-diurnal-theme="true"] main .bg-white:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]),
+.light [data-diurnal-trial="true"] main .bg-white:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]),
+.light[data-diurnal-trial="true"] main .bg-white:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]),
+.light [data-diurnal-theme="true"] main .bg-slate-50:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]),
+.light[data-diurnal-theme="true"] main .bg-slate-50:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]),
+.light [data-diurnal-trial="true"] main .bg-slate-50:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]),
+.light[data-diurnal-trial="true"] main .bg-slate-50:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]),
+.light [data-diurnal-theme="true"] main .bg-\[\#171C23\]:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]),
+.light[data-diurnal-theme="true"] main .bg-\[\#171C23\]:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]),
+.light [data-diurnal-trial="true"] main .bg-\[\#171C23\]:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]),
+.light[data-diurnal-trial="true"] main .bg-\[\#171C23\]:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]),
+.light [data-diurnal-theme="true"] main .bg-\[\#1B2027\]:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]),
+.light[data-diurnal-theme="true"] main .bg-\[\#1B2027\]:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]),
+.light [data-diurnal-trial="true"] main .bg-\[\#1B2027\]:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]),
+.light[data-diurnal-trial="true"] main .bg-\[\#1B2027\]:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]) {
+  background-color: rgba(255, 255, 255, 0.78) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-color: var(--diurnal-border, rgba(0, 0, 0, 0.10)) !important;
+}
+

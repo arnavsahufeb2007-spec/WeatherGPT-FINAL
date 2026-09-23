@@ -70,48 +70,153 @@ export async function getBhashiniStatusAPI(): Promise<{
   }
 }
 
+// Fast in-memory client cache with TTL & in-flight deduplication
+const clientSearchCache = new Map<string, { data: LocationInfo[]; expires: number }>();
+const clientWeatherCache = new Map<string, { data: any; expires: number }>();
+const inFlightRequests = new Map<string, Promise<any>>();
+
 export async function searchLocationsAPI(query: string, count: number = 10): Promise<LocationInfo[]> {
-  if (!query.trim()) return [];
-  const res = await fetch(`/api/location/search?q=${encodeURIComponent(query)}&count=${count}`);
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || `Geocoding request failed with status ${res.status}`);
+  const trimmed = query.trim().toLowerCase();
+  if (!trimmed) return [];
+
+  const cacheKey = `${trimmed}_${count}`;
+  const now = Date.now();
+  const cached = clientSearchCache.get(cacheKey);
+  if (cached && cached.expires > now) {
+    return cached.data;
   }
-  const data = await res.json();
-  return data.locations || [];
+
+  if (inFlightRequests.has(cacheKey)) {
+    return inFlightRequests.get(cacheKey)!;
+  }
+
+  const fetchPromise = (async () => {
+    try {
+      const res = await fetch(`/api/location/search?q=${encodeURIComponent(query.trim())}&count=${count}`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Geocoding request failed with status ${res.status}`);
+      }
+      const data = await res.json();
+      const locations = data.locations || [];
+      // Cache client-side for 5 minutes (300,000ms)
+      clientSearchCache.set(cacheKey, { data: locations, expires: Date.now() + 300000 });
+      return locations;
+    } finally {
+      inFlightRequests.delete(cacheKey);
+    }
+  })();
+
+  inFlightRequests.set(cacheKey, fetchPromise);
+  return fetchPromise;
 }
 
 export async function getCurrentWeatherAPI(
   params: { lat?: number; lon?: number; location?: string; timezone?: string }
-): Promise<{ location: LocationInfo; current: CurrentWeatherData; analysis: WeatherAnalysis; advisories: WeatherAdvisory[] }> {
+): Promise<{
+  location: LocationInfo;
+  current: CurrentWeatherData;
+  hourly?: HourlyForecastItem[];
+  daily?: DailyForecastItem[];
+  analysis: WeatherAnalysis;
+  advisories: WeatherAdvisory[];
+}> {
   const q = new URLSearchParams();
   if (params.lat !== undefined) q.set("lat", String(params.lat));
   if (params.lon !== undefined) q.set("lon", String(params.lon));
   if (params.location) q.set("location", params.location);
   if (params.timezone) q.set("timezone", params.timezone);
 
-  const res = await fetch(`/api/weather/current?${q.toString()}`);
-  if (!res.ok) throw new Error("Failed to load current weather");
-  const data = await res.json();
-  return data;
+  const cacheKey = `curr_${q.toString()}`;
+  const now = Date.now();
+  const cached = clientWeatherCache.get(cacheKey);
+  if (cached && cached.expires > now) {
+    return cached.data;
+  }
+
+  if (inFlightRequests.has(cacheKey)) {
+    return inFlightRequests.get(cacheKey)!;
+  }
+
+  const fetchPromise = (async () => {
+    try {
+      const res = await fetch(`/api/weather/current?${q.toString()}`);
+      if (!res.ok) throw new Error("Failed to load current weather");
+      const data = await res.json();
+      // Cache client-side for 2 minutes (120,000ms)
+      clientWeatherCache.set(cacheKey, { data, expires: Date.now() + 120000 });
+      return data;
+    } finally {
+      inFlightRequests.delete(cacheKey);
+    }
+  })();
+
+  inFlightRequests.set(cacheKey, fetchPromise);
+  return fetchPromise;
 }
 
 export async function getHourlyWeatherAPI(lat: number, lon: number, timezone?: string): Promise<HourlyForecastItem[]> {
   const q = new URLSearchParams({ lat: String(lat), lon: String(lon) });
   if (timezone) q.set("timezone", timezone);
-  const res = await fetch(`/api/weather/hourly?${q.toString()}`);
-  if (!res.ok) throw new Error("Failed to load hourly forecast");
-  const data = await res.json();
-  return data.hourly || [];
+
+  const cacheKey = `hourly_${q.toString()}`;
+  const now = Date.now();
+  const cached = clientWeatherCache.get(cacheKey);
+  if (cached && cached.expires > now) {
+    return cached.data;
+  }
+
+  if (inFlightRequests.has(cacheKey)) {
+    return inFlightRequests.get(cacheKey)!;
+  }
+
+  const fetchPromise = (async () => {
+    try {
+      const res = await fetch(`/api/weather/hourly?${q.toString()}`);
+      if (!res.ok) throw new Error("Failed to load hourly forecast");
+      const data = await res.json();
+      const items = data.hourly || [];
+      clientWeatherCache.set(cacheKey, { data: items, expires: Date.now() + 120000 });
+      return items;
+    } finally {
+      inFlightRequests.delete(cacheKey);
+    }
+  })();
+
+  inFlightRequests.set(cacheKey, fetchPromise);
+  return fetchPromise;
 }
 
 export async function getDailyWeatherAPI(lat: number, lon: number, timezone?: string): Promise<DailyForecastItem[]> {
   const q = new URLSearchParams({ lat: String(lat), lon: String(lon) });
   if (timezone) q.set("timezone", timezone);
-  const res = await fetch(`/api/weather/daily?${q.toString()}`);
-  if (!res.ok) throw new Error("Failed to load daily forecast");
-  const data = await res.json();
-  return data.daily || [];
+
+  const cacheKey = `daily_${q.toString()}`;
+  const now = Date.now();
+  const cached = clientWeatherCache.get(cacheKey);
+  if (cached && cached.expires > now) {
+    return cached.data;
+  }
+
+  if (inFlightRequests.has(cacheKey)) {
+    return inFlightRequests.get(cacheKey)!;
+  }
+
+  const fetchPromise = (async () => {
+    try {
+      const res = await fetch(`/api/weather/daily?${q.toString()}`);
+      if (!res.ok) throw new Error("Failed to load daily forecast");
+      const data = await res.json();
+      const items = data.daily || [];
+      clientWeatherCache.set(cacheKey, { data: items, expires: Date.now() + 120000 });
+      return items;
+    } finally {
+      inFlightRequests.delete(cacheKey);
+    }
+  })();
+
+  inFlightRequests.set(cacheKey, fetchPromise);
+  return fetchPromise;
 }
 
 export async function analyzeActivityAPI(

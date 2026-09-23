@@ -30,6 +30,7 @@ import { UserProfile, authService } from "../services/auth.js";
 import { getLanguageConfig, ALL_LANGUAGES } from "../languages.js";
 import { DeviceMode } from "./DevicePreviewBar.js";
 import { VoiceLanguageModal } from "./VoiceLanguageModal.js";
+import { DiurnalPhase } from "../services/diurnalTheme.js";
 
 interface SettingsViewProps {
   currentUser: UserProfile | null;
@@ -318,6 +319,29 @@ export function SettingsView({
               Airy pearl canvas with high-contrast typography and subtle dividers for daytime clarity.
             </p>
           </button>
+        </div>
+
+        {/* Full-Page Diurnal Atmospheric Adaptation */}
+        <div className="pt-3 border-t border-[#30353D] dark:border-[#30353D] light:border-slate-200">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono font-semibold text-slate-100 dark:text-slate-100 light:text-slate-900">
+                  Solar Diurnal Atmosphere System
+                </span>
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  ACTIVE
+                </span>
+              </div>
+              <p className="text-xs font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 mt-0.5">
+                Automatically coordinates atmospheric backdrops, glassmorphism telemetry, and diurnal lighting across Dawn, Solar Apex, Golden Hour, Dusk, and Night.
+              </p>
+            </div>
+            <div className="px-3 py-1.5 rounded-[4px] font-mono text-xs font-semibold bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 shrink-0 self-start sm:self-auto flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>Always Synchronized</span>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -243,6 +243,7 @@ export function normalizeOpenMeteoResponse(raw: any, requestedTimezone: string =
 
 export class OpenMeteoWeatherProvider implements IWeatherProvider {
   private baseUrl = "https://api.open-meteo.com/v1/forecast";
+  private inFlightRequests = new Map<string, Promise<WeatherDataResult>>();
 
   async getWeatherData(lat: number, lon: number, requestedTimezone: string = "auto"): Promise<WeatherDataResult> {
     if (typeof lat !== "number" || typeof lon !== "number" || isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
@@ -255,93 +256,105 @@ export class OpenMeteoWeatherProvider implements IWeatherProvider {
       return cached;
     }
 
-    const currentParams = [
-      "temperature_2m",
-      "relative_humidity_2m",
-      "apparent_temperature",
-      "precipitation",
-      "rain",
-      "weather_code",
-      "cloud_cover",
-      "pressure_msl",
-      "surface_pressure",
-      "wind_speed_10m",
-      "wind_direction_10m",
-      "wind_gusts_10m",
-      "uv_index",
-      "is_day",
-      "dew_point_2m",
-    ].join(",");
-
-    const hourlyParams = [
-      "temperature_2m",
-      "relative_humidity_2m",
-      "apparent_temperature",
-      "precipitation_probability",
-      "precipitation",
-      "rain",
-      "weather_code",
-      "visibility",
-      "wind_speed_10m",
-      "uv_index",
-    ].join(",");
-
-    const dailyParams = [
-      "weather_code",
-      "temperature_2m_max",
-      "temperature_2m_min",
-      "apparent_temperature_max",
-      "apparent_temperature_min",
-      "sunrise",
-      "sunset",
-      "uv_index_max",
-      "precipitation_sum",
-      "rain_sum",
-      "precipitation_probability_max",
-      "wind_speed_10m_max",
-    ].join(",");
-
-    const url = `${this.baseUrl}?latitude=${lat}&longitude=${lon}&current=${currentParams}&hourly=${hourlyParams}&daily=${dailyParams}&timezone=${encodeURIComponent(
-      requestedTimezone
-    )}&forecast_days=7`;
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
-
-    try {
-      const response = await fetch(url, { signal: controller.signal });
-      clearTimeout(timeout);
-
-      if (!response.ok) {
-        throw new WeatherProviderError(
-          `Open-Meteo returned status ${response.status}: ${response.statusText}`,
-          "http_error",
-          response.status
-        );
-      }
-
-      let raw: any;
-      try {
-        raw = await response.json();
-      } catch {
-        throw new WeatherProviderError("Failed to parse JSON response from Open-Meteo", "malformed_response");
-      }
-
-      const result = normalizeOpenMeteoResponse(raw, requestedTimezone);
-
-      // Cache for 10 minutes (600s)
-      appCache.set(cacheKey, result, 600);
-      return result;
-    } catch (err: any) {
-      clearTimeout(timeout);
-      if (err instanceof WeatherProviderError) {
-        throw err;
-      }
-      if (controller.signal.aborted || err.name === "AbortError") {
-        throw new WeatherProviderError("Open-Meteo weather service request timed out after 8000ms", "timeout");
-      }
-      throw new WeatherProviderError(`Failed to fetch weather from Open-Meteo: ${err.message}`, "network_error");
+    const inFlight = this.inFlightRequests.get(cacheKey);
+    if (inFlight) {
+      return inFlight;
     }
+
+    const fetchPromise = (async () => {
+      const currentParams = [
+        "temperature_2m",
+        "relative_humidity_2m",
+        "apparent_temperature",
+        "precipitation",
+        "rain",
+        "weather_code",
+        "cloud_cover",
+        "pressure_msl",
+        "surface_pressure",
+        "wind_speed_10m",
+        "wind_direction_10m",
+        "wind_gusts_10m",
+        "uv_index",
+        "is_day",
+        "dew_point_2m",
+      ].join(",");
+
+      const hourlyParams = [
+        "temperature_2m",
+        "relative_humidity_2m",
+        "apparent_temperature",
+        "precipitation_probability",
+        "precipitation",
+        "rain",
+        "weather_code",
+        "visibility",
+        "wind_speed_10m",
+        "uv_index",
+      ].join(",");
+
+      const dailyParams = [
+        "weather_code",
+        "temperature_2m_max",
+        "temperature_2m_min",
+        "apparent_temperature_max",
+        "apparent_temperature_min",
+        "sunrise",
+        "sunset",
+        "uv_index_max",
+        "precipitation_sum",
+        "rain_sum",
+        "precipitation_probability_max",
+        "wind_speed_10m_max",
+      ].join(",");
+
+      const url = `${this.baseUrl}?latitude=${lat}&longitude=${lon}&current=${currentParams}&hourly=${hourlyParams}&daily=${dailyParams}&timezone=${encodeURIComponent(
+        requestedTimezone
+      )}&forecast_days=7`;
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+
+      try {
+        const response = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeout);
+
+        if (!response.ok) {
+          throw new WeatherProviderError(
+            `Open-Meteo returned status ${response.status}: ${response.statusText}`,
+            "http_error",
+            response.status
+          );
+        }
+
+        let raw: any;
+        try {
+          raw = await response.json();
+        } catch {
+          throw new WeatherProviderError("Failed to parse JSON response from Open-Meteo", "malformed_response");
+        }
+
+        const result = normalizeOpenMeteoResponse(raw, requestedTimezone);
+
+        // Cache for 10 minutes (600s)
+        appCache.set(cacheKey, result, 600);
+        return result;
+      } catch (err: any) {
+        clearTimeout(timeout);
+        if (err instanceof WeatherProviderError) {
+          throw err;
+        }
+        if (controller.signal.aborted || err.name === "AbortError") {
+          throw new WeatherProviderError("Open-Meteo weather service request timed out after 8000ms", "timeout");
+        }
+        throw new WeatherProviderError(`Failed to fetch weather from Open-Meteo: ${err.message}`, "network_error");
+      } finally {
+        this.inFlightRequests.delete(cacheKey);
+      }
+    })();
+
+    this.inFlightRequests.set(cacheKey, fetchPromise);
+    return fetchPromise;
   }
 }
 

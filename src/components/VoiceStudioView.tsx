@@ -24,6 +24,7 @@ import { getLanguageConfig } from "../languages.js";
 import { queryWeatherAPI } from "../services/api.js";
 import { VoiceLanguageModal } from "./VoiceLanguageModal.js";
 import { GeminiLiveModal } from "./GeminiLiveModal.js";
+import { DiurnalPhase, DiurnalPhaseConfig } from "../services/diurnalTheme.js";
 
 interface VoiceStudioViewProps {
   currentLocation: LocationInfo | null;
@@ -32,6 +33,8 @@ interface VoiceStudioViewProps {
   onOpenLocationSearch: () => void;
   context?: ConversationContext;
   onUpdateContext?: (ctx: ConversationContext) => void;
+  diurnalPhase?: DiurnalPhase;
+  diurnalConfig?: DiurnalPhaseConfig;
 }
 
 interface VoiceTranscriptMessage {
@@ -49,6 +52,8 @@ export function VoiceStudioView({
   onOpenLocationSearch,
   context,
   onUpdateContext,
+  diurnalPhase,
+  diurnalConfig,
 }: VoiceStudioViewProps) {
   const voice = useVoiceMode(preferredLanguage);
   const langConfig = getLanguageConfig(preferredLanguage);
@@ -200,36 +205,69 @@ export function VoiceStudioView({
   return (
     <div id="voice-studio" className="space-y-4 sm:space-y-5 max-w-4xl mx-auto">
       {/* Voice Studio Hero Banner with Atmospheric HUD */}
-      <div className="relative rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 p-5 sm:p-6 overflow-hidden transition-colors shadow-lg">
+      <div
+        data-atmospheric-banner="true"
+        className="hero-atmospheric-card atmospheric-hero-card relative rounded-[8px] bg-[#0F141B] border border-[#30353D] p-5 sm:p-6 overflow-hidden transition-colors shadow-lg"
+        style={diurnalConfig ? { borderColor: `${diurnalConfig.accentColor}40` } : undefined}
+      >
         <div className="absolute inset-0 z-0 pointer-events-none select-none">
           <img
-            src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=1600&q=80"
-            alt="Acoustic Voice Studio"
-            className="w-full h-full object-cover object-center opacity-30 dark:opacity-25 light:opacity-20"
+            key={diurnalConfig?.backgrounds.home.photoUrl || "standard-voice"}
+            src={
+              diurnalConfig?.backgrounds.home.photoUrl ||
+              "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=1600&q=80"
+            }
+            alt={diurnalConfig?.backgrounds.home.photoAlt || "Acoustic Voice Studio"}
+            className="w-full h-full object-cover object-center opacity-75 dark:opacity-70 transition-opacity duration-700"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0F141B] via-[#171C23]/95 to-[#171C23]/60 dark:from-[#0F141B] dark:via-[#171C23]/95 dark:to-[#171C23]/60 light:from-white light:via-white/95 light:to-white/80" />
+          <div
+            className="absolute inset-0 transition-colors duration-700"
+            style={{
+              background: diurnalConfig
+                ? "linear-gradient(90deg, rgba(13,19,26,0.94) 0%, rgba(13,19,26,0.80) 55%, rgba(13,19,26,0.25) 100%)"
+                : "linear-gradient(90deg, rgba(15,20,27,0.95) 0%, rgba(23,28,35,0.90) 60%, rgba(23,28,35,0.40) 100%)",
+            }}
+          />
         </div>
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1.5 max-w-xl">
-            <div className="inline-flex items-center gap-2">
-              <span className="text-[10px] font-mono uppercase font-bold text-[#8ECAE6] tracking-wider px-2 py-0.5 rounded-[3px] bg-[#0F141B]/80 border border-[#8ECAE6]/30">
-                VOICE DISPATCH • BIDIRECTIONAL ACOUSTIC STUDIO
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                className="text-[10px] font-mono uppercase font-bold tracking-wider px-2 py-0.5 rounded-[3px] bg-[#0F141B]/80 border transition-colors"
+                style={{
+                  color: diurnalConfig ? diurnalConfig.accentColor : "#8ECAE6",
+                  borderColor: diurnalConfig ? `${diurnalConfig.accentColor}40` : "rgba(142, 202, 230, 0.3)",
+                }}
+              >
+                VOICE DISPATCH • {diurnalConfig ? diurnalConfig.stationTelemetrySub : "BIDIRECTIONAL ACOUSTIC STUDIO"}
               </span>
+              {diurnalConfig && (
+                <span
+                  className="inline-flex items-center gap-1 text-[9px] font-mono uppercase font-bold px-2 py-0.5 rounded-[4px] backdrop-blur-sm"
+                  style={{
+                    backgroundColor: `${diurnalConfig.accentColor}25`,
+                    color: diurnalConfig.accentColor,
+                    border: `1px solid ${diurnalConfig.accentColor}50`,
+                  }}
+                >
+                  {diurnalConfig.solarStatusBadge}
+                </span>
+              )}
               <span className="flex h-1.5 w-1.5 relative">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400"></span>
               </span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 font-mono tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-bold text-white font-mono tracking-tight">
               Hands-Free Voice Studio
             </h2>
-            <p className="text-xs text-slate-300 dark:text-slate-300 light:text-slate-700 leading-relaxed">
+            <p className="text-xs text-slate-200 leading-relaxed">
               Speak in your native Indian or international language and listen to natural meteorological audio with decoupled input and speech synthesis engines.
             </p>
           </div>
 
           {/* Telemetry HUD Badge */}
-          <div className="bg-[#0F141B]/80 dark:bg-[#0F141B]/80 light:bg-slate-100/90 backdrop-blur-md border border-[#30353D] dark:border-[#30353D] light:border-slate-300 p-3 rounded-[6px] hidden sm:flex flex-col gap-1.5 min-w-[210px] text-[11px] font-mono shrink-0 shadow-inner">
+          <div className="bg-[#0F141B]/85 backdrop-blur-md border border-white/10 p-3 rounded-[6px] hidden sm:flex flex-col gap-1.5 min-w-[210px] text-[11px] font-mono shrink-0 shadow-inner">
             <div className="flex items-center justify-between text-slate-400">
               <span className="text-[10px] uppercase tracking-wider text-slate-400">DUPLEX AUDIO</span>
               <span className="text-emerald-400 font-semibold flex items-center gap-1">

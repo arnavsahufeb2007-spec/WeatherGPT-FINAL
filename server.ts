@@ -131,6 +131,7 @@ async function startServer() {
 
   // Multilingual Languages Registry Route
   app.get("/api/languages", (req: Request, res: Response) => {
+    res.setHeader("Cache-Control", "public, max-age=86400");
     res.json({
       success: true,
       languages: ALL_LANGUAGES,
@@ -141,6 +142,7 @@ async function startServer() {
 
   // BHASHINI Provider Status (never exposes secret keys)
   app.get("/api/bhashini/status", (req: Request, res: Response) => {
+    res.setHeader("Cache-Control", "public, max-age=300");
     res.json(bhashiniProvider.getStatus());
   });
 
@@ -171,6 +173,7 @@ async function startServer() {
       }
       const count = req.query.count ? parseInt(String(req.query.count), 10) : 5;
       const locations = await geocodingProvider.searchLocations(q, count);
+      res.setHeader("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
       res.json({ success: true, locations, results: locations });
     } catch (err: any) {
       res.status(500).json({ success: false, error: err.message });
@@ -224,10 +227,13 @@ async function startServer() {
       const analysis = analyzeWeather(weatherData.current, weatherData.hourly, weatherData.daily);
       const advisories = generateAdvisories(resolvedLoc.name, weatherData.current, weatherData.hourly, weatherData.daily);
 
+      res.setHeader("Cache-Control", "public, max-age=180, stale-while-revalidate=600");
       res.json({
         success: true,
         location: resolvedLoc,
         current: weatherData.current,
+        hourly: weatherData.hourly,
+        daily: weatherData.daily,
         analysis,
         advisories,
       });
@@ -248,6 +254,7 @@ async function startServer() {
       }
 
       const weatherData = await weatherProvider.getWeatherData(lat, lon, tz);
+      res.setHeader("Cache-Control", "public, max-age=180, stale-while-revalidate=600");
       res.json({ success: true, hourly: weatherData.hourly });
     } catch (err: any) {
       handleWeatherError(res, err);
@@ -266,6 +273,7 @@ async function startServer() {
       }
 
       const weatherData = await weatherProvider.getWeatherData(lat, lon, tz);
+      res.setHeader("Cache-Control", "public, max-age=180, stale-while-revalidate=600");
       res.json({ success: true, daily: weatherData.daily });
     } catch (err: any) {
       handleWeatherError(res, err);

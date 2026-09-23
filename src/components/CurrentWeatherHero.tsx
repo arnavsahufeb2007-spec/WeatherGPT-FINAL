@@ -1,8 +1,35 @@
-import React from "react";
-import { Droplets, Wind, Eye, Compass, Sun, Sparkles, Sunrise, Sunset } from "lucide-react";
-import { CurrentWeatherData, DailyForecastItem, LocationInfo, WeatherAnalysis } from "../types.js";
+import React, { useState, useMemo } from "react";
+import {
+  CurrentWeatherData,
+  DailyForecastItem,
+  LocationInfo,
+  WeatherAnalysis,
+} from "../types.js";
 import { WeatherIcon } from "./WeatherIcons.js";
+import {
+  Wind,
+  Droplets,
+  Sun,
+  Sunrise,
+  Sunset,
+  Moon,
+  Sparkles,
+  Eye,
+  Compass,
+  MapPin,
+  Clock,
+  Activity,
+  ArrowUp,
+  ArrowDown,
+} from "lucide-react";
 import { getLanguageConfig } from "../languages.js";
+import {
+  DiurnalPhase,
+  determineDiurnalPhase,
+  DIURNAL_PHASE_CONFIGS,
+} from "../services/diurnalTheme.js";
+
+export { determineDiurnalPhase, type DiurnalPhase };
 
 interface CurrentWeatherHeroProps {
   location: LocationInfo;
@@ -11,6 +38,8 @@ interface CurrentWeatherHeroProps {
   todayDaily?: DailyForecastItem;
   isFahrenheit: boolean;
   language?: string;
+  activePhaseOverride?: DiurnalPhase | "auto";
+  onPhaseChange?: (phase: DiurnalPhase | "auto") => void;
 }
 
 export function CurrentWeatherHero({
@@ -20,132 +49,244 @@ export function CurrentWeatherHero({
   todayDaily,
   isFahrenheit,
   language = "en",
+  activePhaseOverride,
+  onPhaseChange,
 }: CurrentWeatherHeroProps) {
   const langConfig = getLanguageConfig(language);
   const t = langConfig.translations;
-  const formatTemp = (celsius: number) => {
+
+  // Selected phase state: defaults to "auto" (synchronizing with actual solar position) or activePhaseOverride
+  const [internalSelectedPhase, setInternalSelectedPhase] = useState<DiurnalPhase | "auto">("auto");
+  const selectedPhase = activePhaseOverride !== undefined ? activePhaseOverride : internalSelectedPhase;
+
+  const detectedPhase = useMemo(
+    () => determineDiurnalPhase(current.time, current.sunrise, current.sunset, current.isDay),
+    [current.time, current.sunrise, current.sunset, current.isDay]
+  );
+
+  const activePhase: DiurnalPhase = selectedPhase === "auto" ? detectedPhase : selectedPhase;
+  const phaseConfig = DIURNAL_PHASE_CONFIGS[activePhase];
+
+  const cyclePhases: (DiurnalPhase | "auto")[] = ["auto", "dawn", "day", "golden_hour", "dusk", "night"];
+  const handleCyclePhase = () => {
+    const idx = cyclePhases.indexOf(selectedPhase);
+    const nextIdx = (idx + 1) % cyclePhases.length;
+    const nextPhase = cyclePhases[nextIdx];
+    if (onPhaseChange) {
+      onPhaseChange(nextPhase);
+    } else {
+      setInternalSelectedPhase(nextPhase);
+    }
+  };
+
+  const formatTemp = (celsius?: number) => {
+    if (celsius === undefined || celsius === null) return "--";
     if (isFahrenheit) {
       return `${Math.round((celsius * 9) / 5 + 32)}°F`;
     }
     return `${celsius}°C`;
   };
 
-  const score = analysis?.outdoorSuitabilityScore ?? 90;
+  const score = analysis?.outdoorSuitabilityScore ?? 100;
+
+  const renderPhaseIcon = () => {
+    switch (phaseConfig.iconName) {
+      case "sunrise":
+        return <Sunrise className="w-3.5 h-3.5" style={{ color: phaseConfig.accentColor }} />;
+      case "sun":
+        return <Sun className="w-3.5 h-3.5" style={{ color: phaseConfig.accentColor }} />;
+      case "sunset":
+        return <Sunset className="w-3.5 h-3.5" style={{ color: phaseConfig.accentColor }} />;
+      case "sparkles":
+        return <Sparkles className="w-3.5 h-3.5" style={{ color: phaseConfig.accentColor }} />;
+      case "moon":
+        return <Moon className="w-3.5 h-3.5" style={{ color: phaseConfig.accentColor }} />;
+      default:
+        return <Sun className="w-3.5 h-3.5" style={{ color: phaseConfig.accentColor }} />;
+    }
+  };
 
   return (
     <div id="current-weather-hero" className="space-y-4">
-      {/* Primary Hero Box: Atmospheric Editorial Structure with Atmospheric Landscape overlay */}
-      <div className="relative rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 p-5 sm:p-7 overflow-hidden transition-colors">
-        {/* Subtle landscape photographic background overlay */}
-        <div className="absolute inset-0 z-0 pointer-events-none select-none">
+      {/* Primary Atmospheric Hero Card with Diurnally Adaptive Backdrop */}
+      <div
+        id="hero-atmospheric-card"
+        data-solar-phase={activePhase}
+        className="hero-atmospheric-card relative rounded-[8px] bg-[#0F141B] border border-[#252A32] p-5 sm:p-7 overflow-hidden transition-colors shadow-sm"
+      >
+        {/* Diurnal photographic backdrop adapting to solar phase */}
+        <div className="absolute inset-0 z-0 pointer-events-none select-none overflow-hidden">
           <img
-            src="https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1600&q=80"
-            alt="Atmospheric landscape"
-            className="w-full h-full object-cover object-right opacity-35 dark:opacity-30 light:opacity-20"
+            key={phaseConfig.backgrounds.home.photoUrl}
+            src={phaseConfig.backgrounds.home.photoUrl}
+            alt={phaseConfig.backgrounds.home.photoAlt}
+            className="w-full h-full object-cover object-right opacity-70 transition-opacity duration-700 ease-in-out"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#171C23] via-[#171C23]/95 to-transparent dark:from-[#171C23] dark:via-[#171C23]/95 light:from-white light:via-white/95" />
+          {/* Multi-stop gradient calibrated per phase for pristine typography contrast & warm solar radiance */}
+          <div
+            className="absolute inset-0 transition-colors duration-700"
+            style={{
+              background: `linear-gradient(90deg, rgba(13,19,26,0.95) 0%, rgba(13,19,26,0.85) 60%, rgba(13,19,26,0.3) 100%)`,
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0F141B]/80 via-transparent to-transparent" />
         </div>
 
-        {/* Content container */}
-        <div className="relative z-10 space-y-4">
-          {/* Station Telemetry live banner */}
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-            <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-300 dark:text-slate-300 light:text-slate-700">
-              STATION TELEMETRY • {location.name.toUpperCase()}
-            </span>
-            <span className="px-1.5 py-0.5 rounded-[3px] bg-[#8ECAE6]/10 text-[#8ECAE6] border border-[#8ECAE6]/25 font-mono text-[9px] uppercase font-semibold">
-              LIVE FEED
+        {/* Foreground Content */}
+        <div className="relative z-10 space-y-5">
+          {/* Top Status Banner: Station Telemetry, Diurnal Phase Interactive Badge & Live Feed */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="hero-surface-badge inline-flex items-center gap-2 px-2.5 py-1 rounded-[4px] bg-[#14181F]/80 border border-[#252A32] backdrop-blur-sm">
+                <span
+                  className="w-2 h-2 rounded-full shrink-0 transition-colors duration-500"
+                  style={{ backgroundColor: phaseConfig.accentColor }}
+                />
+                <span className="hero-secondary-text text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-200">
+                  STATION TELEMETRY • {location.name.toUpperCase()}
+                </span>
+                <span
+                  className="font-mono text-[9px] uppercase font-bold tracking-wider ml-1 transition-colors duration-500"
+                  style={{ color: phaseConfig.accentColor }}
+                >
+                  {phaseConfig.stationTelemetrySub}
+                </span>
+              </div>
+
+              {/* Diurnal Phase Interactive Tag (Click to cycle through all 5 diurnal phases or return to live) */}
+              <button
+                type="button"
+                id="diurnal-phase-toggle-btn"
+                onClick={handleCyclePhase}
+                title={`Solar phase: ${phaseConfig.name}. Click to explore other phases of the day.`}
+                className="hero-surface-badge inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] bg-[#14181F]/80 hover:bg-[#1C232D] border border-[#252A32] backdrop-blur-sm text-[11px] font-mono transition-all cursor-pointer select-none group"
+              >
+                {renderPhaseIcon()}
+                <span className="font-semibold uppercase tracking-wider" style={{ color: phaseConfig.accentColor }}>
+                  {phaseConfig.solarStatusBadge}
+                </span>
+                {selectedPhase === "auto" ? (
+                  <span className="text-[9px] font-mono text-emerald-400 font-bold uppercase tracking-wider ml-1 px-1 py-0.2 rounded bg-emerald-950/40 border border-emerald-500/30">
+                    LIVE
+                  </span>
+                ) : (
+                  <span className="text-[9px] font-mono text-[#8ECAE6] font-medium uppercase tracking-wider ml-1">
+                    PREVIEW
+                  </span>
+                )}
+              </button>
+            </div>
+
+            <div className="hero-surface-badge flex items-center gap-2 text-[11px] font-mono text-slate-300 bg-[#14181F]/70 px-2.5 py-1 rounded-[4px] border border-[#252A32] backdrop-blur-sm">
+              <Clock className="w-3.5 h-3.5 text-slate-400 hero-muted-text" />
+              <span className="hero-secondary-text text-slate-300">
+                {current.time ? current.time.replace("T", " • ") : "Synoptic Real-Time"}
+              </span>
+            </div>
+          </div>
+
+          {/* Location Title Header */}
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <h1 className="hero-primary-text text-3xl sm:text-4xl font-bold text-slate-100 tracking-tight">
+              {location.name}
+            </h1>
+            <span className="hero-accent-sky text-xs font-mono font-semibold uppercase tracking-wider text-[#8ECAE6]">
+              {location.admin1 ? `${location.admin1.toUpperCase()}, ` : ""}
+              {location.country ? location.country.toUpperCase() : "INDIA"}
             </span>
           </div>
 
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-5">
-            {/* Left Column: Location, Temperature, Summary */}
-            <div className="space-y-3 max-w-2xl">
-              {/* Location Name & Region */}
-              <div className="flex items-baseline gap-2 flex-wrap">
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 tracking-tight">
-                  {location.name}
-                </h1>
-                <span className="text-xs font-mono uppercase tracking-wider text-slate-400">
-                  {location.admin1 ? `${location.admin1}, ` : ""}
-                  {location.country || "INDIA"}
-                </span>
-              </div>
-
-              {/* Dominant Temperature & Condition */}
-              <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
-                <span className="text-5xl sm:text-6xl lg:text-7xl font-black font-mono tracking-tighter text-slate-100 dark:text-slate-100 light:text-slate-900 select-none">
-                  {formatTemp(current.temperature)}
-                </span>
-                <div className="flex flex-col justify-center">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg sm:text-xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 tracking-tight">
-                      {current.condition}
-                    </span>
-                    <WeatherIcon code={current.weatherCode} className="w-6 h-6 text-[#F4A261]" isDay={current.isDay} />
-                  </div>
-                  <div className="text-xs text-slate-400 mt-0.5 font-mono">
-                    Feels like {formatTemp(current.feelsLike)} • High {todayDaily ? formatTemp(todayDaily.tempMax) : "--"} / Low {todayDaily ? formatTemp(todayDaily.tempMin) : "--"}
-                  </div>
+          {/* Temperature & Weather Condition Row */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+            <div className="flex items-center gap-5 sm:gap-6 flex-wrap">
+              <span className="hero-primary-text text-6xl sm:text-7xl font-light font-mono tracking-tight text-slate-100 select-none">
+                {formatTemp(current.temperature)}
+              </span>
+              <div className="flex flex-col justify-center">
+                <div className="flex items-center gap-2">
+                  <span className="hero-primary-text text-xl sm:text-2xl font-bold text-slate-100 tracking-tight">
+                    {current.condition}
+                  </span>
+                  <WeatherIcon
+                    code={current.weatherCode}
+                    className="w-6 h-6 hero-accent-amber"
+                    isDay={activePhase === "day" || activePhase === "dawn" || activePhase === "golden_hour"}
+                  />
                 </div>
-              </div>
-
-              {/* Natural language synopsis paragraph */}
-              <p className="text-xs sm:text-sm text-slate-300 dark:text-slate-300 light:text-slate-700 leading-relaxed pt-1">
-                Current conditions are {current.condition.toLowerCase()} with {formatTemp(current.temperature)} (feels like {formatTemp(current.feelsLike)}). Rain probability is {current.precipitationProbability}%, humidity is {current.humidity ?? 80}%, wind is {current.windSpeed} km/h, and UV index is {current.uvIndex ?? 0}. Overall outdoor rating: {score}/100.
-              </p>
-            </div>
-
-            {/* Right Column Stat Tiles: Sunset & Outdoor Score */}
-            <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 shrink-0">
-              {/* Sunset Today */}
-              <div className="p-3 rounded-[6px] bg-[#1B2027]/90 dark:bg-[#1B2027]/90 light:bg-slate-50 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 min-w-[130px]">
-                <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase font-semibold text-slate-400">
-                  <Sunset className="w-3 h-3 text-[#F4A261]" />
-                  <span>SUNSET TODAY</span>
-                </div>
-                <div className="font-mono text-lg font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 mt-1">
-                  {current.sunset ? current.sunset.slice(11, 16) : "18:35"}
-                </div>
-                <div className="text-[10px] font-mono text-slate-400 mt-0.5">
-                  Sunrise {current.sunrise ? current.sunrise.slice(11, 16) : "06:27"}
-                </div>
-              </div>
-
-              {/* Outdoor Suitability Score */}
-              <div className="p-3 rounded-[6px] bg-[#1B2027]/90 dark:bg-[#1B2027]/90 light:bg-slate-50 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 min-w-[130px]">
-                <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase font-semibold text-slate-400">
-                  <Sparkles className="w-3 h-3 text-[#8ECAE6]" />
-                  <span>OUTDOOR SCORE</span>
-                </div>
-                <div className="font-mono text-lg font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 mt-1">
-                  {score}/100
-                </div>
-                <div className="text-[10px] font-semibold text-[#8ECAE6] mt-0.5">
-                  {analysis?.comfortLabel || "Comfortable"}
+                <div className="hero-muted-text text-xs text-slate-300 mt-1 font-mono">
+                  Feels like {formatTemp(current.feelsLike)} • High {todayDaily ? formatTemp(todayDaily.tempMax) : "--"} / Low {todayDaily ? formatTemp(todayDaily.tempMin) : "--"}
                 </div>
               </div>
             </div>
+
+            {/* Solar Transition & Outdoor Score Unified Glass Card */}
+            <div className="hero-surface-badge p-3.5 rounded-[8px] bg-[#14181F]/80 backdrop-blur-md border border-[#252A32] flex items-center gap-5 shrink-0 self-start sm:self-center">
+              {/* Context-Aware Solar Transition (Sunset during Day / Next Sunrise at Night) */}
+              <div>
+                <div className="hero-muted-text text-[10px] font-mono uppercase text-slate-300 tracking-wider">
+                  {activePhase === "night" || activePhase === "dusk" ? "NEXT SUNRISE" : "SUNSET TODAY"}
+                </div>
+                <div className="hero-primary-text font-mono text-lg font-bold text-slate-100 mt-0.5">
+                  {activePhase === "night" || activePhase === "dusk"
+                    ? (current.sunrise ? current.sunrise.slice(11, 16) : "06:09")
+                    : (current.sunset ? current.sunset.slice(11, 16) : "18:17")}
+                </div>
+                <div className="hero-muted-text text-[10px] font-mono text-slate-300 mt-0.5">
+                  {activePhase === "night" || activePhase === "dusk"
+                    ? `Sunset was ${current.sunset ? current.sunset.slice(11, 16) : "18:17"}`
+                    : `Sunrise ${current.sunrise ? current.sunrise.slice(11, 16) : "06:09"}`}
+                </div>
+              </div>
+
+              {/* Vertical hairline divider */}
+              <div className="w-px h-10 bg-[#252A32]" />
+
+              {/* Outdoor Score */}
+              <div>
+                <div className="hero-muted-text text-[10px] font-mono uppercase text-slate-300 tracking-wider">
+                  OUTDOOR SCORE
+                </div>
+                <div className="hero-primary-text font-mono text-lg font-bold text-slate-100 mt-0.5">
+                  {score} <span className="hero-muted-text text-xs font-normal text-slate-400 font-mono">/100</span>
+                </div>
+                <div className="hero-secondary-text text-[10px] text-slate-200 mt-0.5">
+                  {analysis?.comfortLabel || "Warm, lightly humid"}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Meteorological Synopsis with Diurnally Coordinated Accent Border */}
+          <div
+            className="border-l-2 pl-3.5 py-0.5 transition-colors duration-500"
+            style={{ borderColor: phaseConfig.accentColor }}
+          >
+            <p className="hero-secondary-text text-xs sm:text-sm text-slate-200 leading-relaxed max-w-4xl">
+              Current conditions are {current.condition.toLowerCase()} with {formatTemp(current.temperature)} (feels like {formatTemp(current.feelsLike)}). Rain probability is {current.precipitationProbability}%, humidity is {current.humidity ?? 80}%, wind is {current.windSpeed} km/h, and UV index is {current.uvIndex ?? 0}. Overall outdoor rating: {score}/100.
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Grounded Surface Observations Section */}
+      {/* Grounded Surface Observations Section with Diurnal Context */}
       <div>
-        <div className="flex items-center justify-between mb-2 px-1">
+        <div className="flex items-center justify-between mb-2.5 px-1">
           <h2 className="text-xs font-mono uppercase font-semibold tracking-wider text-slate-300 dark:text-slate-300 light:text-slate-800">
             GROUNDED SURFACE OBSERVATIONS
           </h2>
           <span className="text-[10px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500">
-            Atmospheric Physical Telemetry
+            {phaseConfig.surfaceTelemetrySubtitle}
           </span>
         </div>
 
-        {/* 6 Observation Metrics */}
+        {/* 6 Metric Observation Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
           {/* Wind Vectors */}
-          <div className="p-3.5 rounded-[6px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex flex-col justify-between transition-colors">
+          <div
+            className={`p-3.5 rounded-[8px] bg-[#14181F] dark:bg-[#14181F] light:bg-white border border-[#252A32] dark:border-[#252A32] light:border-slate-200 flex flex-col justify-between transition-colors ${
+              activePhase === "dusk" ? "ring-1 ring-[#C084FC]/40" : ""
+            }`}
+          >
             <div className="flex items-center justify-between text-slate-400 dark:text-slate-400 light:text-slate-500 mb-1.5">
               <span className="text-[10px] font-mono uppercase font-semibold tracking-wider">WIND VECTORS</span>
               <Wind className="w-3.5 h-3.5 text-slate-300 dark:text-slate-300 light:text-slate-600" />
@@ -161,7 +302,7 @@ export function CurrentWeatherHero({
           </div>
 
           {/* Precipitation */}
-          <div className="p-3.5 rounded-[6px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex flex-col justify-between transition-colors">
+          <div className="p-3.5 rounded-[8px] bg-[#14181F] dark:bg-[#14181F] light:bg-white border border-[#252A32] dark:border-[#252A32] light:border-slate-200 flex flex-col justify-between transition-colors">
             <div className="flex items-center justify-between text-slate-400 dark:text-slate-400 light:text-slate-500 mb-1.5">
               <span className="text-[10px] font-mono uppercase font-semibold tracking-wider">PRECIPITATION</span>
               <Droplets className="w-3.5 h-3.5 text-[#8ECAE6]" />
@@ -177,7 +318,11 @@ export function CurrentWeatherHero({
           </div>
 
           {/* Humidity & Dew Point */}
-          <div className="p-3.5 rounded-[6px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex flex-col justify-between transition-colors">
+          <div
+            className={`p-3.5 rounded-[8px] bg-[#14181F] dark:bg-[#14181F] light:bg-white border border-[#252A32] dark:border-[#252A32] light:border-slate-200 flex flex-col justify-between transition-colors ${
+              activePhase === "dawn" ? "ring-1 ring-[#E76F51]/40" : ""
+            }`}
+          >
             <div className="flex items-center justify-between text-slate-400 dark:text-slate-400 light:text-slate-500 mb-1.5">
               <span className="text-[10px] font-mono uppercase font-semibold tracking-wider">HUMIDITY & DEW</span>
               <Droplets className="w-3.5 h-3.5 text-[#8ECAE6]" />
@@ -193,7 +338,11 @@ export function CurrentWeatherHero({
           </div>
 
           {/* Solar Radiation / UV */}
-          <div className="p-3.5 rounded-[6px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex flex-col justify-between transition-colors">
+          <div
+            className={`p-3.5 rounded-[8px] bg-[#14181F] dark:bg-[#14181F] light:bg-white border border-[#252A32] dark:border-[#252A32] light:border-slate-200 flex flex-col justify-between transition-colors ${
+              activePhase === "day" ? "ring-1 ring-[#38BDF8]/40" : ""
+            }`}
+          >
             <div className="flex items-center justify-between text-slate-400 dark:text-slate-400 light:text-slate-500 mb-1.5">
               <span className="text-[10px] font-mono uppercase font-semibold tracking-wider">SOLAR RADIATION</span>
               <Sun className="w-3.5 h-3.5 text-[#F4A261]" />
@@ -209,7 +358,11 @@ export function CurrentWeatherHero({
           </div>
 
           {/* Clarity / Visibility */}
-          <div className="p-3.5 rounded-[6px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex flex-col justify-between transition-colors">
+          <div
+            className={`p-3.5 rounded-[8px] bg-[#14181F] dark:bg-[#14181F] light:bg-white border border-[#252A32] dark:border-[#252A32] light:border-slate-200 flex flex-col justify-between transition-colors ${
+              activePhase === "golden_hour" ? "ring-1 ring-[#F4A261]/40" : ""
+            }`}
+          >
             <div className="flex items-center justify-between text-slate-400 dark:text-slate-400 light:text-slate-500 mb-1.5">
               <span className="text-[10px] font-mono uppercase font-semibold tracking-wider">CLARITY</span>
               <Eye className="w-3.5 h-3.5 text-slate-300 dark:text-slate-300 light:text-slate-600" />
@@ -229,7 +382,11 @@ export function CurrentWeatherHero({
           </div>
 
           {/* Barometer / Pressure */}
-          <div className="p-3.5 rounded-[6px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex flex-col justify-between transition-colors">
+          <div
+            className={`p-3.5 rounded-[8px] bg-[#14181F] dark:bg-[#14181F] light:bg-white border border-[#252A32] dark:border-[#252A32] light:border-slate-200 flex flex-col justify-between transition-colors ${
+              activePhase === "night" ? "ring-1 ring-[#8ECAE6]/40" : ""
+            }`}
+          >
             <div className="flex items-center justify-between text-slate-400 dark:text-slate-400 light:text-slate-500 mb-1.5">
               <span className="text-[10px] font-mono uppercase font-semibold tracking-wider">BAROMETER</span>
               <Compass className="w-3.5 h-3.5 text-slate-300 dark:text-slate-300 light:text-slate-600" />
@@ -248,4 +405,3 @@ export function CurrentWeatherHero({
     </div>
   );
 }
-

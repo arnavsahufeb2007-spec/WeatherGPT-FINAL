@@ -11,6 +11,7 @@ import {
   Database,
   History,
 } from "lucide-react";
+import { WeatherGptLogo } from "./WeatherGptLogo.js";
 import { authService, UserProfile } from "../services/auth.js";
 import { isSupabaseConfigured } from "../services/supabase.js";
 
@@ -120,8 +121,8 @@ export function AuthPage({ onSuccess, onCancel }: AuthPageProps) {
         {/* Left Side: Brand & Value Prop */}
         <div className="lg:col-span-6 space-y-5">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-[6px] bg-[#1B2027] border border-[#30353D] flex items-center justify-center text-[#8ECAE6]">
-              <Sparkles className="w-5 h-5 text-[#8ECAE6]" />
+            <div className="w-11 h-11 rounded-[6px] bg-[#1B2027] border border-[#30353D] flex items-center justify-center p-1 shadow-md shadow-sky-500/10 shrink-0">
+              <WeatherGptLogo size={36} />
             </div>
             <div>
               <h3 className="text-lg sm:text-xl font-bold font-mono text-slate-100 tracking-tight">WeatherGPT Account</h3>

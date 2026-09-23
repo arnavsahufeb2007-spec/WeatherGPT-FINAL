@@ -14,6 +14,7 @@ import {
   ChevronDown,
   ChevronsUpDown,
 } from "lucide-react";
+import { WeatherGptLogo } from "./WeatherGptLogo.js";
 import { LocationInfo, CurrentWeatherData } from "../types.js";
 import { UserProfile } from "../services/auth.js";
 import { NavSection } from "./Sidebar.js";
@@ -98,8 +99,8 @@ export function HeaderBar({
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {/* Mobile brand icon (shown on small screens) */}
           <div className="md:hidden flex items-center gap-1.5 sm:gap-2">
-            <div className="w-7 h-7 rounded-[4px] bg-[#252A32] border border-[#30353D] flex items-center justify-center shrink-0">
-              <Sparkles className="w-3.5 h-3.5 text-[#8ECAE6]" />
+            <div className="w-7 h-7 rounded-[4px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-100 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex items-center justify-center shrink-0 p-0.5 shadow-sm">
+              <WeatherGptLogo size={22} />
             </div>
             <span className="font-bold text-xs sm:text-sm tracking-tight text-slate-100 dark:text-slate-100 light:text-slate-900 hidden min-[360px]:inline">
               WeatherGPT

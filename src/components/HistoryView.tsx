@@ -18,6 +18,7 @@ import { ConversationRecord, LocationInfo } from "../types.js";
 import { historyService } from "../services/historyService.js";
 import { authService, UserProfile } from "../services/auth.js";
 import { isSupabaseConfigured } from "../services/supabase.js";
+import { DiurnalPhase, DiurnalPhaseConfig } from "../services/diurnalTheme.js";
 
 interface HistoryViewProps {
   currentUser: UserProfile | null;
@@ -25,6 +26,8 @@ interface HistoryViewProps {
   onSelectConversation: (conversation: ConversationRecord) => void;
   onNewChat: () => void;
   onRequestAuth: () => void;
+  diurnalPhase?: DiurnalPhase;
+  diurnalConfig?: DiurnalPhaseConfig;
 }
 
 export function HistoryView({
@@ -33,6 +36,8 @@ export function HistoryView({
   onSelectConversation,
   onNewChat,
   onRequestAuth,
+  diurnalPhase,
+  diurnalConfig,
 }: HistoryViewProps) {
   const [conversations, setConversations] = useState<ConversationRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -110,36 +115,65 @@ export function HistoryView({
     return (
       <div id="history-view" className="max-w-3xl mx-auto py-6 sm:py-8 px-4 space-y-4 sm:space-y-6 animate-in fade-in duration-200">
         {/* Scenic Hero Banner with Telemetry HUD */}
-        <div className="relative rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 p-5 sm:p-6 overflow-hidden transition-colors shadow-lg">
+        <div
+          data-atmospheric-banner="true"
+          className="hero-atmospheric-card atmospheric-hero-card relative rounded-[8px] bg-[#0F141B] border border-[#30353D] p-5 sm:p-6 overflow-hidden transition-colors shadow-lg"
+          style={diurnalConfig ? { borderColor: `${diurnalConfig.accentColor}40` } : undefined}
+        >
           <div className="absolute inset-0 z-0 pointer-events-none select-none">
             <img
-              src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1600&q=80"
-              alt="Atmospheric Mist Valley"
-              className="w-full h-full object-cover object-center opacity-30 dark:opacity-25 light:opacity-20"
+              key={diurnalConfig?.backgrounds.history.photoUrl || "standard"}
+              src={
+                diurnalConfig?.backgrounds.history.photoUrl ||
+                "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1600&q=80"
+              }
+              alt={diurnalConfig?.backgrounds.history.photoAlt || "Atmospheric Mist Valley"}
+              className="w-full h-full object-cover object-center opacity-75 dark:opacity-70 transition-opacity duration-700"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#0F141B] via-[#171C23]/95 to-[#171C23]/60 dark:from-[#0F141B] dark:via-[#171C23]/95 dark:to-[#171C23]/60 light:from-white light:via-white/95 light:to-white/80" />
+            <div
+              className="absolute inset-0 transition-colors duration-700"
+              style={{
+                background: diurnalConfig
+                  ? "linear-gradient(90deg, rgba(13,19,26,0.94) 0%, rgba(13,19,26,0.80) 55%, rgba(13,19,26,0.25) 100%)"
+                  : "linear-gradient(90deg, rgba(15,20,27,0.95) 0%, rgba(23,28,35,0.90) 60%, rgba(23,28,35,0.40) 100%)",
+              }}
+            />
           </div>
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1.5 max-w-xl">
-              <div className="inline-flex items-center gap-2">
-                <span className="text-[10px] font-mono uppercase font-bold text-[#8ECAE6] tracking-wider px-2 py-0.5 rounded-[3px] bg-[#0F141B]/80 border border-[#8ECAE6]/30">
-                  CLOUD ARCHIVE • POSTGRESQL ROW LEVEL SECURITY
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className="text-[10px] font-mono uppercase font-bold tracking-wider px-2 py-0.5 rounded-[3px] bg-[#0F141B]/80 border transition-colors"
+                  style={{
+                    color: diurnalConfig ? diurnalConfig.accentColor : "#8ECAE6",
+                    borderColor: diurnalConfig ? `${diurnalConfig.accentColor}40` : "rgba(142, 202, 230, 0.3)",
+                  }}
+                >
+                  CLOUD ARCHIVE • {diurnalConfig ? diurnalConfig.stationTelemetrySub : "POSTGRESQL ROW LEVEL SECURITY"}
                 </span>
-                <span className="flex h-1.5 w-1.5 relative">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400"></span>
-                </span>
+                {diurnalConfig && (
+                  <span
+                    className="inline-flex items-center gap-1 text-[9px] font-mono uppercase font-bold px-2 py-0.5 rounded-[4px] backdrop-blur-sm"
+                    style={{
+                      backgroundColor: `${diurnalConfig.accentColor}25`,
+                      color: diurnalConfig.accentColor,
+                      border: `1px solid ${diurnalConfig.accentColor}50`,
+                    }}
+                  >
+                    {diurnalConfig.solarStatusBadge}
+                  </span>
+                )}
               </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 font-mono tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-bold text-white font-mono tracking-tight">
                 Cloud Conversation History
               </h2>
-              <p className="text-xs text-slate-300 dark:text-slate-300 light:text-slate-700 leading-relaxed">
+              <p className="text-xs text-slate-200 leading-relaxed">
                 Synchronize your meteorological inquiries, route corridor analyses, and forecast dialogues across all your devices securely.
               </p>
             </div>
 
             {/* Telemetry HUD */}
-            <div className="bg-[#0F141B]/80 dark:bg-[#0F141B]/80 light:bg-slate-100/90 backdrop-blur-md border border-[#30353D] dark:border-[#30353D] light:border-slate-300 p-3 rounded-[6px] hidden sm:flex flex-col gap-1.5 min-w-[210px] text-[11px] font-mono shrink-0 shadow-inner">
+            <div className="bg-[#0F141B]/85 backdrop-blur-md border border-white/10 p-3 rounded-[6px] hidden sm:flex flex-col gap-1.5 min-w-[210px] text-[11px] font-mono shrink-0 shadow-inner">
               <div className="flex items-center justify-between text-slate-400">
                 <span className="text-[10px] uppercase tracking-wider text-slate-400">VAULT STATE</span>
                 <span className="text-slate-300 font-semibold">GUEST MODE</span>
@@ -185,36 +219,65 @@ export function HistoryView({
   return (
     <div id="history-view" className="max-w-4xl mx-auto py-4 sm:py-6 px-4 space-y-4 sm:space-y-5 animate-in fade-in duration-200">
       {/* Cloud History Hero Banner with Telemetry HUD */}
-      <div className="relative rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 p-5 sm:p-6 overflow-hidden transition-colors shadow-lg">
+      <div
+        data-atmospheric-banner="true"
+        className="hero-atmospheric-card atmospheric-hero-card relative rounded-[8px] bg-[#0F141B] border border-[#30353D] p-5 sm:p-6 overflow-hidden transition-colors shadow-lg"
+        style={diurnalConfig ? { borderColor: `${diurnalConfig.accentColor}40` } : undefined}
+      >
         <div className="absolute inset-0 z-0 pointer-events-none select-none">
           <img
-            src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1600&q=80"
-            alt="Atmospheric Mist Valley"
-            className="w-full h-full object-cover object-center opacity-30 dark:opacity-25 light:opacity-20"
+            key={diurnalConfig?.backgrounds.history.photoUrl || "standard-auth"}
+            src={
+              diurnalConfig?.backgrounds.history.photoUrl ||
+              "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1600&q=80"
+            }
+            alt={diurnalConfig?.backgrounds.history.photoAlt || "Atmospheric Mist Valley"}
+            className="w-full h-full object-cover object-center opacity-75 dark:opacity-70 transition-opacity duration-700"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0F141B] via-[#171C23]/95 to-[#171C23]/60 dark:from-[#0F141B] dark:via-[#171C23]/95 dark:to-[#171C23]/60 light:from-white light:via-white/95 light:to-white/80" />
+          <div
+            className="absolute inset-0 transition-colors duration-700"
+            style={{
+              background: diurnalConfig
+                ? "linear-gradient(90deg, rgba(13,19,26,0.94) 0%, rgba(13,19,26,0.80) 55%, rgba(13,19,26,0.25) 100%)"
+                : "linear-gradient(90deg, rgba(15,20,27,0.95) 0%, rgba(23,28,35,0.90) 60%, rgba(23,28,35,0.40) 100%)",
+            }}
+          />
         </div>
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1.5 max-w-xl">
-            <div className="inline-flex items-center gap-2">
-              <span className="text-[10px] font-mono uppercase font-bold text-[#8ECAE6] tracking-wider px-2 py-0.5 rounded-[3px] bg-[#0F141B]/80 border border-[#8ECAE6]/30">
-                CLOUD ARCHIVE • POSTGRESQL ROW LEVEL SECURITY
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                className="text-[10px] font-mono uppercase font-bold tracking-wider px-2 py-0.5 rounded-[3px] bg-[#0F141B]/80 border transition-colors"
+                style={{
+                  color: diurnalConfig ? diurnalConfig.accentColor : "#8ECAE6",
+                  borderColor: diurnalConfig ? `${diurnalConfig.accentColor}40` : "rgba(142, 202, 230, 0.3)",
+                }}
+              >
+                CLOUD ARCHIVE • {diurnalConfig ? diurnalConfig.stationTelemetrySub : "POSTGRESQL ROW LEVEL SECURITY"}
               </span>
-              <span className="flex h-1.5 w-1.5 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400"></span>
-              </span>
+              {diurnalConfig && (
+                <span
+                  className="inline-flex items-center gap-1 text-[9px] font-mono uppercase font-bold px-2 py-0.5 rounded-[4px] backdrop-blur-sm"
+                  style={{
+                    backgroundColor: `${diurnalConfig.accentColor}25`,
+                    color: diurnalConfig.accentColor,
+                    border: `1px solid ${diurnalConfig.accentColor}50`,
+                  }}
+                >
+                  {diurnalConfig.solarStatusBadge}
+                </span>
+              )}
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 font-mono tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-bold text-white font-mono tracking-tight">
               Weather Chat History
             </h2>
-            <p className="text-xs text-slate-300 dark:text-slate-300 light:text-slate-700 leading-relaxed">
+            <p className="text-xs text-slate-200 leading-relaxed">
               Synchronized cloud sessions • PostgreSQL Row Level Security encrypted data store.
             </p>
           </div>
 
           {/* Telemetry HUD */}
-          <div className="bg-[#0F141B]/80 dark:bg-[#0F141B]/80 light:bg-slate-100/90 backdrop-blur-md border border-[#30353D] dark:border-[#30353D] light:border-slate-300 p-3 rounded-[6px] hidden sm:flex flex-col gap-1.5 min-w-[210px] text-[11px] font-mono shrink-0 shadow-inner">
+          <div className="bg-[#0F141B]/85 backdrop-blur-md border border-white/10 p-3 rounded-[6px] hidden sm:flex flex-col gap-1.5 min-w-[210px] text-[11px] font-mono shrink-0 shadow-inner">
             <div className="flex items-center justify-between text-slate-400">
               <span className="text-[10px] uppercase tracking-wider text-slate-400">VAULT STATE</span>
               <span className="text-emerald-400 font-semibold flex items-center gap-1">

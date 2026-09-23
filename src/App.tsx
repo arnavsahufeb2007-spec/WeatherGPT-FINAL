@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
   ConversationContext,
   CurrentWeatherData,
@@ -37,7 +37,15 @@ import { useVoiceMode } from "./services/voice/useVoiceMode.js";
 import { savedLocationsService } from "./services/savedLocationsService.js";
 import { preferencesService } from "./services/preferencesService.js";
 import { ConversationRecord } from "./types.js";
+import { WeatherGptLogo } from "./components/WeatherGptLogo.js";
+import { processSevereAdvisories } from "./services/notificationService.js";
 import { Sparkles, AlertCircle, RefreshCw, Search, Navigation, Globe, MapPin } from "lucide-react";
+import {
+  DiurnalPhase,
+  determineDiurnalPhase,
+  DIURNAL_PHASE_CONFIGS,
+} from "./services/diurnalTheme.js";
+import { SolarAtmosphereBar } from "./components/SolarAtmosphereBar.js";
 
 const LOCATION_STORAGE_KEY = "weathergpt_active_location";
 const THEME_STORAGE_KEY = "weathergpt_theme";
@@ -180,6 +188,7 @@ export default function App() {
   });
 
   const locationVersionRef = useRef<number>(0);
+  const hasInitializedLocationRef = useRef<boolean>(false);
 
   // Fetch weather data for a specific location with race-condition prevention
   const fetchWeather = useCallback(async (loc: LocationInfo, version?: number) => {
@@ -187,27 +196,30 @@ export default function App() {
     setLoading(true);
     setError(null);
     try {
-      const [currentRes, hourlyRes, dailyRes] = await Promise.all([
-        getCurrentWeatherAPI({
-          lat: loc.latitude,
-          lon: loc.longitude,
-          location: loc.name,
-          timezone: loc.timezone,
-        }),
-        getHourlyWeatherAPI(loc.latitude, loc.longitude, loc.timezone),
-        getDailyWeatherAPI(loc.latitude, loc.longitude, loc.timezone),
-      ]);
+      const weatherBundle = await getCurrentWeatherAPI({
+        lat: loc.latitude,
+        lon: loc.longitude,
+        location: loc.name,
+        timezone: loc.timezone,
+      });
 
       // If a newer location request was initiated while waiting, discard stale data
       if (v !== locationVersionRef.current) {
         return;
       }
 
-      setCurrentWeather(currentRes.current);
-      setWeatherAnalysis(currentRes.analysis);
-      setAdvisories(currentRes.advisories || []);
-      setHourlyForecast(hourlyRes);
-      setDailyForecast(dailyRes);
+      const hourly = weatherBundle.hourly || (await getHourlyWeatherAPI(loc.latitude, loc.longitude, loc.timezone));
+      const daily = weatherBundle.daily || (await getDailyWeatherAPI(loc.latitude, loc.longitude, loc.timezone));
+
+      if (v !== locationVersionRef.current) {
+        return;
+      }
+
+      setCurrentWeather(weatherBundle.current);
+      setWeatherAnalysis(weatherBundle.analysis);
+      setAdvisories(weatherBundle.advisories || []);
+      setHourlyForecast(hourly);
+      setDailyForecast(daily);
 
       setConversationContext((prev) => ({
         ...prev,
@@ -223,6 +235,13 @@ export default function App() {
       }
     }
   }, []);
+
+  // Trigger browser notifications for severe weather advisories in current location
+  useEffect(() => {
+    if (advisories && advisories.length > 0) {
+      processSevereAdvisories(advisories, currentLocation?.name);
+    }
+  }, [advisories, currentLocation?.name]);
 
   // Handler when user selects any location from search or hubs
   const handleSelectLocation = useCallback(
@@ -245,6 +264,9 @@ export default function App() {
 
   // Initial startup: if no location saved, dynamically resolve browser's timezone city via Open-Meteo
   useEffect(() => {
+    if (hasInitializedLocationRef.current) return;
+    hasInitializedLocationRef.current = true;
+
     if (currentLocation) {
       const currentVersion = ++locationVersionRef.current;
       fetchWeather(currentLocation, currentVersion);
@@ -381,20 +403,103 @@ export default function App() {
     }
   };
 
+  // Full-Page Diurnal Atmospheric Theme System (Permanent Core Feature)
+  const [activePhaseOverride, setActivePhaseOverride] = useState<DiurnalPhase | "auto">(() => {
+    try {
+      const saved = localStorage.getItem("weathergpt_diurnal_phase") as DiurnalPhase | "auto" | null;
+      return saved || "auto";
+    } catch {
+      return "auto";
+    }
+  });
+
+  const handleSelectPhase = (phase: DiurnalPhase | "auto") => {
+    setActivePhaseOverride(phase);
+    try {
+      localStorage.setItem("weathergpt_diurnal_phase", phase);
+    } catch {}
+  };
+
+  const detectedDiurnalPhase = useMemo(() => {
+    if (currentWeather) {
+      return determineDiurnalPhase(
+        currentWeather.time,
+        currentWeather.sunrise,
+        currentWeather.sunset,
+        currentWeather.isDay
+      );
+    }
+    const nowStr = new Date().toTimeString().slice(0, 5);
+    return determineDiurnalPhase(nowStr, undefined, undefined, true);
+  }, [currentWeather]);
+
+  const activeDiurnalPhase: DiurnalPhase =
+    activePhaseOverride === "auto" ? detectedDiurnalPhase : activePhaseOverride;
+  const activeDiurnalConfig = DIURNAL_PHASE_CONFIGS[activeDiurnalPhase];
+  const activeDiurnalTheme = isDark
+    ? activeDiurnalConfig.darkTheme
+    : activeDiurnalConfig.lightTheme;
+  const activePageBg =
+    activeDiurnalConfig.backgrounds[currentSection] ||
+    activeDiurnalConfig.backgrounds.home;
+
   return (
     <div
-      className={`min-h-screen ${
-        isDark ? "bg-[#0F141B] text-slate-100" : "bg-[#F8FAFC] text-slate-900"
-      } flex flex-col selection:bg-[#8ECAE6]/30 selection:text-white transition-colors`}
+      data-diurnal-theme="true"
+      data-diurnal-trial="true"
+      data-diurnal-phase={activeDiurnalPhase}
+      className={`min-h-screen relative flex flex-col selection:bg-[#8ECAE6]/30 selection:text-white transition-colors duration-500`}
+      style={{
+        backgroundColor: activeDiurnalTheme.bodyBase,
+        color: isDark ? "#F8FAFC" : "#0F172A",
+        "--diurnal-border": activeDiurnalTheme.borderTone,
+        "--diurnal-card-bg": activeDiurnalTheme.cardBg,
+        "--diurnal-accent": activeDiurnalConfig.accentColor,
+      } as React.CSSProperties}
     >
+      {/* Full-Page Diurnal Photographic Atmospheric Backdrop (Permanent Core Feature) */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden transition-opacity duration-1000">
+        <img
+          key={`${currentSection}-${activeDiurnalPhase}`}
+          src={activePageBg.photoUrl}
+          alt={activePageBg.photoAlt}
+          className="w-full h-full object-cover object-center opacity-80 sm:opacity-85 scale-105 transition-all duration-1000 ease-out"
+        />
+        {/* Atmospheric multi-layer gradient vignette */}
+        <div
+          className="absolute inset-0 transition-all duration-700"
+          style={{
+            background: activeDiurnalTheme.overlay,
+          }}
+        />
+        {/* Radial ambient solar glow */}
+        <div
+          className="absolute inset-0 transition-all duration-700 pointer-events-none"
+          style={{
+            background: activeDiurnalTheme.ambientGlow,
+          }}
+        />
+      </div>
+
       {/* Device Mode Preview Switcher Top Bar */}
       <DevicePreviewBar
         deviceMode={deviceMode}
         onChangeDeviceMode={setDeviceMode}
       />
 
+      {/* Permanent Solar Atmosphere Phase Option Bar */}
+      <SolarAtmosphereBar
+        selectedPhase={activePhaseOverride}
+        onSelectPhase={handleSelectPhase}
+        detectedPhase={detectedDiurnalPhase}
+        currentSection={currentSection}
+        isDark={isDark}
+        localTimeStr={currentWeather?.time}
+        cityName={currentLocation?.name}
+      />
+
       {/* Main Responsive Layout Shell */}
-      <div className={`flex-1 flex flex-col ${getDeviceFrameClass()}`}>
+      <div className={`flex-1 flex flex-col relative z-10 ${getDeviceFrameClass()}`}>
         <div className="flex-1 flex flex-row min-h-screen">
           {/* Laptop & Desktop Sidebar Navigation (Hidden in mobile phone layout) */}
           {deviceMode !== "phone" && (
@@ -457,8 +562,8 @@ export default function App() {
               {/* No Location Welcome Hero */}
               {!currentLocation && !loading && (
                 <div className="py-16 text-center max-w-xl mx-auto space-y-5">
-                  <div className="w-12 h-12 rounded-[6px] bg-[#171C23] border border-[#30353D] flex items-center justify-center mx-auto text-[#8ECAE6]">
-                    <Globe className="w-6 h-6 text-[#8ECAE6]" />
+                  <div className="w-16 h-16 rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-slate-100 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex items-center justify-center mx-auto p-1.5 shadow-xl shadow-sky-500/10">
+                    <WeatherGptLogo size={52} />
                   </div>
                   <div className="space-y-1.5">
                     <h2 className="text-xl font-bold tracking-tight text-slate-100 dark:text-slate-100 light:text-slate-900">
@@ -503,6 +608,8 @@ export default function App() {
                       todayDaily={dailyForecast[0]}
                       isFahrenheit={isFahrenheit}
                       language={preferredLanguage}
+                      activePhaseOverride={activePhaseOverride}
+                      onPhaseChange={handleSelectPhase}
                     />
                   )}
 
@@ -536,6 +643,59 @@ export default function App() {
                 <div className="space-y-4">
                   {currentWeather && currentLocation ? (
                     <>
+                      {/* Atmospheric Forecast Hero Banner */}
+                      <div
+                        data-atmospheric-banner="true"
+                        className="hero-atmospheric-card atmospheric-hero-card relative rounded-[8px] bg-[#0F141B] border border-[#30353D] p-5 sm:p-6 overflow-hidden transition-colors shadow-lg"
+                        style={{ borderColor: `${activeDiurnalConfig.accentColor}40` }}
+                      >
+                        <div className="absolute inset-0 z-0 pointer-events-none select-none">
+                          <img
+                            key={activeDiurnalConfig.backgrounds.forecast.photoUrl}
+                            src={activeDiurnalConfig.backgrounds.forecast.photoUrl}
+                            alt={activeDiurnalConfig.backgrounds.forecast.photoAlt}
+                            className="w-full h-full object-cover object-center opacity-75 dark:opacity-70 transition-opacity duration-700"
+                          />
+                          <div
+                            className="absolute inset-0 transition-colors duration-700"
+                            style={{
+                              background: "linear-gradient(90deg, rgba(13,19,26,0.94) 0%, rgba(13,19,26,0.80) 55%, rgba(13,19,26,0.25) 100%)",
+                            }}
+                          />
+                        </div>
+                        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div className="space-y-1.5 max-w-xl">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span
+                                className="text-[10px] font-mono uppercase font-bold tracking-wider px-2 py-0.5 rounded-[3px] bg-[#0F141B]/80 border transition-colors"
+                                style={{
+                                  color: activeDiurnalConfig.accentColor,
+                                  borderColor: `${activeDiurnalConfig.accentColor}40`,
+                                }}
+                              >
+                                METEOROLOGICAL FORECAST • {activeDiurnalConfig.stationTelemetrySub}
+                              </span>
+                              <span
+                                className="inline-flex items-center gap-1 text-[9px] font-mono uppercase font-bold px-2 py-0.5 rounded-[4px] backdrop-blur-sm"
+                                style={{
+                                  backgroundColor: `${activeDiurnalConfig.accentColor}25`,
+                                  color: activeDiurnalConfig.accentColor,
+                                  border: `1px solid ${activeDiurnalConfig.accentColor}50`,
+                                }}
+                              >
+                                {activeDiurnalConfig.solarStatusBadge}
+                              </span>
+                            </div>
+                            <h2 className="text-xl sm:text-2xl font-bold text-white font-mono tracking-tight">
+                              Multi-Day & Hourly Trajectory • {currentLocation.name}
+                            </h2>
+                            <p className="text-xs text-slate-200 leading-relaxed">
+                              High-resolution thermodynamic temperature projections, precipitation probabilities, barometric pressure trends, and wind vector curves.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
                       {advisories.length > 0 && (
                         <div>
                           <h3 className="text-xs font-semibold text-slate-400 dark:text-slate-400 light:text-slate-600 uppercase tracking-wider mb-2 font-mono">
@@ -576,6 +736,8 @@ export default function App() {
                       hourly={hourlyForecast}
                       daily={dailyForecast}
                       isFahrenheit={isFahrenheit}
+                      diurnalPhase={activeDiurnalPhase}
+                      diurnalConfig={activeDiurnalConfig}
                     />
                   ) : (
                     <div className="py-16 text-center text-slate-400 text-xs font-mono">
@@ -597,7 +759,12 @@ export default function App() {
               {/* 4. TRAVEL SECTION: Travel & Route Weather Intelligence */}
               {currentSection === "travel" && (
                 <div className="space-y-4 sm:space-y-5">
-                  <TravelPlanner isFahrenheit={isFahrenheit} currentLocation={currentLocation} />
+                  <TravelPlanner
+                    isFahrenheit={isFahrenheit}
+                    currentLocation={currentLocation}
+                    diurnalPhase={activeDiurnalPhase}
+                    diurnalConfig={activeDiurnalConfig}
+                  />
                 </div>
               )}
 
@@ -611,6 +778,8 @@ export default function App() {
                     onOpenLocationSearch={() => setIsLocationSearchOpen(true)}
                     context={conversationContext}
                     onUpdateContext={setConversationContext}
+                    diurnalPhase={activeDiurnalPhase}
+                    diurnalConfig={activeDiurnalConfig}
                   />
                 </div>
               )}
@@ -623,6 +792,8 @@ export default function App() {
                     onSelectLocation={handleSelectLocation}
                     onOpenLocationSearch={() => setIsLocationSearchOpen(true)}
                     isFahrenheit={isFahrenheit}
+                    diurnalPhase={activeDiurnalPhase}
+                    diurnalConfig={activeDiurnalConfig}
                   />
                 </div>
               )}
@@ -636,6 +807,8 @@ export default function App() {
                     onSelectConversation={handleSelectConversation}
                     onNewChat={handleNewChat}
                     onRequestAuth={() => setIsAuthModalOpen(true)}
+                    diurnalPhase={activeDiurnalPhase}
+                    diurnalConfig={activeDiurnalConfig}
                   />
                 </div>
               )}

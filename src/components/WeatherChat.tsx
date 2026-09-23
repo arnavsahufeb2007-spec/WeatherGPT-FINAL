@@ -27,6 +27,7 @@ import {
   Zap,
 } from "lucide-react";
 import { WeatherIcon } from "./WeatherIcons.js";
+import { WeatherGptLogo } from "./WeatherGptLogo.js";
 import { getLanguageConfig } from "../languages.js";
 import { useVoiceMode } from "../services/voice/useVoiceMode.js";
 import { VoiceLanguageModal } from "./VoiceLanguageModal.js";
@@ -490,22 +491,22 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
   };
 
   return (
-    <div id="weather-chat-container" className="flex flex-col h-[75vh] max-h-[750px] rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 shadow-sm overflow-hidden transition-colors">
+    <div id="weather-chat-container" className="flex flex-col h-[75vh] max-h-[750px] rounded-[8px] bg-[#0F141B] dark:bg-[#0F141B] light:bg-white border border-[#252A32] dark:border-[#252A32] light:border-slate-200 shadow-sm overflow-hidden transition-colors">
       {/* Chat Header */}
-      <div className="px-4 sm:px-5 py-3 bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-50 border-b border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex items-center justify-between gap-3">
+      <div className="px-4 sm:px-5 py-3 bg-[#14181F] dark:bg-[#14181F] light:bg-slate-50 border-b border-[#252A32] dark:border-[#252A32] light:border-slate-200 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-[4px] bg-[#252A32] dark:bg-[#252A32] light:bg-slate-200 border border-[#30353D] dark:border-[#30353D] light:border-slate-300 flex items-center justify-center text-[#8ECAE6]">
-            <Sparkles className="w-3.5 h-3.5 text-[#8ECAE6]" />
+          <div className="w-8 h-8 rounded-[6px] bg-gradient-to-b from-[#2A231C] to-[#171410] border border-[#F4A261]/30 flex items-center justify-center p-1 shadow-sm shrink-0">
+            <WeatherGptLogo size={24} />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="text-xs font-semibold text-slate-100 dark:text-slate-100 light:text-slate-900 uppercase tracking-wider">
-                Conversational Intelligence
+              <span className="text-xs font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 uppercase tracking-wider font-mono">
+                ATMOSPHERIC CONVERSATIONAL INTELLIGENCE
               </span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[#8ECAE6]" />
             </div>
             <span className="text-[11px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500">
-              Context: {activeLocationName || "Worldwide"}
+              Grounded Context: <strong className="text-slate-200 dark:text-slate-200 light:text-slate-800 font-sans font-medium">{activeLocationName || "Worldwide"}</strong>
             </span>
           </div>
         </div>
@@ -515,12 +516,12 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
           <button
             id="voice-languages-config-btn"
             onClick={() => setIsVoiceSettingsOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] bg-[#252A32] dark:bg-[#252A32] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-300 hover:border-slate-400 dark:hover:border-slate-500 text-slate-300 dark:text-slate-300 light:text-slate-700 text-xs font-medium transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-white border border-[#252A32] dark:border-[#252A32] light:border-slate-300 hover:border-slate-400 text-slate-300 dark:text-slate-300 light:text-slate-700 text-xs font-medium transition-colors cursor-pointer"
             title="Configure separate input and output voice languages"
           >
             <Sliders className="w-3.5 h-3.5 text-[#8ECAE6]" />
             <span className="hidden sm:inline">Voice Langs</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-[2px] bg-[#171C23] dark:bg-[#171C23] light:bg-slate-100 text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700 font-mono">
+            <span className="text-[10px] px-1.5 py-0.5 rounded-[2px] bg-[#14181F] dark:bg-[#14181F] light:bg-slate-100 text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700 font-mono">
               {voice.inputLanguage === "auto" ? "In: Auto" : `In: ${voice.inputLanguage.toUpperCase()}`} • {voice.outputLanguage === "auto" ? "Out: Auto" : `Out: ${voice.outputLanguage.toUpperCase()}`}
             </span>
           </button>
@@ -530,8 +531,8 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
             onClick={voice.toggleAutoSpeak}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] text-xs font-medium border transition-colors cursor-pointer ${
               voice.autoSpeak
-                ? "bg-[#252A32] dark:bg-[#252A32] light:bg-sky-50 border-[#8ECAE6]/40 text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-800 font-semibold"
-                : "bg-[#1B2027] dark:bg-[#1B2027] light:bg-white border-[#30353D] dark:border-[#30353D] light:border-slate-300 text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-200"
+                ? "bg-[#1E232B] dark:bg-[#1E232B] light:bg-sky-50 border-[#8ECAE6]/40 text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-800 font-semibold"
+                : "bg-[#1B2027] dark:bg-[#1B2027] light:bg-white border-[#252A32] dark:border-[#252A32] light:border-slate-300 text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-200"
             }`}
             title="Toggle automatic speech output for answers"
           >
@@ -555,16 +556,16 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
           {onNewChat && (
             <button
               onClick={onNewChat}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] bg-[#252A32] dark:bg-[#252A32] light:bg-slate-100 hover:bg-[#30353D] text-slate-200 dark:text-slate-200 light:text-slate-800 border border-[#30353D] dark:border-[#30353D] light:border-slate-300 text-xs font-semibold transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] bg-transparent border border-[#F4A261]/60 hover:bg-[#F4A261]/10 text-[#F4A261] text-xs font-semibold transition-colors cursor-pointer"
               title="Start a new conversation session"
             >
-              <PlusCircle className="w-3.5 h-3.5 text-[#8ECAE6]" />
-              <span className="hidden sm:inline">New Chat</span>
+              <PlusCircle className="w-3.5 h-3.5 text-[#F4A261]" />
+              <span className="hidden sm:inline">New Session</span>
             </button>
           )}
 
-          <div className="text-[11px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 hidden md:block pl-2 border-l border-[#30353D] dark:border-[#30353D] light:border-slate-300">
-            Active: <strong className="text-slate-200 dark:text-slate-200 light:text-slate-800 capitalize font-sans">{langConfig.name}</strong>
+          <div className="text-[11px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 hidden md:block pl-2 border-l border-[#252A32] dark:border-[#252A32] light:border-slate-300">
+            Dialect: <strong className="text-slate-200 dark:text-slate-200 light:text-slate-800 capitalize font-sans">{langConfig.name}</strong>
           </div>
         </div>
       </div>
@@ -595,8 +596,8 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
           return (
             <div key={msg.id} className={`flex gap-2.5 sm:gap-3 ${isUser ? "justify-end" : "justify-start"}`}>
               {!isUser && (
-                <div className="w-6 h-6 rounded-[4px] bg-[#1B2027] border border-[#30353D] flex items-center justify-center shrink-0 mt-0.5 text-[#8ECAE6]">
-                  <Bot className="w-3.5 h-3.5 text-[#8ECAE6]" />
+                <div className="w-6 h-6 rounded-[4px] bg-[#1B2027] border border-[#30353D] flex items-center justify-center shrink-0 mt-0.5 p-0.5 shadow-sm">
+                  <WeatherGptLogo size={18} />
                 </div>
               )}
 
@@ -733,8 +734,8 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
 
         {isSending && (
           <div className="flex gap-2.5 items-center text-xs text-slate-400 font-mono">
-            <div className="w-6 h-6 rounded-[4px] bg-[#1B2027] border border-[#30353D] flex items-center justify-center animate-pulse text-[#8ECAE6]">
-              <Bot className="w-3.5 h-3.5 text-[#8ECAE6]" />
+            <div className="w-6 h-6 rounded-[4px] bg-[#1B2027] border border-[#30353D] flex items-center justify-center animate-pulse p-0.5 shadow-sm">
+              <WeatherGptLogo size={18} />
             </div>
             <span>Analyzing verified weather observations & synthesizing answer...</span>
           </div>
