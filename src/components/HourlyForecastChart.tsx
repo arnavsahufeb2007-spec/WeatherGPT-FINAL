@@ -3,14 +3,17 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Bar, Compo
 import { HourlyForecastItem } from "../types.js";
 import { WeatherIcon } from "./WeatherIcons.js";
 import { Clock, Droplets, Thermometer } from "lucide-react";
+import { getTranslations, formatHourlyTime, getLocalizedWeatherCondition } from "../languages.js";
 
 interface HourlyForecastChartProps {
   hourly: HourlyForecastItem[];
   isFahrenheit: boolean;
+  preferredLanguage?: string;
 }
 
-export function HourlyForecastChart({ hourly, isFahrenheit }: HourlyForecastChartProps) {
+export function HourlyForecastChart({ hourly, isFahrenheit, preferredLanguage }: HourlyForecastChartProps) {
   const [metricMode, setMetricMode] = useState<"temp" | "rain">("temp");
+  const t = getTranslations(preferredLanguage);
 
   // Display next 24 hours
   const displayHours = hourly.slice(0, 24);
@@ -22,13 +25,13 @@ export function HourlyForecastChart({ hourly, isFahrenheit }: HourlyForecastChar
     return Math.round(celsius);
   };
 
-  const chartData = displayHours.map((h) => ({
-    time: h.formattedTime,
+  const chartData = displayHours.map((h, i) => ({
+    time: formatHourlyTime(h.time, h.formattedTime, preferredLanguage),
     temp: formatTemp(h.temperature),
     feelsLike: formatTemp(h.feelsLike),
     rainProb: h.precipitationProbability,
     rainMm: h.rain,
-    condition: h.condition,
+    condition: getLocalizedWeatherCondition(h.weatherCode, h.condition, preferredLanguage),
     weatherCode: h.weatherCode,
   }));
 
@@ -39,11 +42,11 @@ export function HourlyForecastChart({ hourly, isFahrenheit }: HourlyForecastChar
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-[#8ECAE6]" />
             <h3 className="text-xs font-semibold text-slate-100 dark:text-slate-100 light:text-slate-900 tracking-wider uppercase">
-              24-Hour Diurnal Horizon
+              {t.hourlyHorizon}
             </h3>
           </div>
           <p className="text-[11px] font-mono text-slate-400 mt-0.5">
-            Continuous curve tracking real-time physical temperature shifts
+            {t.hourlySubtitle}
           </p>
         </div>
 
@@ -58,7 +61,7 @@ export function HourlyForecastChart({ hourly, isFahrenheit }: HourlyForecastChar
             }`}
           >
             <Thermometer className="w-3.5 h-3.5 text-[#F4A261]" />
-            <span>Thermal Curve</span>
+            <span>{t.metricTemperature}</span>
           </button>
           <button
             onClick={() => setMetricMode("rain")}
@@ -69,7 +72,7 @@ export function HourlyForecastChart({ hourly, isFahrenheit }: HourlyForecastChar
             }`}
           >
             <Droplets className="w-3.5 h-3.5 text-[#8ECAE6]" />
-            <span>Precipitation</span>
+            <span>{t.metricPrecipitation}</span>
           </button>
         </div>
       </div>
@@ -99,11 +102,11 @@ export function HourlyForecastChart({ hourly, isFahrenheit }: HourlyForecastChar
                       <div className="bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 p-2.5 rounded-[4px] text-xs shadow-xl font-mono">
                         <p className="font-semibold text-slate-100 dark:text-slate-100 light:text-slate-900 font-sans">{d.time}</p>
                         <p className="text-[#F4A261] font-bold mt-1">
-                          Temp: {d.temp}°{isFahrenheit ? "F" : "C"}
+                          {t.tempLabel || "Temp"}: {d.temp}°{isFahrenheit ? "F" : "C"}
                         </p>
-                        <p className="text-slate-400 dark:text-slate-400 light:text-slate-600">Feels: {d.feelsLike}°{isFahrenheit ? "F" : "C"}</p>
+                        <p className="text-slate-400 dark:text-slate-400 light:text-slate-600">{t.feelsLikeLabel || "Feels"}: {d.feelsLike}°{isFahrenheit ? "F" : "C"}</p>
                         <p className="text-slate-300 dark:text-slate-300 light:text-slate-700 font-sans mt-0.5">{d.condition}</p>
-                        <p className="text-[#8ECAE6]">Rain Prob: {d.rainProb}%</p>
+                        <p className="text-[#8ECAE6]">{t.rainProbLabel || "Rain Prob"}: {d.rainProb}%</p>
                       </div>
                     );
                   }
@@ -123,8 +126,8 @@ export function HourlyForecastChart({ hourly, isFahrenheit }: HourlyForecastChar
                     return (
                       <div className="bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 p-2.5 rounded-[4px] text-xs shadow-xl font-mono">
                         <p className="font-semibold text-slate-100 dark:text-slate-100 light:text-slate-900 font-sans">{d.time}</p>
-                        <p className="text-[#8ECAE6] font-bold mt-1">Rain Prob: {d.rainProb}%</p>
-                        <p className="text-slate-400 dark:text-slate-400 light:text-slate-600">Precipitation: {d.rainMm} mm</p>
+                        <p className="text-[#8ECAE6] font-bold mt-1">{t.rainProbLabel || "Rain Prob"}: {d.rainProb}%</p>
+                        <p className="text-slate-400 dark:text-slate-400 light:text-slate-600">{t.metricPrecipitation || "Precipitation"}: {d.rainMm} {t.mm || "mm"}</p>
                         <p className="text-slate-300 dark:text-slate-300 light:text-slate-700 font-sans">{d.condition}</p>
                       </div>
                     );
@@ -145,7 +148,9 @@ export function HourlyForecastChart({ hourly, isFahrenheit }: HourlyForecastChar
             key={i}
             className="flex flex-col items-center justify-between p-2 rounded-[4px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-50 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 min-w-[72px] shrink-0 text-center transition-colors"
           >
-            <span className="text-[10px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500">{h.formattedTime}</span>
+            <span className="text-[10px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500">
+              {formatHourlyTime(h.time, h.formattedTime, preferredLanguage)}
+            </span>
             <div className="my-1">
               <WeatherIcon code={h.weatherCode} className="w-4 h-4" />
             </div>

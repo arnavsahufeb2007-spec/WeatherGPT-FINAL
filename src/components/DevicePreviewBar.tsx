@@ -1,5 +1,6 @@
 import React from "react";
 import { Smartphone, Tablet, Laptop, Monitor, Maximize2, X } from "lucide-react";
+import { getTranslations } from "../translations/registry.js";
 
 export type DeviceMode = "auto" | "phone" | "tablet" | "laptop" | "desktop";
 
@@ -7,22 +8,24 @@ interface DevicePreviewBarProps {
   deviceMode: DeviceMode;
   onChangeDeviceMode: (mode: DeviceMode) => void;
   onClose?: () => void;
+  preferredLanguage?: string;
 }
 
-export function DevicePreviewBar({ deviceMode, onChangeDeviceMode, onClose }: DevicePreviewBarProps) {
+export function DevicePreviewBar({ deviceMode, onChangeDeviceMode, onClose, preferredLanguage }: DevicePreviewBarProps) {
+  const t = getTranslations(preferredLanguage);
   const devices: { mode: DeviceMode; label: string; icon: React.ReactNode; width: string }[] = [
-    { mode: "auto", label: "Auto (Responsive)", icon: <Maximize2 className="w-3.5 h-3.5" />, width: "100%" },
-    { mode: "phone", label: "Phone", icon: <Smartphone className="w-3.5 h-3.5" />, width: "375px" },
-    { mode: "tablet", label: "Tablet", icon: <Tablet className="w-3.5 h-3.5" />, width: "768px" },
-    { mode: "laptop", label: "Laptop", icon: <Laptop className="w-3.5 h-3.5" />, width: "1024px" },
-    { mode: "desktop", label: "Desktop", icon: <Monitor className="w-3.5 h-3.5" />, width: "1440px" },
+    { mode: "auto", label: t.responsiveAuto || "Auto (Responsive)", icon: <Maximize2 className="w-3.5 h-3.5" />, width: "100%" },
+    { mode: "phone", label: t.phone || "Phone", icon: <Smartphone className="w-3.5 h-3.5" />, width: "375px" },
+    { mode: "tablet", label: t.tablet || "Tablet", icon: <Tablet className="w-3.5 h-3.5" />, width: "768px" },
+    { mode: "laptop", label: t.laptop || "Laptop", icon: <Laptop className="w-3.5 h-3.5" />, width: "1024px" },
+    { mode: "desktop", label: t.desktop || "Desktop", icon: <Monitor className="w-3.5 h-3.5" />, width: "1440px" },
   ];
 
   return (
     <div className="bg-[#0F141B] dark:bg-[#0F141B] light:bg-slate-100 border-b border-[#30353D] dark:border-[#30353D] light:border-slate-200 py-1 px-4 text-xs flex items-center justify-between z-40 transition-colors">
       <div className="flex items-center gap-2">
         <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-          VIEWPORT:
+          {t.viewport || "VIEWPORT:"}
         </span>
         <div className="flex items-center gap-0.5 bg-[#171C23] dark:bg-[#171C23] light:bg-white p-0.5 rounded-[4px] border border-[#30353D] dark:border-[#30353D] light:border-slate-200">
           {devices.map((d) => {

@@ -19,7 +19,7 @@ import { LocationInfo, CurrentWeatherData } from "../types.js";
 import { UserProfile } from "../services/auth.js";
 import { NavSection } from "./Sidebar.js";
 import { DeviceMode } from "./DevicePreviewBar.js";
-import { getLanguageConfig } from "../languages.js";
+import { getLanguageConfig, getTranslations } from "../languages.js";
 
 interface HeaderBarProps {
   currentSection: NavSection;
@@ -38,6 +38,7 @@ interface HeaderBarProps {
   deviceMode: DeviceMode;
   onChangeDeviceMode: (mode: DeviceMode) => void;
   preferredLanguage: string;
+  onOpenLanding?: () => void;
 }
 
 export function HeaderBar({
@@ -57,31 +58,33 @@ export function HeaderBar({
   deviceMode,
   onChangeDeviceMode,
   preferredLanguage,
+  onOpenLanding,
 }: HeaderBarProps) {
   const langConfig = getLanguageConfig(preferredLanguage);
+  const t = getTranslations(preferredLanguage);
 
   const getSectionTitle = (sec: NavSection) => {
     switch (sec) {
       case "home":
-        return "Home & Atmospheric Intelligence";
+        return t.headerHome;
       case "forecast":
-        return "Hourly & 7-Day Synoptic Outlook";
+        return t.headerForecast;
       case "insights":
-        return "Outdoor Suitability & Guidance";
+        return t.headerInsights;
       case "travel":
-        return "Travel Corridors & Ensembles";
+        return t.headerTravel;
       case "voice":
-        return "Hands-Free Voice Studio";
+        return t.headerVoice;
       case "explore":
-        return "Explore & Compare Hubs";
+        return t.headerExplore;
       case "history":
-        return "Cloud Atmospheric Records";
+        return t.headerHistory;
       case "settings":
-        return "Telemetry & Calibration";
+        return t.headerSettings;
       case "auth":
-        return "Sign In & Create Account";
+        return t.headerAuth;
       default:
-        return "WeatherGPT";
+        return t.appName;
     }
   };
 
@@ -98,19 +101,23 @@ export function HeaderBar({
         {/* Left: Mobile Brand & Section Title */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {/* Mobile brand icon (shown on small screens) */}
-          <div className="md:hidden flex items-center gap-1.5 sm:gap-2">
+          <button
+            onClick={() => onOpenLanding && onOpenLanding()}
+            className="md:hidden flex items-center gap-1.5 sm:gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+            title="Return to Landing Page"
+          >
             <div className="w-7 h-7 rounded-[4px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-100 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex items-center justify-center shrink-0 p-0.5 shadow-sm">
               <WeatherGptLogo size={22} />
             </div>
             <span className="font-bold text-xs sm:text-sm tracking-tight text-slate-100 dark:text-slate-100 light:text-slate-900 hidden min-[360px]:inline">
               WeatherGPT
             </span>
-          </div>
+          </button>
 
           {/* Desktop breadcrumb */}
           <div className="hidden md:flex flex-col">
             <span className="text-[10px] uppercase font-semibold tracking-wider text-slate-400 dark:text-slate-400 light:text-slate-500">
-              ACTIVE MODULE
+              {t.activeModule}
             </span>
             <span className="text-sm font-semibold text-slate-100 dark:text-slate-100 light:text-slate-900 tracking-tight">
               {getSectionTitle(currentSection)}
@@ -124,7 +131,7 @@ export function HeaderBar({
             <button
               onClick={onOpenLocationSearch}
               className="flex items-center gap-2 px-3 py-1.5 rounded-[6px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-50 hover:bg-[#252A32] dark:hover:bg-[#252A32] light:hover:bg-slate-100 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 hover:border-[#8ECAE6]/50 text-xs transition-colors group cursor-pointer max-w-full"
-              title="Click to change city"
+              title={t.clickToChangeCity}
             >
               <MapPin className="w-3.5 h-3.5 text-[#8ECAE6] shrink-0" />
               <div className="flex items-center gap-1.5 text-left truncate">
@@ -145,7 +152,7 @@ export function HeaderBar({
               className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-[6px] bg-[#252A32] dark:bg-[#252A32] light:bg-slate-100 text-[#8ECAE6] border border-[#30353D] dark:border-[#30353D] light:border-slate-300 text-xs font-medium hover:border-[#8ECAE6]/50 transition-colors cursor-pointer shrink-0"
             >
               <Search className="w-3.5 h-3.5" />
-              <span>Select City</span>
+              <span>{t.selectCity}</span>
             </button>
           )}
 
@@ -154,7 +161,7 @@ export function HeaderBar({
             onClick={onUseGeolocation}
             disabled={isDetectingLocation}
             className="p-1.5 rounded-[4px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-50 hover:bg-[#252A32] dark:hover:bg-[#252A32] light:hover:bg-slate-100 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 text-slate-300 dark:text-slate-300 light:text-slate-700 hover:text-[#8ECAE6] hover:border-[#8ECAE6]/40 transition-colors cursor-pointer shrink-0"
-            title="Use current GPS location"
+            title={t.useCurrentGps}
           >
             <Navigation className={`w-3.5 h-3.5 ${isDetectingLocation ? "animate-spin text-[#8ECAE6]" : ""}`} />
           </button>
@@ -166,7 +173,7 @@ export function HeaderBar({
           <button
             onClick={onOpenSettings}
             className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-[4px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-50 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 hover:border-[#8ECAE6]/40 text-xs text-slate-300 dark:text-slate-300 light:text-slate-700 transition-colors cursor-pointer"
-            title="Change display language"
+            title={t.changeLanguageTitle}
           >
             <Globe className="w-3.5 h-3.5 text-[#8ECAE6]" />
             <span className="capitalize">{langConfig.name}</span>
@@ -216,7 +223,7 @@ export function HeaderBar({
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-[#F4A261] hover:bg-[#E76F51] text-[#0F141B] font-semibold border border-[#F4A261] text-xs transition-colors cursor-pointer shadow-sm"
             >
               <LogIn className="w-3.5 h-3.5" />
-              <span>Sign In</span>
+              <span>{t.signIn}</span>
             </button>
           )}
         </div>

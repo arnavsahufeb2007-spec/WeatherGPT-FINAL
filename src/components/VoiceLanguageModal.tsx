@@ -66,7 +66,7 @@ export function VoiceLanguageModal({
     if (!code || code === "auto") {
       return isInput
         ? `Auto (Match App: ${appLangConfig.name})`
-        : `Auto (Match Response Language)`;
+        : `Auto (Follow App Language: ${appLangConfig.name})`;
     }
     const conf = getLanguageConfig(code);
     return `${conf.name} ${conf.nativeName && conf.nativeName !== conf.name ? `(${conf.nativeName})` : ""}`;
@@ -140,7 +140,7 @@ export function VoiceLanguageModal({
             <ArrowRight className="w-3 h-3 text-slate-500" />
             <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-[3px] bg-[#252A32] border border-[#8ECAE6]/30 text-[#8ECAE6] font-medium">
               <Volume2 className="w-3 h-3" />
-              <span>Output: {outputLanguage === "auto" ? "Auto" : getLanguageConfig(outputLanguage).name}</span>
+              <span>Output: {outputLanguage === "auto" ? `Auto (${appLangConfig.name})` : getLanguageConfig(outputLanguage).name}</span>
             </div>
           </div>
 
@@ -262,7 +262,7 @@ export function VoiceLanguageModal({
               {/* Divider */}
               <div className="border-t border-[#30353D]" />
 
-              {/* Section 2: Voice Output Language (Speaker / Read-Aloud) */}
+              {/* Section 2: Voice Output Language (Speaker / Read-Aloud / AI Text Response Language) */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -270,8 +270,8 @@ export function VoiceLanguageModal({
                       <Volume2 className="w-4 h-4" />
                     </div>
                     <div>
-                      <h4 className="text-sm font-bold font-mono text-white">Voice Output Language</h4>
-                      <p className="text-[11px] font-mono text-slate-400">Voice synthesizer accent and dialect used for read-aloud</p>
+                      <h4 className="text-sm font-bold font-mono text-white">Voice & Output Language</h4>
+                      <p className="text-[11px] font-mono text-slate-400">Manual language override for AI text responses and read-aloud voice</p>
                     </div>
                   </div>
                   <span className="text-xs font-mono font-semibold text-[#8ECAE6]">
@@ -282,6 +282,7 @@ export function VoiceLanguageModal({
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {/* Auto option */}
                   <button
+                    id="voice-output-auto-btn"
                     onClick={() => onSelectOutputLanguage("auto")}
                     className={`p-2.5 rounded-[4px] border text-left font-mono transition-all ${
                       outputLanguage === "auto"
@@ -290,11 +291,11 @@ export function VoiceLanguageModal({
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold">Auto (Response Match)</span>
+                      <span className="text-xs font-bold">Auto (Follow App Language)</span>
                       {outputLanguage === "auto" && <Check className="w-3.5 h-3.5 text-[#8ECAE6]" />}
                     </div>
                     <span className="text-[10px] text-slate-400 block mt-0.5">
-                      Matches AI reply language
+                      Follows App Interface: {appLangConfig.name}
                     </span>
                   </button>
 

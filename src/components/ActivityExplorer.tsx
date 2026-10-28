@@ -3,6 +3,7 @@ import { ActivityAnalysis, ActivityType, CurrentWeatherData, DailyForecastItem, 
 import { analyzeActivityAPI } from "../services/api.js";
 import { Activity, Clock, CheckCircle2, AlertCircle, XCircle, Sparkles, ChevronRight, Shield } from "lucide-react";
 import { DiurnalPhase, DiurnalPhaseConfig } from "../services/diurnalTheme.js";
+import { getTranslations, UIStrings } from "../languages.js";
 
 interface ActivityExplorerProps {
   location: LocationInfo;
@@ -12,22 +13,24 @@ interface ActivityExplorerProps {
   isFahrenheit: boolean;
   diurnalPhase?: DiurnalPhase;
   diurnalConfig?: DiurnalPhaseConfig;
+  preferredLanguage?: string;
 }
 
-const ACTIVITIES: { id: ActivityType; label: string; icon: string }[] = [
-  { id: "cricket", label: "Cricket", icon: "🏏" },
-  { id: "running", label: "Running", icon: "🏃" },
-  { id: "cycling", label: "Cycling", icon: "🚴" },
-  { id: "football", label: "Football", icon: "⚽" },
-  { id: "walking", label: "Walking", icon: "🚶" },
-  { id: "picnic", label: "Picnic", icon: "🧺" },
-  { id: "hiking", label: "Hiking", icon: "🥾" },
-  { id: "photography", label: "Photography", icon: "📷" },
-  { id: "gardening", label: "Gardening", icon: "🌱" },
-  { id: "outdoor_events", label: "Events", icon: "🎪" },
+const ACTIVITIES: { id: ActivityType; key: keyof UIStrings; fallback: string; icon: string }[] = [
+  { id: "cricket", key: "activityCricket", fallback: "Cricket", icon: "🏏" },
+  { id: "running", key: "activityRunning", fallback: "Running", icon: "🏃" },
+  { id: "cycling", key: "activityCycling", fallback: "Cycling", icon: "🚴" },
+  { id: "football", key: "activityFootball", fallback: "Football", icon: "⚽" },
+  { id: "walking", key: "activityWalking", fallback: "Walking", icon: "🚶" },
+  { id: "picnic", key: "activityPicnic", fallback: "Picnic", icon: "🧺" },
+  { id: "hiking", key: "activityHiking", fallback: "Hiking", icon: "🥾" },
+  { id: "photography", key: "activityPhotography", fallback: "Photography", icon: "📷" },
+  { id: "gardening", key: "activityGardening", fallback: "Gardening", icon: "🌱" },
+  { id: "outdoor_events", key: "activityEvents", fallback: "Events", icon: "🎪" },
 ];
 
-export function ActivityExplorer({ location, current, hourly, daily, isFahrenheit, diurnalPhase, diurnalConfig }: ActivityExplorerProps) {
+export function ActivityExplorer({ location, current, hourly, daily, isFahrenheit, diurnalPhase, diurnalConfig, preferredLanguage }: ActivityExplorerProps) {
+  const t = getTranslations(preferredLanguage);
   const [selectedActivity, setSelectedActivity] = useState<ActivityType>("cricket");
   const [analysis, setAnalysis] = useState<ActivityAnalysis | null>(null);
   const [loading, setLoading] = useState(false);
@@ -109,7 +112,7 @@ export function ActivityExplorer({ location, current, hourly, daily, isFahrenhei
               className="text-[10px] font-mono uppercase font-semibold tracking-wider transition-colors duration-500"
               style={{ color: diurnalConfig ? diurnalConfig.accentColor : "#8ECAE6" }}
             >
-              OUTDOOR FEASIBILITY • {diurnalConfig ? diurnalConfig.stationTelemetrySub : "SPORT & LEISURE TELEMETRY"}
+              {t.activityBannerTag || "OUTDOOR FEASIBILITY • SPORT & LEISURE TELEMETRY"}
             </span>
             {diurnalConfig && (
               <span
@@ -125,10 +128,10 @@ export function ActivityExplorer({ location, current, hourly, daily, isFahrenhei
             )}
           </div>
           <h2 className="text-xl sm:text-2xl font-bold text-white font-mono tracking-tight">
-            Activity Weather Intelligence
+            {t.activityBannerTitle || "Activity Weather Intelligence"}
           </h2>
           <p className="text-xs text-slate-200 max-w-xl leading-relaxed">
-            Deterministic outdoor suitability scoring, bio-comfort indices, optimal hourly windows, and activity gear advisories for {location.name}.
+            {t.activityBannerDesc || "Deterministic outdoor suitability scoring, bio-comfort indices, optimal hourly windows, and activity gear advisories"} ({location.name}).
           </p>
         </div>
       </div>
@@ -139,11 +142,11 @@ export function ActivityExplorer({ location, current, hourly, daily, isFahrenhei
           <div className="flex items-center gap-2">
             <Activity className="w-4 h-4 text-[#8ECAE6]" />
             <h3 className="text-xs font-semibold text-slate-100 dark:text-slate-100 light:text-slate-900 tracking-wider uppercase font-mono">
-              SELECT SPORT / RECREATIONAL ACTIVITY
+              {t.tabActivity || "SELECT SPORT / RECREATIONAL ACTIVITY"}
             </h3>
           </div>
           <span className="text-xs font-mono text-slate-400 dark:text-slate-400 light:text-slate-500">
-            Assessing {location.name}
+            {t.stationBase}: {location.name}
           </span>
         </div>
 
@@ -160,7 +163,7 @@ export function ActivityExplorer({ location, current, hourly, daily, isFahrenhei
               }`}
             >
               <span>{act.icon}</span>
-              <span>{act.label}</span>
+              <span>{t[act.key] || act.fallback}</span>
             </button>
           ))}
         </div>
@@ -169,7 +172,7 @@ export function ActivityExplorer({ location, current, hourly, daily, isFahrenhei
       {/* Analysis Card */}
       {loading ? (
         <div className="rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-slate-50 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 p-12 text-center text-slate-400 text-xs font-mono">
-          Computing deterministic meteorological factors...
+          {t.evaluatingSuitability || "Computing deterministic meteorological factors..."}
         </div>
       ) : analysis ? (
         <div className="rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 p-4 sm:p-6 space-y-5 transition-colors">
@@ -177,7 +180,7 @@ export function ActivityExplorer({ location, current, hourly, daily, isFahrenhei
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#30353D] dark:border-[#30353D] light:border-slate-200">
             <div>
               <span className="text-[11px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 uppercase tracking-wider block">
-                Suitability Verdict
+                {t.ratingLabel || "Suitability Verdict"}
               </span>
               <div className="flex items-center gap-3 mt-1">
                 <span className="text-xl sm:text-2xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900">
@@ -191,14 +194,14 @@ export function ActivityExplorer({ location, current, hourly, daily, isFahrenhei
 
             <div className="flex items-center gap-3">
               <div className="flex flex-col items-center justify-center p-2.5 rounded-[4px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-50 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 min-w-[90px]">
-                <span className="text-[10px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 uppercase font-semibold">Score</span>
+                <span className="text-[10px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 uppercase font-semibold">{t.outdoorScore || "Score"}</span>
                 <span className="text-xl sm:text-2xl font-mono font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 mt-0.5">
                   {analysis.suitabilityScore}<span className="text-xs font-normal text-slate-500">/100</span>
                 </span>
               </div>
 
               <div className="flex flex-col items-center justify-center p-2.5 rounded-[4px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-50 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 min-w-[85px]">
-                <span className="text-[10px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 uppercase font-semibold">Risk Level</span>
+                <span className="text-[10px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 uppercase font-semibold">{t.advisories || "Risk Level"}</span>
                 <span className={`text-xs font-mono font-semibold uppercase mt-1 ${analysis.riskLevel === "high" || analysis.riskLevel === "severe" ? "text-rose-400" : analysis.riskLevel === "moderate" ? "text-[#F4A261]" : "text-emerald-400"}`}>
                   {analysis.riskLevel}
                 </span>
@@ -209,7 +212,7 @@ export function ActivityExplorer({ location, current, hourly, daily, isFahrenhei
           {/* Primary Assessment Reasons */}
           <div>
             <h4 className="text-xs font-semibold text-slate-400 dark:text-slate-400 light:text-slate-600 uppercase tracking-wider mb-2 font-mono">
-              Key Weather Observations
+              {t.meteorologicalFactors || "Key Weather Observations"}
             </h4>
             <ul className="space-y-1.5">
               {analysis.primaryReasons.map((reason, i) => (
@@ -224,7 +227,7 @@ export function ActivityExplorer({ location, current, hourly, daily, isFahrenhei
           {/* Weather Factors Impact Grid */}
           <div>
             <h4 className="text-xs font-semibold text-slate-400 dark:text-slate-400 light:text-slate-600 uppercase tracking-wider mb-2.5 font-mono">
-              Meteorological Factor Impact
+              {t.meteorologicalFactors || "Meteorological Factor Impact"}
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
               {analysis.weatherFactors.map((f, i) => (
@@ -245,7 +248,7 @@ export function ActivityExplorer({ location, current, hourly, daily, isFahrenhei
               <Clock className="w-4 h-4 text-[#8ECAE6] shrink-0 mt-0.5" />
               <div>
                 <strong className="block text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-800 font-semibold font-mono text-xs mb-0.5">
-                  Recommended Time Window
+                  {t.recommendedWindow || "Recommended Time Window"}
                 </strong>
                 <span className="text-slate-300 dark:text-slate-300 light:text-slate-700">{analysis.bestTimeWindow}</span>
               </div>
@@ -256,7 +259,7 @@ export function ActivityExplorer({ location, current, hourly, daily, isFahrenhei
           {analysis.tips && analysis.tips.length > 0 && (
             <div className="pt-4 border-t border-[#30353D] dark:border-[#30353D] light:border-slate-200">
               <h4 className="text-xs font-semibold text-slate-400 dark:text-slate-400 light:text-slate-600 uppercase tracking-wider mb-2 font-mono">
-                Practical Action Tips
+                {t.safetyPrecautions || "Practical Action Tips"}
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {analysis.tips.map((tip, i) => (

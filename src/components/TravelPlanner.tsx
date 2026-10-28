@@ -4,15 +4,18 @@ import { analyzeTravelAPI } from "../services/api.js";
 import { Car, Bike, Bus, Train, Plane, MapPin, ArrowRight, Clock, AlertTriangle, ShieldCheck, Info, Sunrise, Sun, Sunset, Sparkles, Moon } from "lucide-react";
 import { WeatherIcon } from "./WeatherIcons.js";
 import { DiurnalPhase, DiurnalPhaseConfig } from "../services/diurnalTheme.js";
+import { getTranslations } from "../languages.js";
 
 interface TravelPlannerProps {
   isFahrenheit: boolean;
   currentLocation?: LocationInfo | null;
   diurnalPhase?: DiurnalPhase;
   diurnalConfig?: DiurnalPhaseConfig;
+  preferredLanguage?: string;
 }
 
-export function TravelPlanner({ isFahrenheit, currentLocation, diurnalPhase, diurnalConfig }: TravelPlannerProps) {
+export function TravelPlanner({ isFahrenheit, currentLocation, diurnalPhase, diurnalConfig, preferredLanguage }: TravelPlannerProps) {
+  const t = getTranslations(preferredLanguage);
   const [origin, setOrigin] = useState(() => currentLocation?.name || "");
   const [destination, setDestination] = useState("");
   const [mode, setMode] = useState<"car" | "bike" | "bus" | "train" | "flight">("car");
@@ -81,7 +84,7 @@ export function TravelPlanner({ isFahrenheit, currentLocation, diurnalPhase, diu
               className="text-[10px] font-mono uppercase font-semibold tracking-wider transition-colors duration-500"
               style={{ color: diurnalConfig ? diurnalConfig.accentColor : "#8ECAE6" }}
             >
-              ROUTE METEOROLOGICAL DISPATCH • {diurnalConfig ? diurnalConfig.stationTelemetrySub : "CORRIDOR SURVEILLANCE"}
+              {t.travelBannerTag || "ROUTE METEOROLOGICAL DISPATCH • CORRIDOR SURVEILLANCE"}
             </span>
             {diurnalConfig && (
               <span
@@ -97,10 +100,10 @@ export function TravelPlanner({ isFahrenheit, currentLocation, diurnalPhase, diu
             )}
           </div>
           <h2 className="text-xl sm:text-2xl font-bold text-white font-mono tracking-tight">
-            Route Weather Intelligence
+            {t.travelBannerTitle || "Route Weather Intelligence"}
           </h2>
           <p className="text-xs text-slate-200 max-w-xl leading-relaxed">
-            Real-time highway corridors, transit checkpoints, and deterministic weather forecasts along your trajectory.
+            {t.travelBannerDesc || "Real-time highway corridors, transit checkpoints, and deterministic weather forecasts along your trajectory."}
           </p>
         </div>
       </div>
@@ -111,11 +114,11 @@ export function TravelPlanner({ isFahrenheit, currentLocation, diurnalPhase, diu
           <div className="flex items-center gap-2">
             <Car className="w-4 h-4 text-[#8ECAE6]" />
             <h3 className="text-xs font-semibold text-slate-100 dark:text-slate-100 light:text-slate-900 tracking-wider uppercase font-mono">
-              PLAN CORRIDOR TRANSIT
+              {t.tabTravel || "PLAN CORRIDOR TRANSIT"}
             </h3>
           </div>
           <span className="text-xs font-mono text-slate-400 dark:text-slate-400 light:text-slate-500">
-            Highway & Corridor Weather Analysis
+            {t.travelMode}: {mode.toUpperCase()}
           </span>
         </div>
 
@@ -124,7 +127,7 @@ export function TravelPlanner({ isFahrenheit, currentLocation, diurnalPhase, diu
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs font-medium text-slate-300 dark:text-slate-300 light:text-slate-700">
-                Departure Point
+                {t.originLocation || "Departure Point"}
               </label>
               {currentLocation?.name && origin !== currentLocation.name && (
                 <button
@@ -132,7 +135,7 @@ export function TravelPlanner({ isFahrenheit, currentLocation, diurnalPhase, diu
                   onClick={() => setOrigin(currentLocation.name)}
                   className="text-[11px] font-mono text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700 hover:underline cursor-pointer"
                 >
-                  Use {currentLocation.name}
+                  {t.stationBase}: {currentLocation.name}
                 </button>
               )}
             </div>
@@ -150,7 +153,7 @@ export function TravelPlanner({ isFahrenheit, currentLocation, diurnalPhase, diu
 
           <div>
             <label className="text-xs font-medium text-slate-300 dark:text-slate-300 light:text-slate-700 block mb-1.5">
-              Destination
+              {t.destinationLocation || "Destination"}
             </label>
             <div className="relative">
               <MapPin className="w-4 h-4 text-rose-400 absolute left-3 top-2.5" />
@@ -177,7 +180,7 @@ export function TravelPlanner({ isFahrenheit, currentLocation, diurnalPhase, diu
               }`}
             >
               <Car className="w-3.5 h-3.5" />
-              <span>Car</span>
+              <span>{t.modeCar || "Car"}</span>
             </button>
             <button
               onClick={() => setMode("bike")}
@@ -188,7 +191,7 @@ export function TravelPlanner({ isFahrenheit, currentLocation, diurnalPhase, diu
               }`}
             >
               <Bike className="w-3.5 h-3.5" />
-              <span>Two-Wheeler</span>
+              <span>{t.modeBike || "Two-Wheeler"}</span>
             </button>
             <button
               onClick={() => setMode("bus")}
@@ -199,7 +202,7 @@ export function TravelPlanner({ isFahrenheit, currentLocation, diurnalPhase, diu
               }`}
             >
               <Bus className="w-3.5 h-3.5" />
-              <span>Bus</span>
+              <span>{t.modeBus || "Bus"}</span>
             </button>
             <button
               onClick={() => setMode("train")}
@@ -210,7 +213,7 @@ export function TravelPlanner({ isFahrenheit, currentLocation, diurnalPhase, diu
               }`}
             >
               <Train className="w-3.5 h-3.5" />
-              <span>Train</span>
+              <span>{t.modeTrain || "Train"}</span>
             </button>
             <button
               onClick={() => setMode("flight")}
@@ -221,7 +224,7 @@ export function TravelPlanner({ isFahrenheit, currentLocation, diurnalPhase, diu
               }`}
             >
               <Plane className="w-3.5 h-3.5" />
-              <span>Flight</span>
+              <span>{t.modeFlight || "Flight"}</span>
             </button>
           </div>
 
@@ -239,7 +242,7 @@ export function TravelPlanner({ isFahrenheit, currentLocation, diurnalPhase, diu
             }
             className="w-full sm:w-auto px-4 py-2 rounded-[4px] bg-[#F4A261] hover:brightness-110 text-[#0F141B] font-semibold border border-[#F4A261] text-xs transition-colors disabled:opacity-40 cursor-pointer shadow-sm"
           >
-            {loading ? "Analyzing Corridor..." : "Assess Route Weather"}
+            {loading ? (t.analyzingRoute || "Analyzing Corridor...") : (t.analyzeRoute || "Assess Route Weather")}
           </button>
         </div>
 

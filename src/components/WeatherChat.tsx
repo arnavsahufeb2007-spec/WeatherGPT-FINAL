@@ -28,7 +28,12 @@ import {
 } from "lucide-react";
 import { WeatherIcon } from "./WeatherIcons.js";
 import { WeatherGptLogo } from "./WeatherGptLogo.js";
-import { getLanguageConfig } from "../languages.js";
+import {
+  getLanguageConfig,
+  resolveEffectiveResponseLanguage,
+  buildLocalizedInitialWeatherSummary,
+} from "../languages.js";
+import { MarkdownRenderer } from "./MarkdownRenderer.js";
 import { useVoiceMode } from "../services/voice/useVoiceMode.js";
 import { VoiceLanguageModal } from "./VoiceLanguageModal.js";
 import { GeminiLiveModal } from "./GeminiLiveModal.js";
@@ -91,6 +96,16 @@ export function WeatherChat({
 
   // Multilingual Voice Mode Hook with decoupled Input and Output languages
   const voice = useVoiceMode(preferredLanguage);
+
+  // Centralized Language Resolution Priority:
+  // 1. Manual Output Language Override: voice.outputLanguage (if set and not 'auto' / 'all')
+  // 2. App Language Default: preferredLanguage
+  // 3. Fallback: 'en'
+  const effectiveOutputLang = resolveEffectiveResponseLanguage(
+    preferredLanguage,
+    voice.outputLanguage
+  );
+
   const [currentlySpeakingMessageId, setCurrentlySpeakingMessageId] = useState<string | null>(null);
   const [isVoiceSettingsOpen, setIsVoiceSettingsOpen] = useState(false);
   const [isLiveModalOpen, setIsLiveModalOpen] = useState(false);
@@ -147,44 +162,47 @@ export function WeatherChat({
         ];
   }, [langConfig, activeLocationName]);
 
-  const [messages, setMessages] = useState<ChatMessage[]>([
+  const getLocalizedWelcome = (lang: string) => {
+    if (lang === "hi") {
+      return `नमस्ते! मैं **WeatherGPT** हूँ, आपका संवादात्मक मौसम आसूचना सहायक।
+मैं ओपन-मेटियो प्रेक्षणों और जेमिनी विश्लेषण के साथ सत्यापित मौसम अंतर्दृष्टि प्रदान करता हूँ। मुझसे वर्तमान स्थिति, बारिश के पूर्वानुमान, खेल/गतिविधि अनुकूलता, राजमार्ग यात्रा मौसम या भारत और दुनिया भर के शहरों की तुलना के बारे में कुछ भी पूछें!`;
+    }
+    if (lang === "hinglish") {
+      return `Hello! Main **WeatherGPT** hoon, aapka conversational weather intelligence assistant.
+Factual Open-Meteo observations aur multilingual Gemini interpretation ke saath accurate weather insights provide karta hoon. Current conditions, rain forecast, outdoor sports, travel route weather ya city comparisons ke bare me poochiye!`;
+    }
+    if (lang === "bn") {
+      return `নমস্কার! আমি **WeatherGPT**, আপনার কথোপকথনমূলক আবহাওয়া তথ্য সহকারী।
+যাচাইকৃত আবহাওয়া পর্যবেক্ষণ এবং বহুভাষিক বিশ্লেষণের সাথে নির্ভরযোগ্য তথ্য প্রদান করি। বর্তমান পরিস্থিতি, বৃষ্টির পূর্বাভাস, খেলাধুলার উপযুক্ততা বা শহরের তুলনামূলক আবহাওয়া সম্পর্কে জিজ্ঞাসা করুন!`;
+    }
+    const cfg = getLanguageConfig(lang);
+    return `Hello! I am **WeatherGPT**, your conversational weather intelligence assistant in ${cfg.name}.
+I combine factual Open-Meteo observations with deterministic analysis and multilingual Gemini interpretation. Ask me anything about current conditions, rain forecasts, sport/activity suitability, highway travel weather, or city comparisons worldwide!`;
+  };
+
+  const [messages, setMessages] = useState<ChatMessage[]>(() => [
     {
       id: "welcome_msg",
       role: "assistant",
       sender: "assistant",
-      content: `Hello! I am **WeatherGPT**, your conversational weather intelligence assistant.
-I combine factual Open-Meteo observations with deterministic analysis and multilingual Gemini interpretation. Ask me anything about current conditions, rain forecasts, sport/activity suitability, highway travel weather, or city comparisons across India and worldwide!`,
-      text: `Hello! I am **WeatherGPT**, your conversational weather intelligence assistant.
-I combine factual Open-Meteo observations with deterministic analysis and multilingual Gemini interpretation. Ask me anything about current conditions, rain forecasts, sport/activity suitability, highway travel weather, or city comparisons across India and worldwide!`,
+      content: getLocalizedWelcome(effectiveOutputLang),
+      text: getLocalizedWelcome(effectiveOutputLang),
       timestamp: new Date().toISOString(),
       isAIGenerated: false,
-      language: preferredLanguage,
+      language: effectiveOutputLang,
     },
   ]);
 
-  // Synchronize conversational weather summary with exact normalized weather context
+  // Synchronize conversational weather summary with exact normalized weather context and effective language
   useEffect(() => {
     if (currentLocation && currentWeather) {
-      const rainStatus =
-        currentWeather.rain > 0
-          ? `${currentWeather.rain} mm active rainfall`
-          : currentWeather.precipitation > 0
-          ? `${currentWeather.precipitation} mm precipitation`
-          : "0.0 mm (No rain currently falling)";
-
-      const locationSummary = `Hello! Here is your verified weather intelligence summary for **${currentLocation.name}**${
-        currentLocation.admin1 ? `, ${currentLocation.admin1}` : ""
-      }${currentLocation.country ? ` (${currentLocation.country})` : ""}:
-
-• **Temperature**: ${formatTemp(currentWeather.temperature)} (Feels like ${formatTemp(currentWeather.feelsLike)})
-• **Conditions**: ${currentWeather.condition}
-• **Humidity**: ${currentWeather.humidity !== null ? `${currentWeather.humidity}%` : "Data unavailable"}
-• **Precipitation Probability**: ${currentWeather.precipitationProbability}% • *Current Rain*: ${rainStatus}
-• **Wind Speed**: ${currentWeather.windSpeed} km/h (Gusts: ${currentWeather.windGusts} km/h)
-• **UV Index**: ${currentWeather.uvIndex} / 12 • **Visibility**: ${(currentWeather.visibility / 1000).toFixed(1)} km
-• **Outdoor Suitability**: ${weatherAnalysis?.outdoorSuitabilityScore ?? 80}/100 (${weatherAnalysis?.comfortLabel || "Comfortable"})
-
-You can ask me about hourly rain chances, outdoor sports, travel routes, or comparison with other cities!`;
+      const locationSummary = buildLocalizedInitialWeatherSummary(
+        currentLocation,
+        currentWeather,
+        weatherAnalysis,
+        effectiveOutputLang,
+        isFahrenheit
+      );
 
       setMessages((prev) => {
         const hasUserMessages = prev.some((m) => m.sender === "user");
@@ -198,7 +216,7 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
               text: locationSummary,
               timestamp: new Date().toISOString(),
               isAIGenerated: false,
-              language: effectiveOutputLang || preferredLanguage,
+              language: effectiveOutputLang,
               data: {
                 current: currentWeather,
                 analysis: weatherAnalysis || undefined,
@@ -211,12 +229,16 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
     }
   }, [
     currentLocation?.name,
+    currentLocation?.admin1,
+    currentLocation?.country,
     currentWeather?.temperature,
     currentWeather?.precipitationProbability,
     currentWeather?.humidity,
     currentWeather?.windSpeed,
     isFahrenheit,
+    effectiveOutputLang,
   ]);
+
 
   const [inputText, setInputText] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -260,11 +282,6 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
   }, [activeConversationId, currentUser?.id, currentUser?.isGuest]);
 
   // When user changes output language, update all visible assistant responses dynamically without re-querying weather APIs
-  const effectiveOutputLang =
-    voice.outputLanguage && voice.outputLanguage !== "auto"
-      ? voice.outputLanguage
-      : preferredLanguage;
-
   const prevOutputLangRef = useRef<string>(effectiveOutputLang);
 
   useEffect(() => {
@@ -275,9 +292,7 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
     setMessages((prevMessages) => {
       return prevMessages.map((msg) => {
         if (msg.id === "welcome_msg") {
-          const targetConfig = getLanguageConfig(effectiveOutputLang);
-          const localizedWelcome =
-            `Hello! I am WeatherGPT, your conversational weather intelligence assistant in ${targetConfig.name}. Ask me about rain forecasts, outdoor sports, travel routes, or city comparisons worldwide!`;
+          const localizedWelcome = getLocalizedWelcome(effectiveOutputLang);
           return {
             ...msg,
             text: localizedWelcome,
@@ -378,24 +393,16 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
     }
 
     try {
-      // Language precedence:
-      // 1. Explicit voice output language (if set and not 'auto' and not 'all')
-      // 2. Explicit preferred language from app settings (if set and not 'auto' and not 'all')
-      // 3. Auto mode: regional script detection from query text, else 'auto'
-      const isVoiceExplicit = Boolean(voice.outputLanguage && voice.outputLanguage !== "auto" && voice.outputLanguage.toLowerCase() !== "all");
-      const isPrefExplicit = Boolean(preferredLanguage && preferredLanguage !== "auto" && preferredLanguage.toLowerCase() !== "all");
+      // Centralized Language Resolution Priority:
+      // 1. Manual output language override: voice.outputLanguage
+      // 2. App Language Default: preferredLanguage
+      // 3. Fallback: 'en'
+      const targetQueryLang = resolveEffectiveResponseLanguage(
+        preferredLanguage,
+        voice.outputLanguage
+      );
 
-      let queryLanguage: string;
-      if (isVoiceExplicit) {
-        queryLanguage = voice.outputLanguage;
-      } else if (isPrefExplicit) {
-        queryLanguage = preferredLanguage;
-      } else {
-        const detectedMsgLang = detectScriptLanguage(trimmed);
-        queryLanguage = detectedMsgLang !== "en" ? detectedMsgLang : "auto";
-      }
-
-      const result = await queryWeatherAPI(trimmed, context, queryLanguage, currentLocation || undefined);
+      const result = await queryWeatherAPI(trimmed, context, targetQueryLang, currentLocation || undefined);
 
       const assistantMsgId = `assistant_${Date.now()}`;
       const assistantMsg: ChatMessage = {
@@ -609,7 +616,7 @@ You can ask me about hourly rain chances, outdoor sports, travel routes, or comp
                       : "bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 text-slate-200 dark:text-slate-200 light:text-slate-800"
                   }`}
                 >
-                  <div className="whitespace-pre-line">{msg.text}</div>
+                  <MarkdownRenderer content={msg.text} />
 
                   {/* Attached Mini Cards if response included structured data */}
                   {!isUser && msg.data?.current && (

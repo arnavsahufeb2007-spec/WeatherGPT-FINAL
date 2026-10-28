@@ -30,6 +30,7 @@ import { SettingsView } from "./components/SettingsView.js";
 import { WeatherChat } from "./components/WeatherChat.js";
 import { HistoryView } from "./components/HistoryView.js";
 import { LocationSearchDialog } from "./components/LocationSearchDialog.js";
+import { LandingPage } from "./components/LandingPage.js";
 import { AuthModal } from "./components/AuthModal.js";
 import { AuthPage } from "./components/AuthPage.js";
 import { authService, UserProfile } from "./services/auth.js";
@@ -39,13 +40,15 @@ import { preferencesService } from "./services/preferencesService.js";
 import { ConversationRecord } from "./types.js";
 import { WeatherGptLogo } from "./components/WeatherGptLogo.js";
 import { processSevereAdvisories } from "./services/notificationService.js";
-import { Sparkles, AlertCircle, RefreshCw, Search, Navigation, Globe, MapPin } from "lucide-react";
+import { Sparkles, AlertCircle, RefreshCw, Search, Navigation, MapPin } from "lucide-react";
 import {
   DiurnalPhase,
   determineDiurnalPhase,
   DIURNAL_PHASE_CONFIGS,
 } from "./services/diurnalTheme.js";
 import { SolarAtmosphereBar } from "./components/SolarAtmosphereBar.js";
+import { LanguageProvider } from "./context/LanguageContext.js";
+import { getTranslations } from "./translations/registry.js";
 
 const LOCATION_STORAGE_KEY = "weathergpt_active_location";
 const THEME_STORAGE_KEY = "weathergpt_theme";
@@ -122,7 +125,8 @@ export default function App() {
   // Responsive device preview simulator: auto, phone, tablet, laptop, desktop
   const [deviceMode, setDeviceMode] = useState<DeviceMode>("auto");
 
-  // Navigation section
+  // Navigation section & Landing Page entry screen
+  const [isLandingPage, setIsLandingPage] = useState<boolean>(true);
   const [currentSection, setCurrentSection] = useState<NavSection>("home");
 
   // Active cloud conversation session state
@@ -164,6 +168,8 @@ export default function App() {
       return "en";
     }
   });
+
+  const t = getTranslations(preferredLanguage);
 
   const handleLanguageChange = (lang: string) => {
     setPreferredLanguage(lang);
@@ -443,60 +449,89 @@ export default function App() {
     activeDiurnalConfig.backgrounds[currentSection] ||
     activeDiurnalConfig.backgrounds.home;
 
+  if (isLandingPage) {
+    return (
+      <LanguageProvider language={preferredLanguage} onChangeLanguage={handleLanguageChange}>
+        <LandingPage
+          preferredLanguage={preferredLanguage}
+          onGetStarted={() => setIsLandingPage(false)}
+          onExploreForecast={() => {
+            setCurrentSection("forecast");
+            setIsLandingPage(false);
+          }}
+          onSelectCity={(cityName) => {
+            searchLocationsAPI(cityName)
+              .then((locs) => {
+                if (locs && locs.length > 0) {
+                  handleSelectLocation(locs[0]);
+                }
+              })
+              .catch(() => {});
+            setIsLandingPage(false);
+          }}
+          onChangeLanguage={handleLanguageChange}
+        />
+      </LanguageProvider>
+    );
+  }
+
   return (
-    <div
-      data-diurnal-theme="true"
-      data-diurnal-trial="true"
-      data-diurnal-phase={activeDiurnalPhase}
-      className={`min-h-screen relative flex flex-col selection:bg-[#8ECAE6]/30 selection:text-white transition-colors duration-500`}
-      style={{
-        backgroundColor: activeDiurnalTheme.bodyBase,
-        color: isDark ? "#F8FAFC" : "#0F172A",
-        "--diurnal-border": activeDiurnalTheme.borderTone,
-        "--diurnal-card-bg": activeDiurnalTheme.cardBg,
-        "--diurnal-accent": activeDiurnalConfig.accentColor,
-      } as React.CSSProperties}
-    >
-      {/* Full-Page Diurnal Photographic Atmospheric Backdrop (Permanent Core Feature) */}
-      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden transition-opacity duration-1000">
-        <img
-          key={`${currentSection}-${activeDiurnalPhase}`}
-          src={activePageBg.photoUrl}
-          alt={activePageBg.photoAlt}
-          className="w-full h-full object-cover object-center opacity-80 sm:opacity-85 scale-105 transition-all duration-1000 ease-out"
-        />
-        {/* Atmospheric multi-layer gradient vignette */}
-        <div
-          className="absolute inset-0 transition-all duration-700"
-          style={{
-            background: activeDiurnalTheme.overlay,
-          }}
-        />
-        {/* Radial ambient solar glow */}
-        <div
-          className="absolute inset-0 transition-all duration-700 pointer-events-none"
-          style={{
-            background: activeDiurnalTheme.ambientGlow,
-          }}
-        />
-      </div>
+    <LanguageProvider language={preferredLanguage} onChangeLanguage={handleLanguageChange}>
+      <div
+        data-diurnal-theme="true"
+        data-diurnal-trial="true"
+        data-diurnal-phase={activeDiurnalPhase}
+        className={`min-h-screen relative flex flex-col selection:bg-[#8ECAE6]/30 selection:text-white transition-colors duration-500`}
+        style={{
+          backgroundColor: activeDiurnalTheme.bodyBase,
+          color: isDark ? "#F8FAFC" : "#0F172A",
+          "--diurnal-border": activeDiurnalTheme.borderTone,
+          "--diurnal-card-bg": activeDiurnalTheme.cardBg,
+          "--diurnal-accent": activeDiurnalConfig.accentColor,
+        } as React.CSSProperties}
+      >
+        {/* Full-Page Diurnal Photographic Atmospheric Backdrop (Permanent Core Feature) */}
+        <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden transition-opacity duration-1000">
+          <img
+            key={`${currentSection}-${activeDiurnalPhase}`}
+            src={activePageBg.photoUrl}
+            alt={activePageBg.photoAlt}
+            className="w-full h-full object-cover object-center opacity-80 sm:opacity-85 scale-105 transition-all duration-1000 ease-out"
+          />
+          {/* Atmospheric multi-layer gradient vignette */}
+          <div
+            className="absolute inset-0 transition-all duration-700"
+            style={{
+              background: activeDiurnalTheme.overlay,
+            }}
+          />
+          {/* Radial ambient solar glow */}
+          <div
+            className="absolute inset-0 transition-all duration-700 pointer-events-none"
+            style={{
+              background: activeDiurnalTheme.ambientGlow,
+            }}
+          />
+        </div>
 
-      {/* Device Mode Preview Switcher Top Bar */}
-      <DevicePreviewBar
-        deviceMode={deviceMode}
-        onChangeDeviceMode={setDeviceMode}
-      />
+        {/* Device Mode Preview Switcher Top Bar */}
+        <DevicePreviewBar
+          deviceMode={deviceMode}
+          onChangeDeviceMode={setDeviceMode}
+          preferredLanguage={preferredLanguage}
+        />
 
-      {/* Permanent Solar Atmosphere Phase Option Bar */}
-      <SolarAtmosphereBar
-        selectedPhase={activePhaseOverride}
-        onSelectPhase={handleSelectPhase}
-        detectedPhase={detectedDiurnalPhase}
-        currentSection={currentSection}
-        isDark={isDark}
-        localTimeStr={currentWeather?.time}
-        cityName={currentLocation?.name}
-      />
+        {/* Permanent Solar Atmosphere Phase Option Bar */}
+        <SolarAtmosphereBar
+          selectedPhase={activePhaseOverride}
+          onSelectPhase={handleSelectPhase}
+          detectedPhase={detectedDiurnalPhase}
+          currentSection={currentSection}
+          isDark={isDark}
+          localTimeStr={currentWeather?.time}
+          cityName={currentLocation?.name}
+          preferredLanguage={preferredLanguage}
+        />
 
       {/* Main Responsive Layout Shell */}
       <div className={`flex-1 flex flex-col relative z-10 ${getDeviceFrameClass()}`}>
@@ -513,6 +548,7 @@ export default function App() {
               currentUser={currentUser}
               onOpenAuth={() => setIsAuthModalOpen(true)}
               preferredLanguage={preferredLanguage}
+              onOpenLanding={() => setIsLandingPage(true)}
             />
           )}
 
@@ -536,6 +572,7 @@ export default function App() {
               deviceMode={deviceMode}
               onChangeDeviceMode={setDeviceMode}
               preferredLanguage={preferredLanguage}
+              onOpenLanding={() => setIsLandingPage(true)}
             />
 
             {/* Error Banner */}
@@ -551,7 +588,7 @@ export default function App() {
                     className="flex items-center gap-1 font-semibold text-rose-200 hover:text-white underline cursor-pointer"
                   >
                     <RefreshCw className="w-3 h-3" />
-                    <span>Retry</span>
+                    <span>{t.retry || "Retry"}</span>
                   </button>
                 )}
               </div>
@@ -567,11 +604,10 @@ export default function App() {
                   </div>
                   <div className="space-y-1.5">
                     <h2 className="text-xl font-bold tracking-tight text-slate-100 dark:text-slate-100 light:text-slate-900">
-                      Welcome to WeatherGPT
+                      {t.welcomeTitle || "Welcome to WeatherGPT"}
                     </h2>
                     <p className="text-xs text-slate-400 dark:text-slate-400 light:text-slate-600 leading-relaxed max-w-md mx-auto">
-                      Search and select any city worldwide to access verified weather observations, deterministic
-                      forecasts, and conversational AI insights.
+                      {t.welcomeSubtitle || "Search and select any city worldwide to access verified weather observations, deterministic forecasts, and conversational AI insights."}
                     </p>
                   </div>
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2">
@@ -581,7 +617,7 @@ export default function App() {
                       className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-[4px] bg-[#252A32] dark:bg-[#252A32] light:bg-slate-900 hover:bg-[#30353D] dark:hover:bg-[#30353D] light:hover:bg-slate-800 text-slate-100 dark:text-slate-100 light:text-white border border-[#30353D] dark:border-[#30353D] light:border-slate-800 text-xs font-semibold transition-colors cursor-pointer"
                     >
                       <Search className="w-3.5 h-3.5 text-[#8ECAE6]" />
-                      <span>Search Location Worldwide</span>
+                      <span>{t.searchWorldwide || "Search Location Worldwide"}</span>
                     </button>
                     <button
                       id="welcome-use-gps-btn"
@@ -590,7 +626,7 @@ export default function App() {
                       className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-[4px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-100 hover:bg-[#252A32] dark:hover:bg-[#252A32] light:hover:bg-slate-200 border border-[#30353D] dark:border-[#30353D] light:border-slate-300 text-slate-300 dark:text-slate-300 light:text-slate-800 text-xs font-medium transition-colors cursor-pointer"
                     >
                       <Navigation className={`w-3.5 h-3.5 text-[#8ECAE6] ${isDetectingLocation ? "animate-spin" : ""}`} />
-                      <span>Use Current GPS</span>
+                      <span>{t.useCurrentGps || "Use Current GPS"}</span>
                     </button>
                   </div>
                 </div>
@@ -673,7 +709,7 @@ export default function App() {
                                   borderColor: `${activeDiurnalConfig.accentColor}40`,
                                 }}
                               >
-                                METEOROLOGICAL FORECAST • {activeDiurnalConfig.stationTelemetrySub}
+                                {t.forecastBannerTag || "METEOROLOGICAL FORECAST"} • {activeDiurnalConfig.stationTelemetrySub}
                               </span>
                               <span
                                 className="inline-flex items-center gap-1 text-[9px] font-mono uppercase font-bold px-2 py-0.5 rounded-[4px] backdrop-blur-sm"
@@ -687,10 +723,10 @@ export default function App() {
                               </span>
                             </div>
                             <h2 className="text-xl sm:text-2xl font-bold text-white font-mono tracking-tight">
-                              Multi-Day & Hourly Trajectory • {currentLocation.name}
+                              {t.forecastBannerTitle || "Multi-Day & Hourly Trajectory"} • {currentLocation.name}
                             </h2>
                             <p className="text-xs text-slate-200 leading-relaxed">
-                              High-resolution thermodynamic temperature projections, precipitation probabilities, barometric pressure trends, and wind vector curves.
+                              {t.forecastBannerDesc || "High-resolution thermodynamic temperature projections, precipitation probabilities, barometric pressure trends, and wind vector curves."}
                             </p>
                           </div>
                         </div>
@@ -699,26 +735,26 @@ export default function App() {
                       {advisories.length > 0 && (
                         <div>
                           <h3 className="text-xs font-semibold text-slate-400 dark:text-slate-400 light:text-slate-600 uppercase tracking-wider mb-2 font-mono">
-                            Active Meteorological Advisories
+                            {t.activeAdvisoriesTitle || "Active Meteorological Advisories"}
                           </h3>
-                          <AdvisoriesCard advisories={advisories} />
+                          <AdvisoriesCard advisories={advisories} preferredLanguage={preferredLanguage} />
                         </div>
                       )}
 
-                      <HourlyForecastChart hourly={hourlyForecast} isFahrenheit={isFahrenheit} />
+                      <HourlyForecastChart hourly={hourlyForecast} isFahrenheit={isFahrenheit} preferredLanguage={preferredLanguage} />
 
-                      <DailyForecastList daily={dailyForecast} isFahrenheit={isFahrenheit} />
+                      <DailyForecastList daily={dailyForecast} isFahrenheit={isFahrenheit} preferredLanguage={preferredLanguage} />
                     </>
                   ) : (
                     <div className="py-16 text-center text-slate-400 text-xs">
                       {loading ? (
-                        "Loading verified forecast data..."
+                        t.loadingForecast || "Loading verified forecast data..."
                       ) : (
                         <button
                           onClick={() => setIsLocationSearchOpen(true)}
                           className="text-[#8ECAE6] hover:underline font-medium cursor-pointer"
                         >
-                          Select a location to view hourly and 7-day forecast
+                          {t.selectLocationForForecast || "Select a location to view hourly and 7-day forecast"}
                         </button>
                       )}
                     </div>
@@ -738,17 +774,18 @@ export default function App() {
                       isFahrenheit={isFahrenheit}
                       diurnalPhase={activeDiurnalPhase}
                       diurnalConfig={activeDiurnalConfig}
+                      preferredLanguage={preferredLanguage}
                     />
                   ) : (
                     <div className="py-16 text-center text-slate-400 text-xs font-mono">
                       {loading ? (
-                        "Evaluating meteorological suitability..."
+                        t.evaluatingSuitability || "Evaluating meteorological suitability..."
                       ) : (
                         <button
                           onClick={() => setIsLocationSearchOpen(true)}
                           className="text-[#8ECAE6] hover:underline font-medium cursor-pointer"
                         >
-                          Select a location to evaluate outdoor activities
+                          {t.selectLocationForActivity || "Select a location to evaluate outdoor activities"}
                         </button>
                       )}
                     </div>
@@ -764,6 +801,7 @@ export default function App() {
                     currentLocation={currentLocation}
                     diurnalPhase={activeDiurnalPhase}
                     diurnalConfig={activeDiurnalConfig}
+                    preferredLanguage={preferredLanguage}
                   />
                 </div>
               )}
@@ -794,6 +832,7 @@ export default function App() {
                     isFahrenheit={isFahrenheit}
                     diurnalPhase={activeDiurnalPhase}
                     diurnalConfig={activeDiurnalConfig}
+                    preferredLanguage={preferredLanguage}
                   />
                 </div>
               )}
@@ -809,6 +848,7 @@ export default function App() {
                     onRequestAuth={() => setIsAuthModalOpen(true)}
                     diurnalPhase={activeDiurnalPhase}
                     diurnalConfig={activeDiurnalConfig}
+                    preferredLanguage={preferredLanguage}
                   />
                 </div>
               )}
@@ -857,27 +897,13 @@ export default function App() {
                       setCurrentSection("home");
                     }}
                     onCancel={() => setCurrentSection("home")}
+                    preferredLanguage={preferredLanguage}
                   />
                 </div>
               )}
             </main>
 
-            {/* Desktop / Laptop Subtle Footer */}
-            <footer className="mt-auto border-t border-[#30353D] dark:border-[#30353D] light:border-slate-200 bg-[#171C23] dark:bg-[#171C23] light:bg-white py-3 text-center text-xs text-slate-400 px-4 transition-colors">
-              <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-                <div className="flex items-center gap-2 text-slate-400 dark:text-slate-400 light:text-slate-600 text-xs">
-                  <Globe className="w-3.5 h-3.5 text-[#8ECAE6]" />
-                  <span>Atmospheric intelligence distilled from verified Open-Meteo & NOAA METAR telemetry</span>
-                </div>
-                <div className="flex items-center gap-2 text-[11px] font-mono text-slate-500 dark:text-slate-400 light:text-slate-600">
-                  <span>OSRM Route Models</span>
-                  <span>•</span>
-                  <span>39+ Indian & Global Dialects</span>
-                  <span>•</span>
-                  <span>Strict Data Privacy</span>
-                </div>
-              </div>
-            </footer>
+
           </div>
         </div>
 
@@ -887,6 +913,7 @@ export default function App() {
             currentSection={currentSection}
             onSelectSection={setCurrentSection}
             deviceMode={deviceMode}
+            preferredLanguage={preferredLanguage}
           />
         )}
       </div>
@@ -896,6 +923,7 @@ export default function App() {
         isOpen={isLocationSearchOpen}
         onClose={() => setIsLocationSearchOpen(false)}
         onSelectLocation={handleSelectLocation}
+        preferredLanguage={preferredLanguage}
       />
 
       {/* Modern Authentication Dialog */}
@@ -903,7 +931,9 @@ export default function App() {
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         onAuthSuccess={(user) => setCurrentUser(user)}
+        preferredLanguage={preferredLanguage}
       />
     </div>
+  </LanguageProvider>
   );
 }

@@ -214,7 +214,7 @@ export function CurrentWeatherHero({
                   />
                 </div>
                 <div className="hero-muted-text text-xs text-slate-300 mt-1 font-mono">
-                  Feels like {formatTemp(current.feelsLike)} • High {todayDaily ? formatTemp(todayDaily.tempMax) : "--"} / Low {todayDaily ? formatTemp(todayDaily.tempMin) : "--"}
+                  {t.feelsLike} {formatTemp(current.feelsLike)} • {t.high} {todayDaily ? formatTemp(todayDaily.tempMax) : "--"} / {t.low} {todayDaily ? formatTemp(todayDaily.tempMin) : "--"}
                 </div>
               </div>
             </div>
@@ -224,7 +224,7 @@ export function CurrentWeatherHero({
               {/* Context-Aware Solar Transition (Sunset during Day / Next Sunrise at Night) */}
               <div>
                 <div className="hero-muted-text text-[10px] font-mono uppercase text-slate-300 tracking-wider">
-                  {activePhase === "night" || activePhase === "dusk" ? "NEXT SUNRISE" : "SUNSET TODAY"}
+                  {activePhase === "night" || activePhase === "dusk" ? t.sunrise.toUpperCase() : t.sunset.toUpperCase()}
                 </div>
                 <div className="hero-primary-text font-mono text-lg font-bold text-slate-100 mt-0.5">
                   {activePhase === "night" || activePhase === "dusk"
@@ -233,8 +233,8 @@ export function CurrentWeatherHero({
                 </div>
                 <div className="hero-muted-text text-[10px] font-mono text-slate-300 mt-0.5">
                   {activePhase === "night" || activePhase === "dusk"
-                    ? `Sunset was ${current.sunset ? current.sunset.slice(11, 16) : "18:17"}`
-                    : `Sunrise ${current.sunrise ? current.sunrise.slice(11, 16) : "06:09"}`}
+                    ? `${t.sunsetWas} ${current.sunset ? current.sunset.slice(11, 16) : "18:17"}`
+                    : `${t.sunrise} ${current.sunrise ? current.sunrise.slice(11, 16) : "06:09"}`}
                 </div>
               </div>
 
@@ -244,13 +244,13 @@ export function CurrentWeatherHero({
               {/* Outdoor Score */}
               <div>
                 <div className="hero-muted-text text-[10px] font-mono uppercase text-slate-300 tracking-wider">
-                  OUTDOOR SCORE
+                  {t.outdoorScore.toUpperCase()}
                 </div>
                 <div className="hero-primary-text font-mono text-lg font-bold text-slate-100 mt-0.5">
                   {score} <span className="hero-muted-text text-xs font-normal text-slate-400 font-mono">/100</span>
                 </div>
                 <div className="hero-secondary-text text-[10px] text-slate-200 mt-0.5">
-                  {analysis?.comfortLabel || "Warm, lightly humid"}
+                  {analysis?.comfortLabel || t.ratingLabel}
                 </div>
               </div>
             </div>
@@ -272,7 +272,7 @@ export function CurrentWeatherHero({
       <div>
         <div className="flex items-center justify-between mb-2.5 px-1">
           <h2 className="text-xs font-mono uppercase font-semibold tracking-wider text-slate-300 dark:text-slate-300 light:text-slate-800">
-            GROUNDED SURFACE OBSERVATIONS
+            {t.realTimeTelemetry}
           </h2>
           <span className="text-[10px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500">
             {phaseConfig.surfaceTelemetrySubtitle}
@@ -288,7 +288,7 @@ export function CurrentWeatherHero({
             }`}
           >
             <div className="flex items-center justify-between text-slate-400 dark:text-slate-400 light:text-slate-500 mb-1.5">
-              <span className="text-[10px] font-mono uppercase font-semibold tracking-wider">WIND VECTORS</span>
+              <span className="text-[10px] font-mono uppercase font-semibold tracking-wider">{t.windVector}</span>
               <Wind className="w-3.5 h-3.5 text-slate-300 dark:text-slate-300 light:text-slate-600" />
             </div>
             <div>
@@ -296,7 +296,7 @@ export function CurrentWeatherHero({
                 {current.windSpeed} km/h
               </div>
               <p className="text-[10px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 mt-0.5 truncate">
-                {current.windDirection}° • Gusts {current.windGusts ?? 7.6} km/h
+                {current.windDirection}° • {t.gusts} {current.windGusts ?? 7.6} km/h
               </p>
             </div>
           </div>
@@ -304,15 +304,15 @@ export function CurrentWeatherHero({
           {/* Precipitation */}
           <div className="p-3.5 rounded-[8px] bg-[#14181F] dark:bg-[#14181F] light:bg-white border border-[#252A32] dark:border-[#252A32] light:border-slate-200 flex flex-col justify-between transition-colors">
             <div className="flex items-center justify-between text-slate-400 dark:text-slate-400 light:text-slate-500 mb-1.5">
-              <span className="text-[10px] font-mono uppercase font-semibold tracking-wider">PRECIPITATION</span>
+              <span className="text-[10px] font-mono uppercase font-semibold tracking-wider">{t.precipitation}</span>
               <Droplets className="w-3.5 h-3.5 text-[#8ECAE6]" />
             </div>
             <div>
               <div className="text-lg font-bold font-mono text-slate-100 dark:text-slate-100 light:text-slate-900">
-                {current.precipitationProbability}% Prob
+                {current.precipitationProbability}% {t.rainProb}
               </div>
               <p className="text-[10px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 mt-0.5 truncate">
-                {current.rain > 0 ? `${current.rain} mm rain` : "0.0 mm accumulation"}
+                {current.rain > 0 ? `${current.rain} mm ${t.rainAccumulation}` : t.noAccumulation}
               </p>
             </div>
           </div>
@@ -324,7 +324,7 @@ export function CurrentWeatherHero({
             }`}
           >
             <div className="flex items-center justify-between text-slate-400 dark:text-slate-400 light:text-slate-500 mb-1.5">
-              <span className="text-[10px] font-mono uppercase font-semibold tracking-wider">HUMIDITY & DEW</span>
+              <span className="text-[10px] font-mono uppercase font-semibold tracking-wider">{t.humidity}</span>
               <Droplets className="w-3.5 h-3.5 text-[#8ECAE6]" />
             </div>
             <div>
@@ -332,7 +332,7 @@ export function CurrentWeatherHero({
                 {current.humidity !== null ? `${current.humidity}%` : "80%"}
               </div>
               <p className="text-[10px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 mt-0.5 truncate">
-                Dew pt: {current.dewPoint !== undefined ? formatTemp(current.dewPoint) : "25.1°C"}
+                {t.dewPoint}: {current.dewPoint !== undefined ? formatTemp(current.dewPoint) : "25.1°C"}
               </p>
             </div>
           </div>
@@ -344,15 +344,15 @@ export function CurrentWeatherHero({
             }`}
           >
             <div className="flex items-center justify-between text-slate-400 dark:text-slate-400 light:text-slate-500 mb-1.5">
-              <span className="text-[10px] font-mono uppercase font-semibold tracking-wider">SOLAR RADIATION</span>
+              <span className="text-[10px] font-mono uppercase font-semibold tracking-wider">{t.uvIndex}</span>
               <Sun className="w-3.5 h-3.5 text-[#F4A261]" />
             </div>
             <div>
               <div className="text-lg font-bold font-mono text-slate-100 dark:text-slate-100 light:text-slate-900">
-                {current.uvIndex ?? 0} {current.uvIndex && current.uvIndex > 5 ? "High" : "Low"}
+                {current.uvIndex ?? 0} {current.uvIndex && current.uvIndex > 5 ? t.high : t.low}
               </div>
               <p className="text-[10px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 mt-0.5 truncate">
-                Max index: {todayDaily?.uvIndexMax ?? "7.5"} today
+                Max: {todayDaily?.uvIndexMax ?? "7.5"}
               </p>
             </div>
           </div>
@@ -364,7 +364,7 @@ export function CurrentWeatherHero({
             }`}
           >
             <div className="flex items-center justify-between text-slate-400 dark:text-slate-400 light:text-slate-500 mb-1.5">
-              <span className="text-[10px] font-mono uppercase font-semibold tracking-wider">CLARITY</span>
+              <span className="text-[10px] font-mono uppercase font-semibold tracking-wider">{t.visibility}</span>
               <Eye className="w-3.5 h-3.5 text-slate-300 dark:text-slate-300 light:text-slate-600" />
             </div>
             <div>
@@ -376,7 +376,7 @@ export function CurrentWeatherHero({
                 )}
               </div>
               <p className="text-[10px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 mt-0.5 truncate">
-                Unobstructed sightline
+                {t.visibility}
               </p>
             </div>
           </div>
@@ -388,7 +388,7 @@ export function CurrentWeatherHero({
             }`}
           >
             <div className="flex items-center justify-between text-slate-400 dark:text-slate-400 light:text-slate-500 mb-1.5">
-              <span className="text-[10px] font-mono uppercase font-semibold tracking-wider">BAROMETER</span>
+              <span className="text-[10px] font-mono uppercase font-semibold tracking-wider">{t.pressure}</span>
               <Compass className="w-3.5 h-3.5 text-slate-300 dark:text-slate-300 light:text-slate-600" />
             </div>
             <div>
@@ -396,7 +396,7 @@ export function CurrentWeatherHero({
                 {current.pressure !== null && current.pressure !== undefined ? `${current.pressure} hPa` : "1010 hPa"}
               </div>
               <p className="text-[10px] font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 mt-0.5 truncate">
-                Low trough dynamic
+                {t.pressure}
               </p>
             </div>
           </div>

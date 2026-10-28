@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { LocationInfo } from "../types.js";
 import { UserProfile, authService } from "../services/auth.js";
-import { getLanguageConfig, ALL_LANGUAGES } from "../languages.js";
+import { getLanguageConfig, getTranslations, ALL_LANGUAGES } from "../languages.js";
 import { DeviceMode } from "./DevicePreviewBar.js";
 import { VoiceLanguageModal } from "./VoiceLanguageModal.js";
 import { DiurnalPhase } from "../services/diurnalTheme.js";
@@ -76,6 +76,7 @@ export function SettingsView({
   onSelectLocation,
   voice,
 }: SettingsViewProps) {
+  const t = getTranslations(preferredLanguage);
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const langConfig = getLanguageConfig(preferredLanguage);
   const inputLangConfig = getLanguageConfig(voice.effectiveInputLanguage);
@@ -108,7 +109,7 @@ export function SettingsView({
           <div className="space-y-1.5 max-w-xl">
             <div className="inline-flex items-center gap-2">
               <span className="text-[10px] font-mono uppercase font-bold text-[#8ECAE6] tracking-wider px-2 py-0.5 rounded-[3px] bg-[#0F141B]/80 border border-[#8ECAE6]/30">
-                CALIBRATION & PROFILE • METEOROLOGICAL TELEMETRY
+                {t.settingsBannerTag || "CALIBRATION & PROFILE • METEOROLOGICAL TELEMETRY"}
               </span>
               <span className="flex h-1.5 w-1.5 relative">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -116,10 +117,10 @@ export function SettingsView({
               </span>
             </div>
             <h2 className="text-xl sm:text-2xl font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 font-mono tracking-tight">
-              Preferences & System Configuration
+              {t.settingsBannerTitle || "Preferences & System Configuration"}
             </h2>
             <p className="text-xs text-slate-300 dark:text-slate-300 light:text-slate-700 leading-relaxed">
-              Calibrate temperature scales, language engines, speech synthesizers, and profile synchronization parameters.
+              {t.settingsBannerDesc || "Calibrate temperature scales, language engines, speech synthesizers, and profile synchronization parameters."}
             </p>
           </div>
 
@@ -156,10 +157,10 @@ export function SettingsView({
             </div>
             <div>
               <h3 className="text-sm font-bold font-mono text-slate-100 dark:text-slate-100 light:text-slate-900 tracking-tight uppercase">
-                SYSTEM CALIBRATION CONTROLS
+                {t.settingsBannerTitle || "SYSTEM CALIBRATION CONTROLS"}
               </h3>
               <p className="text-xs font-mono text-slate-400 dark:text-slate-400 light:text-slate-500">
-                Personalize your WeatherGPT experience, units, appearance, and voice dynamics
+                {t.settingsBannerDesc || "Personalize your WeatherGPT experience, units, appearance, and voice dynamics"}
               </p>
             </div>
           </div>
@@ -171,7 +172,7 @@ export function SettingsView({
         <div className="flex items-center justify-between border-b border-[#30353D] dark:border-[#30353D] light:border-slate-200 pb-3">
           <div className="flex items-center gap-2 text-xs font-mono font-semibold uppercase tracking-wider text-slate-100 dark:text-slate-100 light:text-slate-900">
             <User className="w-3.5 h-3.5 text-[#8ECAE6]" />
-            <span>Account & Cloud Profile</span>
+            <span>{t.accountSection || "Account & Cloud Profile"}</span>
           </div>
           {currentUser && !currentUser.isGuest ? (
             <span className="text-[10px] font-mono uppercase font-bold px-2 py-0.5 rounded-[3px] bg-emerald-950/60 light:bg-emerald-50 text-emerald-400 light:text-emerald-700 border border-emerald-500/30 light:border-emerald-300">
@@ -179,7 +180,7 @@ export function SettingsView({
             </span>
           ) : (
             <span className="text-[10px] font-mono uppercase font-bold px-2 py-0.5 rounded-[3px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-100 text-slate-400 dark:text-slate-400 light:text-slate-600 border border-[#30353D] dark:border-[#30353D] light:border-slate-200">
-              Guest Session
+              {t.guestMode || "Guest Session"}
             </span>
           )}
         </div>
@@ -209,7 +210,7 @@ export function SettingsView({
                 className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-[4px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-100 hover:bg-[#252A32] dark:hover:bg-[#252A32] light:hover:bg-slate-200 text-slate-300 dark:text-slate-300 light:text-slate-700 text-xs font-mono border border-[#30353D] dark:border-[#30353D] light:border-slate-200 transition-colors cursor-pointer"
               >
                 <LogOut className="w-3.5 h-3.5" />
-                <span>Sign Out</span>
+                <span>{t.signOut || "Sign Out"}</span>
               </button>
             ) : (
               <button
@@ -217,7 +218,7 @@ export function SettingsView({
                 className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-[4px] bg-[#252A32] dark:bg-[#252A32] light:bg-sky-50 hover:bg-[#30353D] dark:hover:bg-[#30353D] light:hover:bg-sky-100 text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700 text-xs font-mono font-semibold border border-[#8ECAE6]/40 dark:border-[#8ECAE6]/40 light:border-sky-300 transition-colors cursor-pointer"
               >
                 <LogIn className="w-3.5 h-3.5" />
-                <span>Sign In / Create Account</span>
+                <span>{t.signIn || "Sign In / Create Account"}</span>
               </button>
             )}
           </div>
@@ -262,10 +263,10 @@ export function SettingsView({
         <div className="border-b border-[#30353D] dark:border-[#30353D] light:border-slate-200 pb-3">
           <h3 className="text-xs font-mono font-semibold uppercase tracking-wider text-slate-100 dark:text-slate-100 light:text-slate-900 flex items-center gap-2">
             <Sun className="w-3.5 h-3.5 text-[#8ECAE6]" />
-            <span>Display Theme & Appearance</span>
+            <span>{t.appearanceSection || "Display Theme & Appearance"}</span>
           </h3>
           <p className="text-xs font-mono text-slate-400 mt-0.5">
-            Choose your preferred aesthetic style and contrast palette
+            {t.appearance || "Choose your preferred aesthetic style and contrast palette"}
           </p>
         </div>
 
@@ -286,7 +287,7 @@ export function SettingsView({
                 <div className="p-1.5 rounded-[4px] bg-[#252A32] dark:bg-[#252A32] light:bg-slate-200 text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700">
                   <Moon className="w-4 h-4" />
                 </div>
-                <span className="text-xs sm:text-sm font-bold font-mono text-slate-100 dark:text-slate-100 light:text-slate-900">Obsidian Dark Mode</span>
+                <span className="text-xs sm:text-sm font-bold font-mono text-slate-100 dark:text-slate-100 light:text-slate-900">{t.themeDark || "Obsidian Dark Mode"}</span>
               </div>
               {isDark && <Check className="w-4 h-4 text-[#F4A261]" />}
             </div>
@@ -311,7 +312,7 @@ export function SettingsView({
                 <div className="p-1.5 rounded-[4px] bg-amber-500/10 text-[#F4A261]">
                   <Sun className="w-4 h-4" />
                 </div>
-                <span className="text-xs sm:text-sm font-bold font-mono text-slate-100 dark:text-slate-100 light:text-slate-900">Crisp Light Mode</span>
+                <span className="text-xs sm:text-sm font-bold font-mono text-slate-100 dark:text-slate-100 light:text-slate-900">{t.themeLight || "Crisp Light Mode"}</span>
               </div>
               {!isDark && <Check className="w-4 h-4 text-[#F4A261]" />}
             </div>
@@ -350,7 +351,7 @@ export function SettingsView({
         <div className="border-b border-[#30353D] dark:border-[#30353D] light:border-slate-200 pb-3">
           <h3 className="text-xs font-mono font-semibold uppercase tracking-wider text-slate-100 dark:text-slate-100 light:text-slate-900 flex items-center gap-2">
             <Sliders className="w-3.5 h-3.5 text-[#8ECAE6]" />
-            <span>Meteorological Units</span>
+            <span>{t.tempUnitSection || "Meteorological Units"}</span>
           </h3>
           <p className="text-xs font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 mt-0.5">
             Select temperature and atmospheric unit standards
@@ -359,7 +360,7 @@ export function SettingsView({
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-[6px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-50 border border-[#30353D] dark:border-[#30353D] light:border-slate-200">
           <div>
-            <span className="text-xs sm:text-sm font-bold font-mono text-slate-100 dark:text-slate-100 light:text-slate-900 block">Temperature Scale</span>
+            <span className="text-xs sm:text-sm font-bold font-mono text-slate-100 dark:text-slate-100 light:text-slate-900 block">{t.metricTemperature || "Temperature Scale"}</span>
             <span className="text-xs font-mono text-slate-400 dark:text-slate-400 light:text-slate-500">
               Currently displaying in {isFahrenheit ? "Fahrenheit (°F)" : "Celsius (°C)"}
             </span>
@@ -395,10 +396,10 @@ export function SettingsView({
         <div className="border-b border-[#30353D] dark:border-[#30353D] light:border-slate-200 pb-3">
           <h3 className="text-xs font-mono font-semibold uppercase tracking-wider text-slate-100 dark:text-slate-100 light:text-slate-900 flex items-center gap-2">
             <Globe className="w-3.5 h-3.5 text-[#8ECAE6]" />
-            <span>Display Language & Translations</span>
+            <span>{t.interfaceLanguage || "Display Language & Translations"}</span>
           </h3>
           <p className="text-xs font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 mt-0.5">
-            Active: <strong className="text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700">{langConfig.name}</strong> ({langConfig.nativeName})
+            {t.interfaceLanguageDesc || "Active"}: <strong className="text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700">{langConfig.name}</strong> ({langConfig.nativeName})
           </p>
         </div>
 
@@ -549,7 +550,7 @@ export function SettingsView({
       {/* 7. Reset & Data Management */}
       <div className="p-3.5 sm:p-4 rounded-[8px] bg-[#171C23] dark:bg-[#171C23] light:bg-white border border-[#30353D] dark:border-[#30353D] light:border-slate-200 flex items-center justify-between text-xs font-mono transition-colors shadow-sm">
         <div>
-          <span className="font-bold text-slate-200 dark:text-slate-200 light:text-slate-800 block">Factory Reset</span>
+          <span className="font-bold text-slate-200 dark:text-slate-200 light:text-slate-800 block">{t.dangerZone || "Factory Reset"}</span>
           <span className="text-[11px] text-slate-400 dark:text-slate-400 light:text-slate-500">Erase cached weather and restore initial configurations</span>
         </div>
         <button
@@ -557,7 +558,7 @@ export function SettingsView({
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-rose-950/40 hover:bg-rose-950/60 light:bg-rose-50 light:hover:bg-rose-100 border border-rose-500/30 light:border-rose-300 text-rose-300 light:text-rose-700 text-xs font-mono transition-colors cursor-pointer"
         >
           <RotateCcw className="w-3.5 h-3.5" />
-          <span>Reset App Data</span>
+          <span>{t.resetDefaults || "Reset App Data"}</span>
         </button>
       </div>
 

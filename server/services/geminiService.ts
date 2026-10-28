@@ -147,13 +147,21 @@ MANDATORY FACTUAL GROUNDING RULES (NEVER VIOLATE):
 TARGET LANGUAGE SPECIFICATIONS (CRITICAL):
 - Selected Authoritative Language: ${langConfig.name} (${langConfig.nativeName}) [Code: ${langConfig.code}, Script: ${langConfig.script}]
 - Directive: ${langConfig.geminiPromptInstruction}
-- ALL generated text in every field (directAnswer, detailedExplanation, travelWeatherAdvice) MUST be purely and exclusively in ${langConfig.name} (${langConfig.nativeName}).
+- ABSOLUTE LANGUAGE ENFORCEMENT: ALL generated text in every field (directAnswer, detailedExplanation, travelWeatherAdvice) MUST be purely and exclusively in ${langConfig.name} (${langConfig.nativeName}). Even if the user writes their query in English (e.g. "what is the weather today?") or another language, you MUST NOT reply in English. You MUST respond completely in ${langConfig.name} (${langConfig.nativeName}).
 - DO NOT use English headings, English prefixes, or English disclaimers when the target language is not English.
 - For Hinglish: Use natural, conversational Roman-script Hindi mixed with English terms (e.g. "Aaj barish ke asaar 96% hain, halki umbrella carry karein"). Do NOT write in Devanagari script.
-- For Indian & International languages: Write fluently and idiomatically in the specified native script (${langConfig.script}), but ALWAYS keep numerical weather values intact and accurate.`;
+- For Indian & International languages: Write fluently and idiomatically in the specified native script (${langConfig.script}), but ALWAYS keep numerical weather values intact and accurate.
+- MARKDOWN FORMATTING: Structure responses with clear Markdown (bold text with **text**, bullet items with •, code with \`code\`).`;
 
   const payloadSummary = formatContextForGemini(context);
-  const promptContents = `User Query: "${context.userQuery}"\nSelected Language: ${langConfig.name} (${langConfig.code})\n\nVERIFIED WEATHER PROVIDER DATA:\n${payloadSummary}\n\nRespond as WeatherGPT in ${langConfig.name} (${langConfig.nativeName}) maintaining 100% numerical fidelity to the verified provider data:`;
+  const promptContents = `User Query: "${context.userQuery}"
+SELECTED RESPONSE LANGUAGE (MANDATORY): ${langConfig.name} (${langConfig.nativeName}) [Code: ${langConfig.code}]
+CRITICAL: Even if the User Query above is in English, you MUST respond exclusively in ${langConfig.name} (${langConfig.nativeName}). Do NOT reply in English when the selected language is not English.
+
+VERIFIED WEATHER PROVIDER DATA:
+${payloadSummary}
+
+Respond as WeatherGPT in fluent, natural ${langConfig.name} (${langConfig.nativeName}) maintaining 100% numerical fidelity to the verified provider data:`;
 
   const generationConfig = {
     systemInstruction,

@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { LocationInfo, ConversationContext } from "../types.js";
 import { useVoiceMode } from "../services/voice/useVoiceMode.js";
-import { getLanguageConfig } from "../languages.js";
+import { getLanguageConfig, getTranslations } from "../languages.js";
 import { queryWeatherAPI } from "../services/api.js";
 import { VoiceLanguageModal } from "./VoiceLanguageModal.js";
 import { GeminiLiveModal } from "./GeminiLiveModal.js";
@@ -55,6 +55,7 @@ export function VoiceStudioView({
   diurnalPhase,
   diurnalConfig,
 }: VoiceStudioViewProps) {
+  const t = getTranslations(preferredLanguage);
   const voice = useVoiceMode(preferredLanguage);
   const langConfig = getLanguageConfig(preferredLanguage);
   const inputLangConfig = getLanguageConfig(voice.effectiveInputLanguage);
@@ -239,7 +240,7 @@ export function VoiceStudioView({
                   borderColor: diurnalConfig ? `${diurnalConfig.accentColor}40` : "rgba(142, 202, 230, 0.3)",
                 }}
               >
-                VOICE DISPATCH • {diurnalConfig ? diurnalConfig.stationTelemetrySub : "BIDIRECTIONAL ACOUSTIC STUDIO"}
+                {t.voiceBannerTag || "VOICE DISPATCH • BIDIRECTIONAL ACOUSTIC STUDIO"}
               </span>
               {diurnalConfig && (
                 <span
@@ -259,10 +260,10 @@ export function VoiceStudioView({
               </span>
             </div>
             <h2 className="text-xl sm:text-2xl font-bold text-white font-mono tracking-tight">
-              Hands-Free Voice Studio
+              {t.voiceBannerTitle || "Hands-Free Voice Studio"}
             </h2>
             <p className="text-xs text-slate-200 leading-relaxed">
-              Speak in your native Indian or international language and listen to natural meteorological audio with decoupled input and speech synthesis engines.
+              {t.voiceBannerDesc || "Speak in your native Indian or international language and listen to natural meteorological audio with decoupled input and speech synthesis engines."}
             </p>
           </div>
 
@@ -339,7 +340,7 @@ export function VoiceStudioView({
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-[#F4A261] hover:bg-[#F4A261]/90 text-xs font-mono font-bold text-[#0F141B] border border-[#F4A261] transition-colors cursor-pointer shadow-sm"
             >
               <Zap className="w-3.5 h-3.5 text-[#0F141B]" />
-              <span>Gemini Live (Voice Duplex)</span>
+              <span>{t.geminiLive || "Gemini Live (Voice Duplex)"}</span>
               <span className="flex h-2 w-2 relative">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0F141B] opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#0F141B]"></span>
@@ -351,7 +352,7 @@ export function VoiceStudioView({
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-100 hover:bg-[#252A32] dark:hover:bg-[#252A32] light:hover:bg-slate-200 border border-[#30353D] dark:border-[#30353D] light:border-slate-200 text-xs font-mono font-semibold text-slate-200 dark:text-slate-200 light:text-slate-700 hover:text-white dark:hover:text-white light:hover:text-slate-950 transition-colors cursor-pointer"
             >
               <Sliders className="w-3.5 h-3.5 text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700" />
-              <span>Configure Voice & Dialects</span>
+              <span>{t.configureVoice || "Configure Voice & Dialects"}</span>
             </button>
           </div>
         </div>
@@ -395,15 +396,15 @@ export function VoiceStudioView({
         <div className="space-y-1">
           <div className="text-sm font-semibold font-mono text-slate-200 dark:text-slate-200 light:text-slate-800">
             {voice.isListening
-              ? `Listening in ${inputLangConfig.name}... Speak now`
+              ? `${t.listening || "Listening"} (${inputLangConfig.name})...`
               : voice.isSpeaking
-              ? `Speaking in ${outputLangConfig.name}...`
+              ? `${t.speaking || "Speaking"} (${outputLangConfig.name})...`
               : isProcessing
-              ? "Synthesizing weather intelligence..."
-              : "Tap microphone to begin speaking"}
+              ? (t.processing || "Synthesizing weather intelligence...")
+              : (t.micReady || "Tap microphone to begin speaking")}
           </div>
           <p className="text-xs font-mono text-slate-400 dark:text-slate-400 light:text-slate-500">
-            {currentLocation ? `Target City: ${currentLocation.name}` : "Search city or use current GPS"}
+            {currentLocation ? `${t.stationBase}: ${currentLocation.name}` : t.selectCity}
           </p>
         </div>
 

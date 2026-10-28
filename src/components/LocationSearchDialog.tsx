@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { LocationInfo } from "../types.js";
 import { searchLocationsAPI } from "../services/api.js";
+import { getTranslations } from "../translations/registry.js";
 import {
   Search,
   MapPin,
@@ -18,6 +19,7 @@ interface LocationSearchDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectLocation: (loc: LocationInfo) => void;
+  preferredLanguage?: string;
 }
 
 const EXAMPLE_SEARCH_QUERIES = [
@@ -31,7 +33,8 @@ const EXAMPLE_SEARCH_QUERIES = [
   "90210",
 ];
 
-export function LocationSearchDialog({ isOpen, onClose, onSelectLocation }: LocationSearchDialogProps) {
+export function LocationSearchDialog({ isOpen, onClose, onSelectLocation, preferredLanguage }: LocationSearchDialogProps) {
+  const t = getTranslations(preferredLanguage);
   const [searchTerm, setSearchTerm] = useState("");
   const [results, setResults] = useState<LocationInfo[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -150,7 +153,7 @@ export function LocationSearchDialog({ isOpen, onClose, onSelectLocation }: Loca
                 }
               }
             }}
-            placeholder="Search any city, town, state, or postal code worldwide..."
+            placeholder={t.searchDialogPlaceholder || "Search any city, town, state, or postal code worldwide..."}
             autoFocus
             className="min-w-0 flex-1 bg-transparent text-slate-100 text-sm focus:outline-none placeholder-slate-500 font-medium"
           />
@@ -159,7 +162,7 @@ export function LocationSearchDialog({ isOpen, onClose, onSelectLocation }: Loca
               id="clear-search-btn"
               onClick={() => setSearchTerm("")}
               className="text-slate-400 hover:text-slate-200 p-1 rounded-[3px] transition-colors cursor-pointer"
-              title="Clear search"
+              title={t.cancel || "Clear search"}
             >
               <X className="w-4 h-4" />
             </button>
@@ -169,7 +172,7 @@ export function LocationSearchDialog({ isOpen, onClose, onSelectLocation }: Loca
             onClick={onClose}
             className="text-slate-400 hover:text-slate-200 text-xs font-mono px-2 py-0.5 rounded-[4px] bg-[#252A32] border border-[#30353D] hover:border-[#8ECAE6]/40 transition-colors cursor-pointer"
           >
-            Esc
+            {t.close || "Esc"}
           </button>
         </div>
 
@@ -180,7 +183,7 @@ export function LocationSearchDialog({ isOpen, onClose, onSelectLocation }: Loca
             <div className="py-12 flex flex-col items-center justify-center gap-3 text-slate-400">
               <Loader2 className="w-5 h-5 text-[#8ECAE6] animate-spin" />
               <div className="text-center">
-                <p className="text-xs font-medium text-slate-200">Searching global geocoding database...</p>
+                <p className="text-xs font-medium text-slate-200">{t.searchingLocations || "Searching global geocoding database..."}</p>
                 <p className="text-[11px] text-slate-500">Retrieving coordinates & timezone from Open-Meteo</p>
               </div>
             </div>
@@ -201,7 +204,7 @@ export function LocationSearchDialog({ isOpen, onClose, onSelectLocation }: Loca
                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 text-xs font-medium transition-colors cursor-pointer"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
-                <span>Retry Search</span>
+                <span>{t.retry || "Retry Search"}</span>
               </button>
             </div>
           )}
@@ -288,7 +291,7 @@ export function LocationSearchDialog({ isOpen, onClose, onSelectLocation }: Loca
               <div className="w-10 h-10 rounded-[6px] bg-[#1B2027] border border-[#30353D] flex items-center justify-center mx-auto text-slate-400">
                 <Globe className="w-5 h-5 text-slate-500" />
               </div>
-              <h4 className="text-sm font-semibold text-slate-200">No matching locations found</h4>
+              <h4 className="text-sm font-semibold text-slate-200">{t.noLocationsFound || "No matching locations found"}</h4>
               <p className="text-xs text-slate-400 max-w-sm mx-auto">
                 We couldn&apos;t find any place matching &ldquo;{searchTerm}&rdquo;. Try searching with a city name, postal
                 code, or &ldquo;City, State/Country&rdquo; (e.g. &ldquo;Paris, Texas&rdquo; or &ldquo;London, Canada&rdquo;).
@@ -302,7 +305,7 @@ export function LocationSearchDialog({ isOpen, onClose, onSelectLocation }: Loca
               <div className="p-3 rounded-[6px] bg-[#1B2027] border border-[#30353D] flex items-start gap-3">
                 <HelpCircle className="w-4 h-4 text-[#8ECAE6] shrink-0 mt-0.5" />
                 <div className="text-xs text-slate-400 leading-relaxed">
-                  <p className="text-slate-200 font-semibold mb-0.5">Real-time Global Location Search</p>
+                  <p className="text-slate-200 font-semibold mb-0.5">{t.searchDialogTitle || "Real-time Global Location Search"}</p>
                   Search for any city, town, state, region, or postal code worldwide. Multiple matching results will be
                   returned dynamically from the Open-Meteo Geocoding API.
                 </div>
@@ -310,7 +313,7 @@ export function LocationSearchDialog({ isOpen, onClose, onSelectLocation }: Loca
 
               <div>
                 <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-2">
-                  Try searching
+                  {t.popularSearches || "Try searching"}
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {EXAMPLE_SEARCH_QUERIES.map((example) => (

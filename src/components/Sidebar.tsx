@@ -20,7 +20,7 @@ import {
 import { WeatherGptLogo } from "./WeatherGptLogo.js";
 import { LocationInfo } from "../types.js";
 import { UserProfile } from "../services/auth.js";
-import { getLanguageConfig } from "../languages.js";
+import { getLanguageConfig, getTranslations } from "../languages.js";
 
 export type NavSection =
   | "home"
@@ -43,6 +43,7 @@ interface SidebarProps {
   currentUser: UserProfile | null;
   onOpenAuth: () => void;
   preferredLanguage: string;
+  onOpenLanding?: () => void;
 }
 
 interface NavItem {
@@ -62,52 +63,54 @@ export function Sidebar({
   currentUser,
   onOpenAuth,
   preferredLanguage,
+  onOpenLanding,
 }: SidebarProps) {
   const langConfig = getLanguageConfig(preferredLanguage);
+  const t = getTranslations(preferredLanguage);
 
   const navItems: NavItem[] = [
     {
       id: "home",
-      label: "Home & Chat",
+      label: t.navHome,
       icon: <Home className="w-4 h-4" />,
     },
     {
       id: "forecast",
-      label: "Live Forecast",
+      label: t.navForecast,
       icon: <CloudSun className="w-4 h-4" />,
-      badge: "HOURLY & 7D",
+      badge: t.badgeHourly7d,
     },
     {
       id: "insights",
-      label: "AI Insights",
+      label: t.navInsights,
       icon: <Lightbulb className="w-4 h-4" />,
-      badge: "GROUNDED",
+      badge: t.badgeGrounded,
     },
     {
       id: "travel",
-      label: "Travel & Route",
+      label: t.navTravel,
       icon: <Car className="w-4 h-4" />,
     },
     {
       id: "voice",
-      label: "Voice Studio",
+      label: t.navVoice,
       icon: <Mic className="w-4 h-4" />,
-      badge: "MULTILINGUAL",
+      badge: t.badgeMultilingual,
     },
     {
       id: "explore",
-      label: "Explore & Compare",
+      label: t.navExplore,
       icon: <Compass className="w-4 h-4" />,
     },
     {
       id: "history",
-      label: "Cloud History",
+      label: t.navHistory,
       icon: <History className="w-4 h-4" />,
-      badge: "SYNC",
+      badge: t.badgeSync,
     },
     {
       id: "settings",
-      label: "Settings & Profile",
+      label: t.navSettings,
       icon: <Settings className="w-4 h-4" />,
     },
   ];
@@ -119,7 +122,11 @@ export function Sidebar({
     >
       {/* Brand Header */}
       <div className="p-4 border-b border-[#252A32] dark:border-[#252A32] light:border-slate-200 bg-[#0F141B] dark:bg-[#0F141B] light:bg-white">
-        <div className="flex items-center gap-3">
+        <button
+          onClick={() => onOpenLanding && onOpenLanding()}
+          className="flex items-center gap-3 w-full text-left cursor-pointer hover:opacity-85 transition-opacity"
+          title="Return to WeatherGPT Landing Page"
+        >
           <div className="w-9 h-9 rounded-[8px] bg-gradient-to-b from-[#2A231C] to-[#171410] border border-[#F4A261]/30 flex items-center justify-center shrink-0 p-1 shadow-sm">
             <WeatherGptLogo size={28} />
           </div>
@@ -128,15 +135,12 @@ export function Sidebar({
               <span className="font-extrabold text-sm tracking-tight text-slate-100 dark:text-slate-100 light:text-slate-900 truncate">
                 WeatherGPT
               </span>
-              <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#F4A261]/15 text-[#F4A261] border border-[#F4A261]/30 ml-1.5 shrink-0">
-                V2.0
-              </span>
             </div>
             <p className="text-[10px] uppercase font-mono tracking-wider text-slate-400 dark:text-slate-400 light:text-slate-500 truncate mt-0.5">
               ATMOSPHERIC SCIENCE
             </p>
           </div>
-        </div>
+        </button>
 
         {/* Station Base Card */}
         <div className="mt-3.5">
@@ -148,14 +152,14 @@ export function Sidebar({
             <div className="flex items-center justify-between text-xs mb-1">
               <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-400 light:text-slate-500 flex items-center gap-1.5 font-mono">
                 <MapPin className="w-3 h-3 text-[#8ECAE6]" />
-                STATION BASE
+                {t.stationBase}
               </span>
               <span className="text-[10px] font-mono text-slate-400 group-hover:text-slate-200 group-hover:underline transition-colors">
-                Change
+                {t.change}
               </span>
             </div>
             <div className="font-bold text-xs text-slate-100 dark:text-slate-100 light:text-slate-900 truncate">
-              {currentLocation ? currentLocation.name : "Select Station"}
+              {currentLocation ? currentLocation.name : t.selectStation}
             </div>
             <div className="text-[10px] text-slate-400 dark:text-slate-400 light:text-slate-500 truncate mt-0.5 font-mono">
               {currentLocation?.country || "India"}
@@ -167,7 +171,7 @@ export function Sidebar({
       {/* Navigation Section */}
       <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1">
         <div className="text-[9px] font-mono font-bold uppercase tracking-widest text-slate-400 dark:text-slate-400 light:text-slate-500 px-3 py-1">
-          NAVIGATION
+          {t.navigationHeader}
         </div>
 
         {navItems.map((item) => {
@@ -227,11 +231,11 @@ export function Sidebar({
               )}
               <div className="overflow-hidden">
                 <div className="text-[11px] font-semibold text-slate-200 dark:text-slate-200 light:text-slate-800 truncate">
-                  {currentUser.name || "Signed In"}
+                  {currentUser.name || t.synced}
                 </div>
                 <div className="text-[9px] font-mono text-emerald-400 flex items-center gap-1">
                   <CheckCircle2 className="w-2.5 h-2.5" />
-                  Synced
+                  {t.synced}
                 </div>
               </div>
             </div>
@@ -248,15 +252,15 @@ export function Sidebar({
               </div>
               <div>
                 <div className="text-[11px] font-semibold text-slate-200 dark:text-slate-200 light:text-slate-800">
-                  Sync Account
+                  {t.syncAccount}
                 </div>
                 <div className="text-[9px] font-mono text-slate-400">
-                  Guest mode
+                  {t.guestMode}
                 </div>
               </div>
             </div>
             <span className="text-[10px] font-mono text-[#8ECAE6] group-hover:underline">
-              Sign In
+              {t.signIn}
             </span>
           </button>
         )}
@@ -268,7 +272,7 @@ export function Sidebar({
         <div className="flex items-center justify-between text-xs font-mono px-1">
           <div className="flex items-center gap-1.5 text-slate-300 dark:text-slate-300 light:text-slate-700">
             <span className="w-2 h-2 rounded-full bg-[#8ECAE6]" />
-            <span className="text-[11px] font-semibold uppercase tracking-wider">LIVE SYNOPTIC</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider">{t.liveSynoptic}</span>
           </div>
           <span className="text-[10px] text-slate-400 dark:text-slate-400 light:text-slate-500">
             Open-Meteo & METAR
@@ -277,7 +281,7 @@ export function Sidebar({
 
         {/* Theme Appearance Control */}
         <div className="flex items-center justify-between px-1 pt-1">
-          <span className="text-xs text-slate-400 font-medium">Appearance</span>
+          <span className="text-xs text-slate-400 font-medium">{t.appearance}</span>
           <button
             onClick={onToggleTheme}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] bg-[#14181F] dark:bg-[#14181F] light:bg-slate-100 border border-[#252A32] dark:border-[#252A32] light:border-slate-300 hover:border-slate-500 text-xs text-slate-300 dark:text-slate-300 light:text-slate-700 transition-colors cursor-pointer"
@@ -285,12 +289,12 @@ export function Sidebar({
             {isDark ? (
               <>
                 <Moon className="w-3.5 h-3.5 text-[#8ECAE6]" />
-                <span>Dark</span>
+                <span>{t.themeDark}</span>
               </>
             ) : (
               <>
                 <Sun className="w-3.5 h-3.5 text-[#F4A261]" />
-                <span>Light</span>
+                <span>{t.themeLight}</span>
               </>
             )}
           </button>

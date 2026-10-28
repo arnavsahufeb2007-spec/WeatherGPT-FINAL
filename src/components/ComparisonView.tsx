@@ -4,6 +4,7 @@ import { compareLocationsAPI } from "../services/api.js";
 import { GitCompare, MapPin, Sparkles, Plus, Trash2, Calendar, AlertCircle, Zap, ShieldCheck } from "lucide-react";
 import { WeatherIcon } from "./WeatherIcons.js";
 import { DiurnalPhase, DiurnalPhaseConfig } from "../services/diurnalTheme.js";
+import { getTranslations } from "../languages.js";
 
 const DEFAULT_PRESET_COMPARISONS = [
   { label: "Bhopal vs Ujjain", cities: ["Bhopal", "Ujjain"] },
@@ -17,9 +18,11 @@ interface ComparisonViewProps {
   currentLocation?: LocationInfo | null;
   diurnalPhase?: DiurnalPhase;
   diurnalConfig?: DiurnalPhaseConfig;
+  preferredLanguage?: string;
 }
 
-export function ComparisonView({ isFahrenheit, currentLocation, diurnalPhase, diurnalConfig }: ComparisonViewProps) {
+export function ComparisonView({ isFahrenheit, currentLocation, diurnalPhase, diurnalConfig, preferredLanguage }: ComparisonViewProps) {
+  const t = getTranslations(preferredLanguage);
   const [cityInputs, setCityInputs] = useState<string[]>(() =>
     currentLocation?.name ? [currentLocation.name, ""] : ["", ""]
   );
@@ -122,7 +125,7 @@ export function ComparisonView({ isFahrenheit, currentLocation, diurnalPhase, di
                   borderColor: diurnalConfig ? `${diurnalConfig.accentColor}40` : "rgba(142, 202, 230, 0.3)",
                 }}
               >
-                MULTI-STATION COMPARISON • {diurnalConfig ? diurnalConfig.stationTelemetrySub : "SYNOPTIC SATELLITE TELEMETRY"}
+                {t.exploreBannerTag || "MULTI-STATION COMPARISON • SYNOPTIC SATELLITE TELEMETRY"}
               </span>
               {diurnalConfig && (
                 <span
@@ -138,10 +141,10 @@ export function ComparisonView({ isFahrenheit, currentLocation, diurnalPhase, di
               )}
             </div>
             <h2 className="text-xl sm:text-2xl font-bold text-white font-mono tracking-tight">
-              Atmospheric Multi-City Comparison
+              {t.tabCompareCities || "Atmospheric Multi-City Comparison"}
             </h2>
             <p className="text-xs text-slate-200 leading-relaxed">
-              Side-by-side physical meteorological comparison across 2 to 4 locations with delta temperature and precipitation differentials.
+              {t.exploreBannerDesc || "Side-by-side physical meteorological comparison across 2 to 4 locations with delta temperature and precipitation differentials."}
             </p>
           </div>
 
@@ -159,7 +162,7 @@ export function ComparisonView({ isFahrenheit, currentLocation, diurnalPhase, di
             </div>
             <div className="flex items-center justify-between text-slate-300">
               <span className="text-[10px] text-slate-400">TIME WINDOW:</span>
-              <span className="text-slate-200 font-semibold uppercase">{selectedDay}</span>
+              <span className="text-slate-200 font-semibold uppercase">{selectedDay === "tomorrow" ? t.tomorrow : t.today}</span>
             </div>
             <div className="flex items-center justify-between text-slate-300">
               <span className="text-[10px] text-slate-400">DELTA CALC:</span>
@@ -175,11 +178,11 @@ export function ComparisonView({ isFahrenheit, currentLocation, diurnalPhase, di
           <div className="flex items-center gap-2">
             <GitCompare className="w-4 h-4 text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700" />
             <h3 className="text-xs font-mono font-semibold uppercase tracking-wider text-slate-100 dark:text-slate-100 light:text-slate-900">
-              LOCATION WEATHER COMPARISON
+              {t.tabCompareCities || "LOCATION WEATHER COMPARISON"}
             </h3>
           </div>
           <span className="text-xs font-mono text-slate-400 dark:text-slate-400 light:text-slate-500">
-            Deterministic Multi-City Atmospheric Comparison
+            {t.exploreBannerTag}
           </span>
         </div>
 
@@ -198,7 +201,7 @@ export function ComparisonView({ isFahrenheit, currentLocation, diurnalPhase, di
                   : "text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-200 dark:hover:text-white light:hover:text-slate-900"
               }`}
             >
-              Current Weather
+              {t.today || "Current Weather"}
             </button>
             <button
               onClick={() => setSelectedDay("tomorrow")}
@@ -208,7 +211,7 @@ export function ComparisonView({ isFahrenheit, currentLocation, diurnalPhase, di
                   : "text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-200 dark:hover:text-white light:hover:text-slate-900"
               }`}
             >
-              Tomorrow
+              {t.tomorrow || "Tomorrow"}
             </button>
           </div>
         </div>
@@ -222,7 +225,7 @@ export function ComparisonView({ isFahrenheit, currentLocation, diurnalPhase, di
                 type="text"
                 value={city}
                 onChange={(e) => updateCity(idx, e.target.value)}
-                placeholder={`City ${idx + 1}`}
+                placeholder={idx === 0 ? (t.firstCity || "First City") : idx === 1 ? (t.secondCity || "Second City") : `City ${idx + 1}`}
                 className="w-full pl-8 pr-8 py-2 rounded-[4px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-50 border border-[#30353D] dark:border-[#30353D] light:border-slate-300 text-xs font-mono text-white dark:text-white light:text-slate-900 placeholder-slate-500 focus:outline-none focus:border-[#8ECAE6] transition-colors"
               />
               {cityInputs.length > 2 && (
@@ -256,7 +259,7 @@ export function ComparisonView({ isFahrenheit, currentLocation, diurnalPhase, di
             disabled={loading || cityInputs.filter((c) => c.trim()).length < 2}
             className="w-full sm:w-auto px-4 py-2 rounded-[4px] bg-[#F4A261] hover:bg-[#E76F51] text-[#0F141B] border border-[#F4A261] text-xs font-mono font-bold transition-colors disabled:opacity-40 cursor-pointer shadow-sm"
           >
-            {loading ? "Comparing Data..." : `Run Side-by-Side Comparison (${selectedDay === "tomorrow" ? "Tomorrow" : "Now"})`}
+            {loading ? "..." : (t.compareNow || "Compare Now")}
           </button>
         </div>
 

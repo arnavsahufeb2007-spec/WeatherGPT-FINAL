@@ -1,23 +1,27 @@
 import React from "react";
 import { Home, CloudSun, Lightbulb, Car, Mic, Settings, Compass, History } from "lucide-react";
 import { NavSection } from "./Sidebar.js";
+import { getTranslations } from "../languages.js";
 
 interface BottomNavProps {
   currentSection: NavSection;
   onSelectSection: (section: NavSection) => void;
   unreadCount?: number;
   deviceMode?: string;
+  preferredLanguage?: string;
 }
 
-export function BottomNav({ currentSection, onSelectSection, deviceMode }: BottomNavProps) {
+export function BottomNav({ currentSection, onSelectSection, deviceMode, preferredLanguage }: BottomNavProps) {
+  const t = getTranslations(preferredLanguage);
+
   const tabs: { id: NavSection; label: string; icon: React.ReactNode }[] = [
-    { id: "home", label: "Home", icon: <Home className="w-4 h-4" /> },
-    { id: "forecast", label: "Forecast", icon: <CloudSun className="w-4 h-4" /> },
-    { id: "insights", label: "Insights", icon: <Lightbulb className="w-4 h-4" /> },
-    { id: "history", label: "History", icon: <History className="w-4 h-4" /> },
-    { id: "voice", label: "Voice", icon: <Mic className="w-4 h-4" /> },
-    { id: "explore", label: "Explore", icon: <Compass className="w-4 h-4" /> },
-    { id: "settings", label: "Profile", icon: <Settings className="w-4 h-4" /> },
+    { id: "home", label: t.tabHome, icon: <Home className="w-4 h-4" /> },
+    { id: "forecast", label: t.tabForecast, icon: <CloudSun className="w-4 h-4" /> },
+    { id: "insights", label: t.tabInsights, icon: <Lightbulb className="w-4 h-4" /> },
+    { id: "history", label: t.tabHistory, icon: <History className="w-4 h-4" /> },
+    { id: "voice", label: t.tabVoice, icon: <Mic className="w-4 h-4" /> },
+    { id: "explore", label: t.tabExplore, icon: <Compass className="w-4 h-4" /> },
+    { id: "settings", label: t.tabProfile, icon: <Settings className="w-4 h-4" /> },
   ];
 
   return (

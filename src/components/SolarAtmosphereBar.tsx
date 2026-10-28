@@ -9,6 +9,7 @@ import {
   Clock,
 } from "lucide-react";
 import { DiurnalPhase, DIURNAL_PHASE_CONFIGS } from "../services/diurnalTheme.js";
+import { getTranslations } from "../translations/registry.js";
 
 interface SolarAtmosphereBarProps {
   selectedPhase: DiurnalPhase | "auto";
@@ -18,6 +19,7 @@ interface SolarAtmosphereBarProps {
   isDark: boolean;
   localTimeStr?: string;
   cityName?: string;
+  preferredLanguage?: string;
 }
 
 export function SolarAtmosphereBar({
@@ -27,7 +29,9 @@ export function SolarAtmosphereBar({
   isDark,
   localTimeStr,
   cityName,
+  preferredLanguage,
 }: SolarAtmosphereBarProps) {
+  const t = getTranslations(preferredLanguage);
   const activeEffectivePhase =
     selectedPhase === "auto" ? detectedPhase : selectedPhase;
   const activeConfig = DIURNAL_PHASE_CONFIGS[activeEffectivePhase];
@@ -41,42 +45,42 @@ export function SolarAtmosphereBar({
   }[] = [
     {
       id: "auto",
-      label: "Live Auto",
+      label: t.liveAuto || "Live Auto",
       icon: <Compass className="w-3.5 h-3.5" />,
       color: "#8ECAE6",
       description: `Follow real-time solar cycle (${DIURNAL_PHASE_CONFIGS[detectedPhase].name})`,
     },
     {
       id: "dawn",
-      label: "Dawn",
+      label: t.dawn || "Dawn",
       icon: <Sunrise className="w-3.5 h-3.5" />,
       color: "#F4A261",
       description: "First light, cool morning mist, rising horizon",
     },
     {
       id: "day",
-      label: "Solar Apex",
+      label: t.solarApex || "Solar Apex",
       icon: <Sun className="w-3.5 h-3.5" />,
       color: "#FFB703",
       description: "High noon, maximum ambient irradiance, crisp visibility",
     },
     {
       id: "golden_hour",
-      label: "Golden Hour",
+      label: t.goldenHour || "Golden Hour",
       icon: <Sunset className="w-3.5 h-3.5" />,
       color: "#E76F51",
       description: "Low-angle amber rays, long silhouettes, evening transition",
     },
     {
       id: "dusk",
-      label: "Dusk",
+      label: t.dusk || "Dusk",
       icon: <Sparkles className="w-3.5 h-3.5" />,
       color: "#C77DFF",
       description: "Post-sunset twilight, deep violet skies, planetary glow",
     },
     {
       id: "night",
-      label: "Night",
+      label: t.night || "Night",
       icon: <Moon className="w-3.5 h-3.5" />,
       color: "#48CAE4",
       description: "Starlight, nocturne chill, nocturnal planetary horizon",

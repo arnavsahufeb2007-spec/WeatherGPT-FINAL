@@ -19,6 +19,7 @@ import { historyService } from "../services/historyService.js";
 import { authService, UserProfile } from "../services/auth.js";
 import { isSupabaseConfigured } from "../services/supabase.js";
 import { DiurnalPhase, DiurnalPhaseConfig } from "../services/diurnalTheme.js";
+import { getTranslations } from "../languages.js";
 
 interface HistoryViewProps {
   currentUser: UserProfile | null;
@@ -28,6 +29,7 @@ interface HistoryViewProps {
   onRequestAuth: () => void;
   diurnalPhase?: DiurnalPhase;
   diurnalConfig?: DiurnalPhaseConfig;
+  preferredLanguage?: string;
 }
 
 export function HistoryView({
@@ -38,7 +40,9 @@ export function HistoryView({
   onRequestAuth,
   diurnalPhase,
   diurnalConfig,
+  preferredLanguage,
 }: HistoryViewProps) {
+  const t = getTranslations(preferredLanguage);
   const [conversations, setConversations] = useState<ConversationRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -149,7 +153,7 @@ export function HistoryView({
                     borderColor: diurnalConfig ? `${diurnalConfig.accentColor}40` : "rgba(142, 202, 230, 0.3)",
                   }}
                 >
-                  CLOUD ARCHIVE • {diurnalConfig ? diurnalConfig.stationTelemetrySub : "POSTGRESQL ROW LEVEL SECURITY"}
+                  {t.historyBannerTag || "CLOUD ARCHIVE • POSTGRESQL ROW LEVEL SECURITY"}
                 </span>
                 {diurnalConfig && (
                   <span
@@ -165,10 +169,10 @@ export function HistoryView({
                 )}
               </div>
               <h2 className="text-xl sm:text-2xl font-bold text-white font-mono tracking-tight">
-                Cloud Conversation History
+                {t.historyBannerTitle || "Cloud Conversation History"}
               </h2>
               <p className="text-xs text-slate-200 leading-relaxed">
-                Synchronize your meteorological inquiries, route corridor analyses, and forecast dialogues across all your devices securely.
+                {t.historyBannerDesc || "Synchronize your meteorological inquiries, route corridor analyses, and forecast dialogues across all your devices securely."}
               </p>
             </div>
 
@@ -176,7 +180,7 @@ export function HistoryView({
             <div className="bg-[#0F141B]/85 backdrop-blur-md border border-white/10 p-3 rounded-[6px] hidden sm:flex flex-col gap-1.5 min-w-[210px] text-[11px] font-mono shrink-0 shadow-inner">
               <div className="flex items-center justify-between text-slate-400">
                 <span className="text-[10px] uppercase tracking-wider text-slate-400">VAULT STATE</span>
-                <span className="text-slate-300 font-semibold">GUEST MODE</span>
+                <span className="text-slate-300 font-semibold">{t.guestMode || "GUEST MODE"}</span>
               </div>
               <div className="flex items-center justify-between text-slate-300">
                 <span className="text-[10px] text-slate-400">RLS SECURITY:</span>
@@ -196,10 +200,10 @@ export function HistoryView({
           </div>
           <div className="space-y-1.5">
             <h3 className="text-base sm:text-lg font-bold font-mono tracking-tight text-slate-100 dark:text-slate-100 light:text-slate-900">
-              Sign In to Access Cloud Records
+              {t.authTitle || "Sign In to Access Cloud Records"}
             </h3>
             <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
-              Sign in with Google to enable cloud synchronization. Your weather queries, route analyses, and forecast chats will be preserved securely with PostgreSQL Row Level Security (RLS).
+              {t.guestHistoryNotice || "Sign in with Google to enable cloud synchronization. Your weather queries, route analyses, and forecast chats will be preserved securely."}
             </p>
           </div>
           <div className="pt-1.5 flex justify-center">
@@ -208,7 +212,7 @@ export function HistoryView({
               className="flex items-center gap-2 px-5 py-2.5 rounded-[4px] bg-[#F4A261] hover:bg-[#E76F51] text-[#0F141B] font-mono font-bold text-xs transition-colors cursor-pointer shadow-sm"
             >
               <LogIn className="w-4 h-4 text-[#0F141B]" />
-              <span>Sign In with Google</span>
+              <span>{t.continueWithGoogle || "Sign In with Google"}</span>
             </button>
           </div>
         </div>
@@ -269,10 +273,10 @@ export function HistoryView({
               )}
             </div>
             <h2 className="text-xl sm:text-2xl font-bold text-white font-mono tracking-tight">
-              Weather Chat History
+              {t.historyBannerTitle || "Weather Chat History"}
             </h2>
             <p className="text-xs text-slate-200 leading-relaxed">
-              Synchronized cloud sessions • PostgreSQL Row Level Security encrypted data store.
+              {t.historyBannerDesc || "Synchronized cloud sessions • PostgreSQL Row Level Security encrypted data store."}
             </p>
           </div>
 
@@ -281,7 +285,7 @@ export function HistoryView({
             <div className="flex items-center justify-between text-slate-400">
               <span className="text-[10px] uppercase tracking-wider text-slate-400">VAULT STATE</span>
               <span className="text-emerald-400 font-semibold flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse"></span> SYNCHRONIZED
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse"></span> {t.synced || "SYNCHRONIZED"}
               </span>
             </div>
             <div className="flex items-center justify-between text-slate-300">
@@ -309,7 +313,7 @@ export function HistoryView({
             </div>
             <div>
               <h3 className="text-sm font-bold font-mono text-slate-100 dark:text-slate-100 light:text-slate-900 tracking-tight uppercase">
-                SAVED CONVERSATIONS
+                {t.historyBannerTitle || "SAVED CONVERSATIONS"}
               </h3>
               <p className="text-xs font-mono text-slate-400">
                 User: {currentUser?.email || "Authenticated User"}
@@ -325,7 +329,7 @@ export function HistoryView({
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-[#F4A261] hover:bg-[#E76F51] text-[#0F141B] font-mono font-bold text-xs transition-colors cursor-pointer shadow-sm"
           >
             <PlusCircle className="w-3.5 h-3.5" />
-            <span>New Chat</span>
+            <span>{t.startNewChat || "New Chat"}</span>
           </button>
 
           {conversations.length > 0 && !confirmClearAll && (
@@ -335,27 +339,27 @@ export function HistoryView({
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-[#1B2027] hover:bg-rose-950/40 text-slate-300 hover:text-rose-300 border border-[#30353D] hover:border-rose-500/40 text-xs font-mono transition-colors cursor-pointer"
             >
               <Trash2 className="w-3.5 h-3.5" />
-              <span>Clear All</span>
+              <span>{t.clearHistory || "Clear All"}</span>
             </button>
           )}
 
           {confirmClearAll && (
             <div className="flex flex-wrap items-center gap-2 bg-rose-950/60 border border-rose-500/40 px-3 py-1.5 rounded-[4px] font-mono">
-              <span className="text-xs text-rose-200">Clear all conversations?</span>
+              <span className="text-xs text-rose-200">{t.confirmClear || "Clear all conversations?"}</span>
               <button
                 type="button"
                 onClick={handleClearAll}
                 disabled={isClearingAll}
                 className="text-xs px-2.5 py-0.5 rounded-[3px] bg-rose-600 hover:bg-rose-500 text-white font-bold cursor-pointer"
               >
-                {isClearingAll ? "Clearing..." : "Yes, Delete"}
+                {isClearingAll ? "..." : (t.confirm || "Yes, Delete")}
               </button>
               <button
                 type="button"
                 onClick={() => setConfirmClearAll(false)}
                 className="text-xs px-2 py-0.5 rounded-[3px] bg-[#1B2027] border border-[#30353D] text-slate-300 hover:text-white cursor-pointer"
               >
-                Cancel
+                {t.cancel || "Cancel"}
               </button>
             </div>
           )}
@@ -370,7 +374,7 @@ export function HistoryView({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search conversations by title or topic..."
+            placeholder={t.searchHistoryPlaceholder || "Search conversations by title or topic..."}
             className="w-full bg-[#1B2027] border border-[#30353D] focus:border-[#8ECAE6] rounded-[4px] pl-9 pr-4 py-2 text-xs font-mono text-slate-100 placeholder-slate-500 focus:outline-none transition-colors"
           />
         </div>

@@ -13,6 +13,7 @@ import {
 import { LocationInfo } from "../types.js";
 import { ComparisonView } from "./ComparisonView.js";
 import { DiurnalPhase, DiurnalPhaseConfig } from "../services/diurnalTheme.js";
+import { getTranslations } from "../languages.js";
 
 interface ExploreViewProps {
   currentLocation: LocationInfo | null;
@@ -21,6 +22,7 @@ interface ExploreViewProps {
   isFahrenheit: boolean;
   diurnalPhase?: DiurnalPhase;
   diurnalConfig?: DiurnalPhaseConfig;
+  preferredLanguage?: string;
 }
 
 interface HubCity {
@@ -164,7 +166,9 @@ export function ExploreView({
   isFahrenheit,
   diurnalPhase,
   diurnalConfig,
+  preferredLanguage,
 }: ExploreViewProps) {
+  const t = getTranslations(preferredLanguage);
   const [activeTab, setActiveTab] = useState<"hubs" | "compare">("hubs");
   const [hubCategory, setHubCategory] = useState<"all" | "india" | "world">("all");
 
@@ -209,7 +213,7 @@ export function ExploreView({
                   borderColor: diurnalConfig ? `${diurnalConfig.accentColor}40` : "rgba(142, 202, 230, 0.3)",
                 }}
               >
-                SYNOPTIC RADAR • {diurnalConfig ? diurnalConfig.stationTelemetrySub : "GLOBAL & INDIAN METRO CORRIDORS"}
+                {t.exploreBannerTag || "SYNOPTIC RADAR • GLOBAL & INDIAN METRO CORRIDORS"}
               </span>
               {diurnalConfig && (
                 <span
@@ -229,10 +233,10 @@ export function ExploreView({
               </span>
             </div>
             <h2 className="text-xl sm:text-2xl font-bold text-white font-mono tracking-tight">
-              Explore & Compare Weather
+              {t.exploreBannerTitle || "Explore & Compare Weather"}
             </h2>
             <p className="text-xs text-slate-200 leading-relaxed">
-              Discover deterministic physical weather patterns across Indian regional hubs, global metropolitan centers, and compare atmospheric parameters side-by-side.
+              {t.exploreBannerDesc || "Discover deterministic physical weather patterns across Indian regional hubs, global metropolitan centers, and compare atmospheric parameters side-by-side."}
             </p>
           </div>
 
@@ -266,7 +270,7 @@ export function ExploreView({
           <div className="flex items-center gap-2">
             <Compass className="w-4 h-4 text-[#8ECAE6] dark:text-[#8ECAE6] light:text-sky-700" />
             <h3 className="text-xs font-semibold text-slate-100 dark:text-slate-100 light:text-slate-900 uppercase font-mono tracking-wider">
-              REGIONAL & WORLD TELEMETRY
+              {t.tabExplore || "REGIONAL & WORLD TELEMETRY"}
             </h3>
           </div>
           <p className="text-xs font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 mt-0.5">
@@ -285,7 +289,7 @@ export function ExploreView({
             }`}
           >
             <Globe className="w-3.5 h-3.5" />
-            <span>Featured Hubs</span>
+            <span>{t.tabFeaturedHubs || "Featured Hubs"}</span>
           </button>
           <button
             onClick={() => setActiveTab("compare")}
@@ -296,7 +300,7 @@ export function ExploreView({
             }`}
           >
             <GitCompare className="w-3.5 h-3.5" />
-            <span>Side-by-Side Comparison</span>
+            <span>{t.tabCompareCities || "Side-by-Side Comparison"}</span>
           </button>
         </div>
       </div>
@@ -464,6 +468,7 @@ export function ExploreView({
             currentLocation={currentLocation}
             diurnalPhase={diurnalPhase}
             diurnalConfig={diurnalConfig}
+            preferredLanguage={preferredLanguage}
           />
         </div>
       )}

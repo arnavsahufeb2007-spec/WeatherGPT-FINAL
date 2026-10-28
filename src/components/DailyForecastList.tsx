@@ -2,13 +2,17 @@ import React from "react";
 import { DailyForecastItem } from "../types.js";
 import { WeatherIcon } from "./WeatherIcons.js";
 import { Calendar, Droplets, Sun } from "lucide-react";
+import { getTranslations, getLocalizedDayName, getLocalizedWeatherCondition } from "../languages.js";
 
 interface DailyForecastListProps {
   daily: DailyForecastItem[];
   isFahrenheit: boolean;
+  preferredLanguage?: string;
 }
 
-export function DailyForecastList({ daily, isFahrenheit }: DailyForecastListProps) {
+export function DailyForecastList({ daily, isFahrenheit, preferredLanguage }: DailyForecastListProps) {
+  const t = getTranslations(preferredLanguage);
+
   const formatTemp = (celsius: number) => {
     if (isFahrenheit) {
       return Math.round((celsius * 9) / 5 + 32);
@@ -30,15 +34,15 @@ export function DailyForecastList({ daily, isFahrenheit }: DailyForecastListProp
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-[#8ECAE6]" />
             <h3 className="text-xs font-semibold text-slate-100 dark:text-slate-100 light:text-slate-900 tracking-wider uppercase">
-              7-Day Extended Outlook
+              {t.sevenDayOutlook}
             </h3>
           </div>
           <p className="text-[11px] font-mono text-slate-400 mt-0.5">
-            Deterministic physical model progression
+            {t.deterministicProgression}
           </p>
         </div>
         <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-[3px] bg-[#1B2027] dark:bg-[#1B2027] light:bg-slate-100 text-slate-400 border border-[#30353D] dark:border-[#30353D] light:border-slate-300 shrink-0">
-          DETERMINISTIC
+          {t.badgeDeterministic}
         </span>
       </div>
 
@@ -69,16 +73,20 @@ export function DailyForecastList({ daily, isFahrenheit }: DailyForecastListProp
                           : "text-slate-200 dark:text-slate-200 light:text-slate-900"
                       }`}
                     >
-                      {idx === 0 ? "Today" : idx === 1 ? "Tomorrow" : item.dayName}
+                      {idx === 0
+                        ? t.today
+                        : idx === 1
+                        ? t.tomorrow
+                        : getLocalizedDayName(item.date, item.dayName, preferredLanguage)}
                     </span>
                     {isToday && (
                       <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded-[3px] bg-[#F4A261] text-[#0F141B] font-bold">
-                        Active
+                        {t.activeBadge || "Active"}
                       </span>
                     )}
                   </div>
                   <span className="text-[11px] text-slate-400 dark:text-slate-400 light:text-slate-500 capitalize block truncate">
-                    {item.condition}
+                    {getLocalizedWeatherCondition(item.weatherCode, item.condition, preferredLanguage)}
                   </span>
                 </div>
               </div>

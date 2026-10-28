@@ -1,3 +1,11 @@
+import { UIStrings, getTranslations as getRegistryTranslations } from "./translations/registry.js";
+
+export type { UIStrings };
+
+export function getTranslations(code?: string): UIStrings {
+  return getRegistryTranslations(code);
+}
+
 export type LanguageCategory = "special" | "indian" | "international";
 
 export type LanguageCode =
@@ -45,7 +53,7 @@ export interface LanguageDefinition {
   description?: string;
   geminiPromptInstruction: string;
   sampleQueries: string[];
-  translations: {
+  translations: UIStrings | {
     appName: string;
     tagline: string;
     tabAssistant: string;
@@ -73,6 +81,10 @@ export interface LanguageDefinition {
     send: string;
     askPlaceholder: string;
   };
+}
+
+export interface LanguageConfig extends Omit<LanguageDefinition, "translations"> {
+  translations: UIStrings;
 }
 
 export const LANGUAGE_REGISTRY: Record<LanguageCode, LanguageDefinition> = {
@@ -1453,17 +1465,294 @@ export const INDIAN_LANGUAGES = ALL_LANGUAGES.filter((l) => l.category === "indi
 export const INTERNATIONAL_LANGUAGES = ALL_LANGUAGES.filter((l) => l.category === "international");
 export const SPECIAL_LANGUAGES = ALL_LANGUAGES.filter((l) => l.category === "special");
 
-export function getLanguageConfig(code?: string): LanguageDefinition {
-  if (!code) return LANGUAGE_REGISTRY.en;
-  const normalized = code.toLowerCase().trim();
-  // "ALL" is a UI / output-mode selection, not a single language code
-  if (normalized === "all") return LANGUAGE_REGISTRY.en;
-  if (LANGUAGE_REGISTRY[normalized as LanguageCode]) {
-    return LANGUAGE_REGISTRY[normalized as LanguageCode];
+export function getLanguageConfig(code?: string): LanguageConfig {
+  let config: LanguageDefinition;
+  if (!code) {
+    config = LANGUAGE_REGISTRY.en;
+  } else {
+    const normalized = code.toLowerCase().trim();
+    // "ALL" is a UI / output-mode selection, not a single language code
+    if (normalized === "all") {
+      config = LANGUAGE_REGISTRY.en;
+    } else if (LANGUAGE_REGISTRY[normalized as LanguageCode]) {
+      config = LANGUAGE_REGISTRY[normalized as LanguageCode];
+    } else {
+      // Try matching bcp47 or prefix
+      const match = ALL_LANGUAGES.find(
+        (l) => l.bcp47.toLowerCase() === normalized || l.code.toLowerCase() === normalized.split("-")[0]
+      );
+      config = match || LANGUAGE_REGISTRY.en;
+    }
   }
-  // Try matching bcp47 or prefix
-  const match = ALL_LANGUAGES.find(
-    (l) => l.bcp47.toLowerCase() === normalized || l.code.toLowerCase() === normalized.split("-")[0]
-  );
-  return match || LANGUAGE_REGISTRY.en;
+
+  // Ensure full, strongly-typed translations dictionary with complete UI coverage and English fallback
+  return {
+    ...config,
+    translations: getTranslations(config.code),
+  };
 }
+
+/**
+ * Centralized Language Resolution Priority:
+ * 1. Manual Output Language Override: If explicitly chosen (and not 'auto' / 'all' / undefined), use this.
+ * 2. App Language Default: If no manual override (or override is 'auto'), follow App Interface Language.
+ * 3. Fallback: If unresolved or invalid, safely fall back to 'en'.
+ */
+export function resolveEffectiveResponseLanguage(
+  appLanguage?: string | null,
+  manualOutputOverride?: string | null
+): string {
+  // Priority 1: Manual output override (if set and not 'auto' and not 'all')
+  if (manualOutputOverride && typeof manualOutputOverride === "string") {
+    const normOverride = manualOutputOverride.trim().toLowerCase();
+    if (normOverride !== "auto" && normOverride !== "all" && normOverride !== "") {
+      if (LANGUAGE_REGISTRY[normOverride as LanguageCode]) {
+        return normOverride;
+      }
+      const match = ALL_LANGUAGES.find(
+        (l) =>
+          l.code.toLowerCase() === normOverride ||
+          l.bcp47.toLowerCase() === normOverride ||
+          l.code === normOverride.split("-")[0]
+      );
+      if (match) {
+        return match.code;
+      }
+    }
+  }
+
+  // Priority 2: App Language Default
+  if (appLanguage && typeof appLanguage === "string") {
+    const normApp = appLanguage.trim().toLowerCase();
+    if (normApp !== "auto" && normApp !== "all" && normApp !== "") {
+      if (LANGUAGE_REGISTRY[normApp as LanguageCode]) {
+        return normApp;
+      }
+      const match = ALL_LANGUAGES.find(
+        (l) =>
+          l.code.toLowerCase() === normApp ||
+          l.bcp47.toLowerCase() === normApp ||
+          l.code === normApp.split("-")[0]
+      );
+      if (match) {
+        return match.code;
+      }
+    }
+  }
+
+  // Priority 3: Fallback
+  return "en";
+}
+
+/**
+ * Builds localized initial weather summary for the chat interface in the target effective language.
+ * Guarantees proper Markdown formatting and natural translations for Hindi, Hinglish, Bengali, etc.
+ */
+export function buildLocalizedInitialWeatherSummary(
+  currentLocation: { name: string; admin1?: string; country?: string; [key: string]: any },
+  currentWeather: {
+    temperature: number;
+    feelsLike: number;
+    condition: string;
+    humidity: number | null;
+    precipitationProbability: number;
+    rain: number;
+    precipitation: number;
+    windSpeed: number;
+    windGusts: number;
+    uvIndex: number;
+    visibility: number;
+    [key: string]: any;
+  },
+  weatherAnalysis: { outdoorSuitabilityScore?: number; comfortLabel?: string } | null | undefined,
+  language: string,
+  isFahrenheit: boolean
+): string {
+  const effectiveLang = resolveEffectiveResponseLanguage(language, undefined);
+  const t = getTranslations(effectiveLang);
+
+  const formatTemp = (celsius: number) => {
+    if (isFahrenheit) {
+      return `${Math.round((celsius * 9) / 5 + 32)}°F`;
+    }
+    return `${Math.round(celsius)}°C`;
+  };
+
+  const locQualifier = `${currentLocation.admin1 ? `, ${currentLocation.admin1}` : ""}${
+    currentLocation.country ? ` (${currentLocation.country})` : ""
+  }`;
+
+  const score = weatherAnalysis?.outdoorSuitabilityScore ?? 80;
+
+  if (effectiveLang === "hi") {
+    const rainStatus =
+      currentWeather.rain > 0
+        ? `${currentWeather.rain} मिमी सक्रिय बारिश`
+        : currentWeather.precipitation > 0
+        ? `${currentWeather.precipitation} मिमी वर्षा`
+        : "0.0 मिमी (वर्तमान में कोई बारिश नहीं)";
+
+    return `नमस्ते! यहाँ **${currentLocation.name}**${locQualifier} के लिए आपका सत्यापित मौसम विवरण है:
+
+• **तापमान**: ${formatTemp(currentWeather.temperature)} (महसूस: ${formatTemp(currentWeather.feelsLike)})
+• **मौसम स्थिति**: ${currentWeather.condition}
+• **आर्द्रता**: ${currentWeather.humidity !== null ? `${currentWeather.humidity}%` : "अनुपलब्ध"}
+• **बारिश की संभावना**: ${currentWeather.precipitationProbability}% • *वर्तमान स्थिति*: ${rainStatus}
+• **हवा की गति**: ${currentWeather.windSpeed} किमी/घंटा (झोंके: ${currentWeather.windGusts} किमी/घंटा)
+• **यूवी इंडेक्स**: ${currentWeather.uvIndex} / 12 • **दृश्यता**: ${(currentWeather.visibility / 1000).toFixed(1)} किमी
+• **आउटडोर अनुकूलता**: ${score}/100 (${weatherAnalysis?.comfortLabel || "अनुकूल"})
+
+आप मुझसे प्रति घंटा बारिश के आसार, आउटडोर खेल, यात्रा मार्ग मौसम या अन्य शहरों की तुलना के बारे में पूछ सकते हैं!`;
+  }
+
+  if (effectiveLang === "hinglish") {
+    const rainStatus =
+      currentWeather.rain > 0
+        ? `${currentWeather.rain} mm active rainfall`
+        : currentWeather.precipitation > 0
+        ? `${currentWeather.precipitation} mm precipitation`
+        : "0.0 mm (Abhi koi barish nahi ho rahi hai)";
+
+    return `Hello! Yahan **${currentLocation.name}**${locQualifier} ke liye aapka verified weather intelligence summary hai:
+
+• **Temperature**: ${formatTemp(currentWeather.temperature)} (Feels like ${formatTemp(currentWeather.feelsLike)})
+• **Conditions**: ${currentWeather.condition}
+• **Humidity**: ${currentWeather.humidity !== null ? `${currentWeather.humidity}%` : "Data unavailable"}
+• **Precipitation Probability**: ${currentWeather.precipitationProbability}% • *Current Rain*: ${rainStatus}
+• **Wind Speed**: ${currentWeather.windSpeed} km/h (Gusts: ${currentWeather.windGusts} km/h)
+• **UV Index**: ${currentWeather.uvIndex} / 12 • **Visibility**: ${(currentWeather.visibility / 1000).toFixed(1)} km
+• **Outdoor Suitability**: ${score}/100 (${weatherAnalysis?.comfortLabel || "Comfortable"})
+
+Aap mujhse hourly rain chances, outdoor sports, travel routes ya doosre cities ke comparison ke bare me pooch sakte hain!`;
+  }
+
+  if (effectiveLang === "bn") {
+    const rainStatus =
+      currentWeather.rain > 0
+        ? `${currentWeather.rain} মিমি সক্রিয় বৃষ্টি`
+        : currentWeather.precipitation > 0
+        ? `${currentWeather.precipitation} মিমি বর্ষণ`
+        : "০.০ মিমি (বর্তমানে কোনো বৃষ্টি নেই)";
+
+    return `নমস্কার! এখানে **${currentLocation.name}**${locQualifier}-এর যাচাইকৃত আবহাওয়া তথ্য সারসংক্ষেপ:
+
+• **তাপমাত্রা**: ${formatTemp(currentWeather.temperature)} (অনুভূত: ${formatTemp(currentWeather.feelsLike)})
+• **আবহাওয়ার অবস্থা**: ${currentWeather.condition}
+• **আর্দ্রতা**: ${currentWeather.humidity !== null ? `${currentWeather.humidity}%` : "অনুপলব্ধ"}
+• **বৃষ্টিপাতের সম্ভাবনা**: ${currentWeather.precipitationProbability}% • *বর্তমান অবস্থা*: ${rainStatus}
+• **বাতাসের গতিবেগ**: ${currentWeather.windSpeed} কিমি/ঘণ্টা (দমকা: ${currentWeather.windGusts} কিমি/ঘণ্টা)
+• **ইউভি সূচক**: ${currentWeather.uvIndex} / ১২ • **দৃশ্যমানতা**: ${(currentWeather.visibility / 1000).toFixed(1)} কিমি
+• **বহির্দ্বারের উপযুক্ততা**: ${score}/১০০ (${weatherAnalysis?.comfortLabel || "স্বস্তিদায়ক"})
+
+আপনি বৃষ্টিপাতের সম্ভাবনা, খেলাধুলা, ভ্রমণ আবহাওয়া বা অন্যান্য শহরের তুলনামূলক তথ্য জানতে প্রশ্ন করতে পারেন!`;
+  }
+
+  // English & generalized localized template
+  const rainStatus =
+    currentWeather.rain > 0
+      ? `${currentWeather.rain} mm active rainfall`
+      : currentWeather.precipitation > 0
+      ? `${currentWeather.precipitation} mm precipitation`
+      : "0.0 mm (No rain currently falling)";
+
+  if (effectiveLang === "en") {
+    return `Hello! Here is your verified weather intelligence summary for **${currentLocation.name}**${locQualifier}:
+
+• **Temperature**: ${formatTemp(currentWeather.temperature)} (Feels like ${formatTemp(currentWeather.feelsLike)})
+• **Conditions**: ${currentWeather.condition}
+• **Humidity**: ${currentWeather.humidity !== null ? `${currentWeather.humidity}%` : "Data unavailable"}
+• **Precipitation Probability**: ${currentWeather.precipitationProbability}% • *Current Rain*: ${rainStatus}
+• **Wind Speed**: ${currentWeather.windSpeed} km/h (Gusts: ${currentWeather.windGusts} km/h)
+• **UV Index**: ${currentWeather.uvIndex} / 12 • **Visibility**: ${(currentWeather.visibility / 1000).toFixed(1)} km
+• **Outdoor Suitability**: ${score}/100 (${weatherAnalysis?.comfortLabel || "Comfortable"})
+
+You can ask me about hourly rain chances, outdoor sports, travel routes, or comparison with other cities!`;
+  }
+
+  // Other languages: construct using available UIStrings
+  return `${t.welcomeTitle || "Weather Intelligence"}: **${currentLocation.name}**${locQualifier}
+
+• **${t.feelsLike || "Temperature"}**: ${formatTemp(currentWeather.temperature)} (${t.feelsLike || "Feels like"} ${formatTemp(currentWeather.feelsLike)})
+• **${t.liveSynoptic || "Conditions"}**: ${currentWeather.condition}
+• **${t.humidity || "Humidity"}**: ${currentWeather.humidity !== null ? `${currentWeather.humidity}%` : "N/A"}
+• **${t.precipitation || "Precipitation"}**: ${currentWeather.precipitationProbability}% • ${rainStatus}
+• **${t.windVector || t.windSpeed || "Wind Speed"}**: ${currentWeather.windSpeed} km/h (Gusts: ${currentWeather.windGusts} km/h)
+• **${t.uvIndex || "UV Index"}**: ${currentWeather.uvIndex} / 12 • **${t.visibility || "Visibility"}**: ${(currentWeather.visibility / 1000).toFixed(1)} km
+• **${t.outdoorScore || "Outdoor Suitability"}**: ${score}/100 (${weatherAnalysis?.comfortLabel || ""})
+
+${t.askPlaceholder || "Ask about rain forecasts, sports, or travel weather!"}`;
+}
+
+export function getLocaleCode(lang?: string): string {
+  if (!lang) return "en-US";
+  const map: Record<string, string> = {
+    hi: "hi-IN",
+    hinglish: "hi-IN",
+    bn: "bn-IN",
+    te: "te-IN",
+    mr: "mr-IN",
+    ta: "ta-IN",
+    gu: "gu-IN",
+    kn: "kn-IN",
+    ml: "ml-IN",
+    pa: "pa-IN",
+    as: "as-IN",
+    or: "or-IN",
+    ur: "ur-PK",
+    ne: "ne-NP",
+    es: "es-ES",
+    fr: "fr-FR",
+    de: "de-DE",
+    ja: "ja-JP",
+    zh: "zh-CN",
+    ar: "ar-SA",
+    pt: "pt-PT",
+    ru: "ru-RU",
+    ko: "ko-KR",
+    it: "it-IT",
+    id: "id-ID",
+    tr: "tr-TR",
+    vi: "vi-VN",
+    nl: "nl-NL",
+  };
+  return map[lang] || "en-US";
+}
+
+export function getLocalizedDayName(dateStr: string, fallbackDayName: string, lang?: string): string {
+  if (!dateStr) return fallbackDayName;
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return fallbackDayName;
+    const locale = getLocaleCode(lang);
+    const day = date.toLocaleDateString(locale, { weekday: "long" });
+    return day ? day.charAt(0).toUpperCase() + day.slice(1) : fallbackDayName;
+  } catch {
+    return fallbackDayName;
+  }
+}
+
+export function formatHourlyTime(rawTime: string, fallbackFormatted: string, lang?: string): string {
+  const t = getTranslations(lang);
+  if (fallbackFormatted === "Now" || !rawTime) {
+    return t.now || "Now";
+  }
+  try {
+    const date = new Date(rawTime);
+    if (isNaN(date.getTime())) return fallbackFormatted;
+    const locale = getLocaleCode(lang);
+    return date.toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit" });
+  } catch {
+    return fallbackFormatted;
+  }
+}
+
+export function getLocalizedWeatherCondition(weatherCode?: number, fallbackCondition?: string, lang?: string): string {
+  if (weatherCode !== undefined) {
+    const t = getTranslations(lang);
+    if (t.conditions && t.conditions[weatherCode]) {
+      return t.conditions[weatherCode];
+    }
+  }
+  return fallbackCondition || "Variable Weather";
+}
+
