@@ -1,5 +1,5 @@
 import React from "react";
-import { Home, CloudSun, Lightbulb, Car, Mic, Settings, Compass, History } from "lucide-react";
+import { Home, CloudSun, Lightbulb, Car, Mic, Settings, Compass, History, Newspaper } from "lucide-react";
 import { NavSection } from "./Sidebar.js";
 import { getTranslations } from "../languages.js";
 
@@ -18,6 +18,7 @@ export function BottomNav({ currentSection, onSelectSection, deviceMode, preferr
     { id: "home", label: t.tabHome, icon: <Home className="w-4 h-4" /> },
     { id: "forecast", label: t.tabForecast, icon: <CloudSun className="w-4 h-4" /> },
     { id: "insights", label: t.tabInsights, icon: <Lightbulb className="w-4 h-4" /> },
+    { id: "news", label: "News", icon: <Newspaper className="w-4 h-4" /> },
     { id: "history", label: t.tabHistory, icon: <History className="w-4 h-4" /> },
     { id: "voice", label: t.tabVoice, icon: <Mic className="w-4 h-4" /> },
     { id: "explore", label: t.tabExplore, icon: <Compass className="w-4 h-4" /> },
