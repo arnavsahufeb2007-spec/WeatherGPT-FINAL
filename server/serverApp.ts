@@ -266,6 +266,52 @@ export function buildServerApp(options?: ServerAppOptions) {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
 
+
+  // Public worldwide weather headlines, cached for 30 minutes. No API key required.
+  let newsCache: { expires: number; articles: Array<{ title: string; link: string; source: string; publishedAt: string; description: string; image?: string }> } | null = null;
+  app.get("/api/news/weather", async (_req: Request, res: Response) => {
+    if (newsCache && newsCache.expires > Date.now()) {
+      return res.json({ articles: newsCache.articles });
+    }
+    try {
+      const feed = "https://news.google.com/rss/search?q=" +
+        encodeURIComponent("(weather OR cyclone OR hurricane OR typhoon OR flood OR heatwave OR blizzard) when:3d") +
+        "&hl=en-US&gl=US&ceid=US:en";
+      const upstream = await fetch(feed, { signal: AbortSignal.timeout(9000), headers: { "User-Agent": "WeatherGPT/1.0 (+weather news reader)" } });
+      if (!upstream.ok) throw new Error("News feed unavailable");
+      const xml = await upstream.text();
+      const decode = (value: string) => value
+        .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+        .replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'")
+        .replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+        .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)));
+      const tag = (item: string, name: string) => decode(item.match(new RegExp("<" + name + "(?:\\s[^>]*)?>([\\s\\S]*?)<\\/" + name + ">"))?.[1] || "").trim();
+      const seen = new Set<string>();
+      const articles = Array.from(xml.matchAll(/<item>([\s\S]*?)<\/item>/g)).map((match) => {
+        const item = match[1];
+        const rawTitle = tag(item, "title");
+        const source = tag(item, "source") || "News publisher";
+        const title = rawTitle.endsWith(" - " + source) ? rawTitle.slice(0, -source.length - 3) : rawTitle;
+        const link = tag(item, "link");
+        const publishedAt = tag(item, "pubDate");
+        const rawImage = item.match(/<media:content[^>]*url="([^"]+)"/)?.[1] || item.match(/<media:thumbnail[^>]*url="([^"]+)"/)?.[1];
+        const image = rawImage && /^https:\/\//i.test(decode(rawImage)) ? decode(rawImage) : undefined;
+        return { title, link, source, publishedAt, description: "", ...(image ? { image } : {}) };
+      }).filter((article) => {
+        if (!article.title || !/^https:\/\//.test(article.link) || seen.has(article.title.toLowerCase())) return false;
+        seen.add(article.title.toLowerCase());
+        return true;
+      }).slice(0, 24);
+      if (!articles.length) throw new Error("No weather news in feed");
+      newsCache = { expires: Date.now() + 30 * 60 * 1000, articles };
+      res.setHeader("Cache-Control", "public, max-age=300");
+      return res.json({ articles });
+    } catch {
+      if (newsCache) return res.json({ articles: newsCache.articles });
+      return res.status(503).json({ error: "Worldwide weather news is temporarily unavailable." });
+    }
+  });
+
   // Multilingual Languages Registry Route
   app.get("/api/languages", (req: Request, res: Response) => {
     res.setHeader("Cache-Control", "public, max-age=86400");
