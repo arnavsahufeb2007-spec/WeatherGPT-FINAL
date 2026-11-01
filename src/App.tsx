@@ -29,6 +29,7 @@ import { ExploreView } from "./components/ExploreView.js";
 import { SettingsView } from "./components/SettingsView.js";
 import { WeatherChat } from "./components/WeatherChat.js";
 import { HistoryView } from "./components/HistoryView.js";
+import { WorldwideWeatherNews } from "./components/WorldwideWeatherNews.js";
 import { LocationSearchDialog } from "./components/LocationSearchDialog.js";
 import { LandingPage } from "./components/LandingPage.js";
 import { AuthModal } from "./components/AuthModal.js";
@@ -836,6 +837,8 @@ export default function App() {
                   />
                 </div>
               )}
+
+              {currentSection === "news" && <WorldwideWeatherNews />}
 
               {/* 7. CLOUD HISTORY SECTION: Search, Restore, and Manage Sessions */}
               {currentSection === "history" && (
