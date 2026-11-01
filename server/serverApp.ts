@@ -275,8 +275,10 @@ export function buildServerApp(options?: ServerAppOptions) {
     }
     try {
       const feeds = [
-        { region: "India", query: "(India weather OR IMD weather alert OR India monsoon OR India cyclone OR India rainfall OR India heatwave) when:7d", locale: "hl=en-IN&gl=IN&ceid=IN:en" },
-        { region: "World", query: "(weather OR cyclone OR hurricane OR typhoon OR flood OR heatwave OR blizzard) when:3d", locale: "hl=en-US&gl=US&ceid=US:en" },
+        { region: "Asia", query: "(weather OR typhoon OR monsoon OR flood OR heatwave OR cyclone) when:5d", locale: "hl=en-IN&gl=IN&ceid=IN:en" },
+        { region: "Americas", query: "(weather OR hurricane OR tornado OR flood OR wildfire OR snowstorm) when:5d", locale: "hl=en-US&gl=US&ceid=US:en" },
+        { region: "Europe", query: "(weather OR storm OR flood OR heatwave OR snow OR climate) when:5d", locale: "hl=en-GB&gl=GB&ceid=GB:en" },
+        { region: "Oceania", query: "(weather OR cyclone OR flooding OR bushfire OR storm) when:5d", locale: "hl=en-AU&gl=AU&ceid=AU:en" },
       ];
       const results = await Promise.allSettled(feeds.map(async (feed) => {
         const url = "https://news.google.com/rss/search?q=" + encodeURIComponent(feed.query) + "&" + feed.locale;
@@ -298,7 +300,7 @@ export function buildServerApp(options?: ServerAppOptions) {
         const title = rawTitle.endsWith(" - " + source) ? rawTitle.slice(0, -source.length - 3) : rawTitle;
         const link = tag(item, "link");
         const publishedAt = tag(item, "pubDate");
-        const rawImage = item.match(/<media:content[^>]*url="([^"]+)"/)?.[1] || item.match(/<media:thumbnail[^>]*url="([^"]+)"/)?.[1];
+        const rawImage = item.match(/<media:content[^>]*url="([^"]+)"/)?.[1] || item.match(/<media:thumbnail[^>]*url="([^"]+)"/)?.[1] || item.match(/<enclosure[^>]*type="image\/[^"]+"[^>]*url="([^"]+)"/)?.[1];
         const image = rawImage && decode(rawImage).startsWith("https://") ? decode(rawImage) : undefined;
         return { title, link, source, publishedAt, description: "", region, ...(image ? { image } : {}) };
       }).filter((article) => {
@@ -306,9 +308,10 @@ export function buildServerApp(options?: ServerAppOptions) {
         seen.add(article.title.toLowerCase());
         return true;
       });
-      const indiaFeed = results[0].status === "fulfilled" ? parse(results[0].value.xml, "India").slice(0, 10) : [];
-      const worldFeed = results[1].status === "fulfilled" ? parse(results[1].value.xml, "World").slice(0, 18) : [];
-      const articles = [...indiaFeed, ...worldFeed];
+      const regional = results.map((result, index) => result.status === "fulfilled"
+        ? parse(result.value.xml, feeds[index].region).slice(0, 8)
+        : []);
+      const articles = Array.from({ length: 8 }, (_, index) => regional.map(group => group[index]).filter(Boolean)).flat().slice(0, 28);
       if (!articles.length) throw new Error("No weather news in feed");
       newsCache = { expires: Date.now() + 30 * 60 * 1000, articles };
       res.setHeader("Cache-Control", "public, max-age=300");
