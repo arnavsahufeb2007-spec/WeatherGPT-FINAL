@@ -291,7 +291,7 @@ export function buildServerApp(options?: ServerAppOptions) {
         .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)));
       const tag = (item: string, name: string) => decode(item.match(new RegExp("<" + name + "(?:\\s[^>]*)?>([\\s\\S]*?)<\\/" + name + ">"))?.[1] || "").trim();
       const seen = new Set<string>();
-      const parse = (xml: string, region: string) => Array.from(xml.matchAll(/<item>([\\s\\S]*?)<\\/item>/g)).map((match) => {
+      const parse = (xml: string, region: string) => Array.from(xml.matchAll(new RegExp("<item>([\\s\\S]*?)</item>", "g"))).map((match) => {
         const item = match[1];
         const rawTitle = tag(item, "title");
         const source = tag(item, "source") || "News publisher";
@@ -299,10 +299,10 @@ export function buildServerApp(options?: ServerAppOptions) {
         const link = tag(item, "link");
         const publishedAt = tag(item, "pubDate");
         const rawImage = item.match(/<media:content[^>]*url="([^"]+)"/)?.[1] || item.match(/<media:thumbnail[^>]*url="([^"]+)"/)?.[1];
-        const image = rawImage && /^https:\\/\\//i.test(decode(rawImage)) ? decode(rawImage) : undefined;
+        const image = rawImage && decode(rawImage).startsWith("https://") ? decode(rawImage) : undefined;
         return { title, link, source, publishedAt, description: "", region, ...(image ? { image } : {}) };
       }).filter((article) => {
-        if (!article.title || !/^https:\\/\\//.test(article.link) || seen.has(article.title.toLowerCase())) return false;
+        if (!article.title || !article.link.startsWith("https://") || seen.has(article.title.toLowerCase())) return false;
         seen.add(article.title.toLowerCase());
         return true;
       });
