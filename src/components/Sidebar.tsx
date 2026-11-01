@@ -15,6 +15,7 @@ import {
   ChevronRight,
   History,
   Radio,
+  Newspaper,
   CheckCircle2,
 } from "lucide-react";
 import { WeatherGptLogo } from "./WeatherGptLogo.js";
@@ -30,6 +31,7 @@ export type NavSection =
   | "voice"
   | "explore"
   | "history"
+  | "news"
   | "settings"
   | "auth";
 
@@ -101,6 +103,11 @@ export function Sidebar({
       id: "explore",
       label: t.navExplore,
       icon: <Compass className="w-4 h-4" />,
+    },
+    {
+      id: "news",
+      label: "World News",
+      icon: <Newspaper className="w-4 h-4" />,
     },
     {
       id: "history",
