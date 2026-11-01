@@ -7,6 +7,16 @@ const dateLabel = (date: string) => {
   return Number.isNaN(parsed.getTime()) ? "" : parsed.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
 };
 
+// Editorial weather photographs are illustrative, not photos of the reported event.
+const weatherPhoto = (title: string) => {
+  const t = title.toLowerCase();
+  if (/hurricane|cyclone|typhoon|storm|tornado/.test(t)) return "https://images.unsplash.com/photo-1500534623283-312aade485b7?w=1000&auto=format&fit=crop&q=80";
+  if (/flood|rain|monsoon/.test(t)) return "https://images.unsplash.com/photo-1519692933481-e162a57d6721?w=1000&auto=format&fit=crop&q=80";
+  if (/snow|blizzard|winter|ice/.test(t)) return "https://images.unsplash.com/photo-1483664852095-d6cc6870702d?w=1000&auto=format&fit=crop&q=80";
+  if (/heat|drought|wildfire|fire/.test(t)) return "https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=1000&auto=format&fit=crop&q=80";
+  return "https://images.unsplash.com/photo-1534088568595-a066f410bcda?w=1000&auto=format&fit=crop&q=80";
+};
+
 export function WorldwideWeatherNews() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,14 +41,12 @@ export function WorldwideWeatherNews() {
   const articleCard = (article: Article, featured = false) => (
     <a key={article.link} href={article.link} target="_blank" rel="noopener noreferrer"
       className="group flex flex-col overflow-hidden rounded-xl border border-[#30353D] light:border-slate-200 bg-[#171C23] light:bg-white hover:border-[#8ECAE6]/60 transition-colors">
-      {article.image ? (
-        <img src={article.image} alt="" loading="lazy" referrerPolicy="no-referrer"
-          className={`w-full object-cover ${featured ? "h-56 sm:h-72" : "h-40"}`} />
-      ) : (
-        <div className={`w-full flex items-center justify-center bg-gradient-to-br from-[#254554] to-[#17252f] light:from-sky-100 light:to-slate-200 ${featured ? "h-48 sm:h-64" : "h-36"}`}>
-          <Globe2 className={featured ? "w-14 h-14 text-sky-200/60" : "w-10 h-10 text-sky-200/60"} />
-        </div>
-      )}
+      <div className="relative">
+        <img src={article.image || weatherPhoto(article.title)} alt={article.image ? "News article image" : "Illustrative weather photograph"} loading={featured ? "eager" : "lazy"} referrerPolicy="no-referrer"
+          onError={(event) => { const img = event.currentTarget; const fallback = weatherPhoto(article.title); if (img.src !== fallback) img.src = fallback; else img.style.display = "none"; }}
+          className={`w-full object-cover bg-[#254554] ${featured ? "h-56 sm:h-72" : "h-40"}`} />
+        {!article.image && <span className="absolute bottom-2 right-2 rounded bg-black/65 px-2 py-1 text-[10px] text-white">Illustrative image</span>}
+      </div>
       <div className={`flex-1 flex flex-col ${featured ? "p-5 sm:p-6" : "p-4"}`}>
         <div className="text-[11px] text-[#8ECAE6] light:text-sky-700 font-semibold mb-2">{article.source} <span className="text-slate-400 font-normal">· {dateLabel(article.publishedAt)}</span></div>
         <h3 className={`font-bold leading-snug text-slate-100 light:text-slate-900 group-hover:text-[#8ECAE6] transition-colors ${featured ? "text-xl sm:text-2xl" : "text-sm sm:text-base"}`}>{article.title}</h3>
