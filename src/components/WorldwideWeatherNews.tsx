@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ArrowUpRight, Globe2, RefreshCw, Newspaper } from "lucide-react";
 
-type Article = { title: string; link: string; source: string; publishedAt: string; description: string; image?: string };
+type Article = { title: string; link: string; source: string; publishedAt: string; description: string; image?: string; region?: string };
 const dateLabel = (date: string) => {
   const parsed = new Date(date);
   return Number.isNaN(parsed.getTime()) ? "" : parsed.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
@@ -48,7 +48,7 @@ export function WorldwideWeatherNews() {
         {!article.image && <span className="absolute bottom-2 right-2 rounded bg-black/65 px-2 py-1 text-[10px] text-white">Illustrative image</span>}
       </div>
       <div className={`flex-1 flex flex-col ${featured ? "p-5 sm:p-6" : "p-4"}`}>
-        <div className="text-[11px] text-[#8ECAE6] light:text-sky-700 font-semibold mb-2">{article.source} <span className="text-slate-400 font-normal">· {dateLabel(article.publishedAt)}</span></div>
+        <div className="text-[11px] text-[#8ECAE6] light:text-sky-700 font-semibold mb-2">{article.region === "India" ? "🇮🇳 India · " : ""}{article.source} <span className="text-slate-400 font-normal">· {dateLabel(article.publishedAt)}</span></div>
         <h3 className={`font-bold leading-snug text-slate-100 light:text-slate-900 group-hover:text-[#8ECAE6] transition-colors ${featured ? "text-xl sm:text-2xl" : "text-sm sm:text-base"}`}>{article.title}</h3>
         {article.description && <p className="mt-2 text-xs sm:text-sm leading-relaxed text-slate-400 light:text-slate-600 line-clamp-3">{article.description}</p>}
         <span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-[#8ECAE6] light:text-sky-700">Read original story <ArrowUpRight className="w-3.5 h-3.5" /></span>
@@ -72,6 +72,7 @@ export function WorldwideWeatherNews() {
         : error ? <div role="alert" className="rounded-xl border border-rose-500/30 p-6 text-sm text-rose-300">{error} <button className="underline ml-2" onClick={() => void refresh()}>Try again</button></div>
         : articles.length === 0 ? <div className="py-20 text-center text-slate-400"><Newspaper className="w-8 h-8 mx-auto mb-3" />No weather stories available right now.</div>
         : <>
+          {articles.some(article => article.region === "India") && <h2 className="text-lg font-bold text-slate-100 light:text-slate-900">🇮🇳 India Weather News</h2>}
           <div>{articleCard(articles[0], true)}</div>
           {articles.length > 1 && <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">{articles.slice(1).map(article => articleCard(article))}</div>}
         </>}
