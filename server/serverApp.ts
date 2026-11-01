@@ -274,12 +274,16 @@ export function buildServerApp(options?: ServerAppOptions) {
       return res.json({ articles: newsCache.articles });
     }
     try {
-      const feed = "https://news.google.com/rss/search?q=" +
-        encodeURIComponent("(weather OR cyclone OR hurricane OR typhoon OR flood OR heatwave OR blizzard) when:3d") +
-        "&hl=en-US&gl=US&ceid=US:en";
-      const upstream = await fetch(feed, { signal: AbortSignal.timeout(9000), headers: { "User-Agent": "WeatherGPT/1.0 (+weather news reader)" } });
-      if (!upstream.ok) throw new Error("News feed unavailable");
-      const xml = await upstream.text();
+      const feeds = [
+        { region: "India", query: "(India weather OR IMD weather alert OR India monsoon OR India cyclone OR India rainfall OR India heatwave) when:7d", locale: "hl=en-IN&gl=IN&ceid=IN:en" },
+        { region: "World", query: "(weather OR cyclone OR hurricane OR typhoon OR flood OR heatwave OR blizzard) when:3d", locale: "hl=en-US&gl=US&ceid=US:en" },
+      ];
+      const results = await Promise.allSettled(feeds.map(async (feed) => {
+        const url = "https://news.google.com/rss/search?q=" + encodeURIComponent(feed.query) + "&" + feed.locale;
+        const response = await fetch(url, { signal: AbortSignal.timeout(9000), headers: { "User-Agent": "WeatherGPT/1.0 (+weather news reader)" } });
+        if (!response.ok) throw new Error("News feed unavailable");
+        return { region: feed.region, xml: await response.text() };
+      }));
       const decode = (value: string) => value
         .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
         .replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'")
@@ -287,7 +291,7 @@ export function buildServerApp(options?: ServerAppOptions) {
         .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)));
       const tag = (item: string, name: string) => decode(item.match(new RegExp("<" + name + "(?:\\s[^>]*)?>([\\s\\S]*?)<\\/" + name + ">"))?.[1] || "").trim();
       const seen = new Set<string>();
-      const articles = Array.from(xml.matchAll(/<item>([\s\S]*?)<\/item>/g)).map((match) => {
+      const parse = (xml: string, region: string) => Array.from(xml.matchAll(/<item>([\\s\\S]*?)<\\/item>/g)).map((match) => {
         const item = match[1];
         const rawTitle = tag(item, "title");
         const source = tag(item, "source") || "News publisher";
@@ -295,13 +299,16 @@ export function buildServerApp(options?: ServerAppOptions) {
         const link = tag(item, "link");
         const publishedAt = tag(item, "pubDate");
         const rawImage = item.match(/<media:content[^>]*url="([^"]+)"/)?.[1] || item.match(/<media:thumbnail[^>]*url="([^"]+)"/)?.[1];
-        const image = rawImage && /^https:\/\//i.test(decode(rawImage)) ? decode(rawImage) : undefined;
-        return { title, link, source, publishedAt, description: "", ...(image ? { image } : {}) };
+        const image = rawImage && /^https:\\/\\//i.test(decode(rawImage)) ? decode(rawImage) : undefined;
+        return { title, link, source, publishedAt, description: "", region, ...(image ? { image } : {}) };
       }).filter((article) => {
-        if (!article.title || !/^https:\/\//.test(article.link) || seen.has(article.title.toLowerCase())) return false;
+        if (!article.title || !/^https:\\/\\//.test(article.link) || seen.has(article.title.toLowerCase())) return false;
         seen.add(article.title.toLowerCase());
         return true;
-      }).slice(0, 24);
+      });
+      const indiaFeed = results[0].status === "fulfilled" ? parse(results[0].value.xml, "India").slice(0, 10) : [];
+      const worldFeed = results[1].status === "fulfilled" ? parse(results[1].value.xml, "World").slice(0, 18) : [];
+      const articles = [...indiaFeed, ...worldFeed];
       if (!articles.length) throw new Error("No weather news in feed");
       newsCache = { expires: Date.now() + 30 * 60 * 1000, articles };
       res.setHeader("Cache-Control", "public, max-age=300");
