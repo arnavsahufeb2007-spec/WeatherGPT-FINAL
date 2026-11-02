@@ -102,5 +102,5 @@ export async function fetchMetNorwayWeather(lat: number, lon: number, requestedT
       windSpeedMax: round(Math.max(...winds)), sunrise: "", sunset: ""
     };
   });
-  return { current, hourly, daily, timezone: tz };
+  return { current, hourly, daily, timezone: tz, source: "met-norway", fetchedAt: new Date().toISOString(), isStale: false, unavailableMetrics: ["precipitationProbability", "uvIndex", "feelsLike", "sunrise", "sunset", "visibility"] };
 }
