@@ -6,6 +6,8 @@ import {
   getSavedLocationsFromFirestore,
 } from "./firebase.js";
 
+type CloudProvider = "firebase" | "supabase";
+
 const GUEST_LOCATIONS_KEY = "weathergpt_guest_saved_locations";
 
 export class SavedLocationsService {
@@ -14,13 +16,13 @@ export class SavedLocationsService {
    * If authenticated, checks Firestore first, then Supabase if needed.
    * If guest or remote unconfigured, reads from local storage.
    */
-  public async getSavedLocations(userId: string, isGuest: boolean): Promise<LocationInfo[]> {
+  public async getSavedLocations(userId: string, isGuest: boolean, provider: CloudProvider = "firebase"): Promise<LocationInfo[]> {
     if (isGuest) {
       return this.getLocalSavedLocations();
     }
 
-    // 1. Check Firestore
-    try {
+    // Firebase rules require a Firebase-authenticated UID; never use Firestore for Supabase users.
+    if (provider === "firebase") try {
       const firestoreLocs = await getSavedLocationsFromFirestore(userId);
       if (firestoreLocs && firestoreLocs.length > 0) {
         return firestoreLocs;
@@ -30,7 +32,7 @@ export class SavedLocationsService {
     }
 
     // 2. Fallback / Sync with Supabase if configured
-    if (isSupabaseConfigured()) {
+    if (provider === "supabase" && isSupabaseConfigured()) {
       const client = getSupabase();
       if (client) {
         try {
@@ -50,10 +52,6 @@ export class SavedLocationsService {
               longitude: row.longitude,
               timezone: row.timezone || "UTC",
             }));
-            // Persist to Firestore for future quick reads
-            for (const loc of parsed) {
-              saveLocationToFirestore(userId, loc).catch(() => {});
-            }
             return parsed;
           }
         } catch (err) {
@@ -68,7 +66,7 @@ export class SavedLocationsService {
   /**
    * Save a location as favorite.
    */
-  public async saveLocation(userId: string, isGuest: boolean, loc: LocationInfo): Promise<boolean> {
+  public async saveLocation(userId: string, isGuest: boolean, loc: LocationInfo, provider: CloudProvider = "firebase"): Promise<boolean> {
     if (isGuest) {
       const current = this.getLocalSavedLocations();
       const exists = current.some(
@@ -82,18 +80,18 @@ export class SavedLocationsService {
     }
 
     let firestoreSuccess = false;
-    try {
+    if (provider === "firebase") try {
       await saveLocationToFirestore(userId, loc);
       firestoreSuccess = true;
     } catch (err) {
       console.warn("Failed to save location to Firestore:", err);
     }
 
-    if (isSupabaseConfigured()) {
+    if (provider === "supabase" && isSupabaseConfigured()) {
       const client = getSupabase();
       if (client) {
         try {
-          await client.from("saved_locations").upsert(
+          const { error } = await client.from("saved_locations").upsert(
             {
               user_id: userId,
               name: loc.name,
@@ -106,6 +104,8 @@ export class SavedLocationsService {
             },
             { onConflict: "user_id,latitude,longitude" }
           );
+          if (error) throw error;
+          return true;
         } catch (err) {
           console.warn("Error upserting to Supabase:", err);
         }
@@ -118,7 +118,7 @@ export class SavedLocationsService {
   /**
    * Remove a saved favorite location.
    */
-  public async removeLocation(userId: string, isGuest: boolean, loc: LocationInfo): Promise<boolean> {
+  public async removeLocation(userId: string, isGuest: boolean, loc: LocationInfo, provider: CloudProvider = "firebase"): Promise<boolean> {
     if (isGuest) {
       const current = this.getLocalSavedLocations();
       const filtered = current.filter(
@@ -129,17 +129,17 @@ export class SavedLocationsService {
     }
 
     const locId = `${loc.latitude.toFixed(4)}_${loc.longitude.toFixed(4)}`;
-    try {
+    if (provider === "firebase") try {
       await removeLocationFromFirestore(userId, locId);
     } catch (err) {
       console.warn("Failed to remove location from Firestore:", err);
     }
 
-    if (isSupabaseConfigured()) {
+    if (provider === "supabase" && isSupabaseConfigured()) {
       const client = getSupabase();
       if (client) {
         try {
-          await client
+          const { error } = await client
             .from("saved_locations")
             .delete()
             .eq("user_id", userId)
@@ -147,6 +147,8 @@ export class SavedLocationsService {
             .lte("latitude", loc.latitude + 0.05)
             .gte("longitude", loc.longitude - 0.05)
             .lte("longitude", loc.longitude + 0.05);
+          if (error) throw error;
+          return true;
         } catch (err) {
           console.warn("Error deleting from Supabase:", err);
         }
@@ -159,14 +161,14 @@ export class SavedLocationsService {
   /**
    * Migrate guest saved locations into the authenticated user's Firestore & Supabase account.
    */
-  public async syncGuestLocationsToCloud(userId: string): Promise<void> {
+  public async syncGuestLocationsToCloud(userId: string, provider: CloudProvider = "firebase"): Promise<void> {
     const guestLocs = this.getLocalSavedLocations();
     if (guestLocs.length === 0) return;
 
     for (const loc of guestLocs) {
-      await this.saveLocation(userId, false, loc);
+      const saved = await this.saveLocation(userId, false, loc, provider);
+      if (!saved) return;
     }
-    // Clear local guest locations after successful sync
     this.removeStorageItem(GUEST_LOCATIONS_KEY);
   }
 
