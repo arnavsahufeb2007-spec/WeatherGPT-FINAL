@@ -369,6 +369,7 @@ export function buildServerApp(options?: ServerAppOptions) {
         success: true,
         location: resolvedLoc,
         current: weatherData.current,
+        weatherSource: { provider: weatherData.source || "unknown", fetchedAt: weatherData.fetchedAt || weatherData.current.time, isStale: weatherData.isStale || false, unavailableMetrics: weatherData.unavailableMetrics || [] },
         hourly: weatherData.hourly,
         daily: weatherData.daily,
         analysis,
