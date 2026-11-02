@@ -120,6 +120,7 @@ export async function getCurrentWeatherAPI(
   daily?: DailyForecastItem[];
   analysis: WeatherAnalysis;
   advisories: WeatherAdvisory[];
+  weatherSource?: { provider: string; fetchedAt: string; isStale: boolean; unavailableMetrics: string[] };
 }> {
   const q = new URLSearchParams();
   if (params.lat !== undefined) q.set("lat", String(params.lat));
