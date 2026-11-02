@@ -244,6 +244,9 @@ export function normalizeOpenMeteoResponse(raw: any, requestedTimezone: string =
 export class OpenMeteoWeatherProvider implements IWeatherProvider {
   private baseUrl = "https://api.open-meteo.com/v1/forecast";
   private inFlightRequests = new Map<string, Promise<WeatherDataResult>>();
+  // Retain successful observations during short upstream outages, separate from the 10-minute cache.
+  private lastSuccessful = new Map<string, { data: WeatherDataResult; fetchedAt: number }>();
+  private readonly staleMaxAgeMs = 60 * 60 * 1000;
 
   async getWeatherData(lat: number, lon: number, requestedTimezone: string = "auto"): Promise<WeatherDataResult> {
     if (typeof lat !== "number" || typeof lon !== "number" || isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
@@ -312,42 +315,65 @@ export class OpenMeteoWeatherProvider implements IWeatherProvider {
         requestedTimezone
       )}&forecast_days=7`;
 
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 8000);
-
       try {
-        const response = await fetch(url, { signal: controller.signal });
-        clearTimeout(timeout);
+        let lastError: WeatherProviderError | undefined;
+        // Retry only transient failures; do not retry invalid requests or malformed payloads.
+        for (let attempt = 0; attempt < 3; attempt++) {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 8000);
+          try {
+            const response = await fetch(url, { signal: controller.signal });
+            if (!response.ok) {
+              throw new WeatherProviderError(
+                `Open-Meteo returned status ${response.status}: ${response.statusText}`,
+                "http_error",
+                response.status
+              );
+            }
 
-        if (!response.ok) {
-          throw new WeatherProviderError(
-            `Open-Meteo returned status ${response.status}: ${response.statusText}`,
-            "http_error",
-            response.status
-          );
+            let raw: any;
+            try {
+              raw = await response.json();
+            } catch {
+              throw new WeatherProviderError("Failed to parse JSON response from Open-Meteo", "malformed_response");
+            }
+            const result = normalizeOpenMeteoResponse(raw, requestedTimezone);
+            appCache.set(cacheKey, result, 600);
+            this.lastSuccessful.set(cacheKey, { data: result, fetchedAt: Date.now() });
+            // Prevent unbounded retention for a long-running server.
+            if (this.lastSuccessful.size > 200) {
+              const oldestKey = this.lastSuccessful.keys().next().value;
+              if (oldestKey !== undefined) this.lastSuccessful.delete(oldestKey);
+            }
+            return result;
+          } catch (err: any) {
+            if (err instanceof WeatherProviderError) {
+              lastError = err;
+            } else if (controller.signal.aborted || err?.name === "AbortError") {
+              lastError = new WeatherProviderError("Open-Meteo weather service request timed out after 8000ms", "timeout");
+            } else {
+              lastError = new WeatherProviderError(`Failed to fetch weather from Open-Meteo: ${err?.message || "Unknown error"}`, "network_error");
+            }
+            const retryable = lastError.category === "timeout" ||
+              lastError.category === "network_error" ||
+              (lastError.category === "http_error" && [429, 500, 502, 503, 504].includes(lastError.statusCode ?? 0));
+            if (!retryable) break;
+            if (attempt < 2) await new Promise(resolve => setTimeout(resolve, 400 * (attempt + 1)));
+          } finally {
+            clearTimeout(timeout);
+          }
         }
 
-        let raw: any;
-        try {
-          raw = await response.json();
-        } catch {
-          throw new WeatherProviderError("Failed to parse JSON response from Open-Meteo", "malformed_response");
+        // A recently observed result is safer than fabricated weather. Preserve its original timestamp.
+        const stale = this.lastSuccessful.get(cacheKey);
+        if (stale && Date.now() - stale.fetchedAt <= this.staleMaxAgeMs) {
+          console.warn("[WeatherProvider] Open-Meteo unavailable; serving last successful weather observation", {
+            observedAt: stale.data.current.time,
+            cachedAt: new Date(stale.fetchedAt).toISOString(),
+          });
+          return stale.data;
         }
-
-        const result = normalizeOpenMeteoResponse(raw, requestedTimezone);
-
-        // Cache for 10 minutes (600s)
-        appCache.set(cacheKey, result, 600);
-        return result;
-      } catch (err: any) {
-        clearTimeout(timeout);
-        if (err instanceof WeatherProviderError) {
-          throw err;
-        }
-        if (controller.signal.aborted || err.name === "AbortError") {
-          throw new WeatherProviderError("Open-Meteo weather service request timed out after 8000ms", "timeout");
-        }
-        throw new WeatherProviderError(`Failed to fetch weather from Open-Meteo: ${err.message}`, "network_error");
+        throw lastError ?? new WeatherProviderError("Open-Meteo unavailable", "network_error");
       } finally {
         this.inFlightRequests.delete(cacheKey);
       }
