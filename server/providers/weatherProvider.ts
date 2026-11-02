@@ -1,6 +1,7 @@
 import { CurrentWeatherData, DailyForecastItem, HourlyForecastItem } from "../types.js";
 import { getWeatherInfo } from "./weatherCodes.js";
 import { appCache } from "../cache.js";
+import { fetchMetNorwayWeather } from "./metNorwayProvider.js";
 
 export type WeatherErrorCategory =
   | "timeout"
@@ -362,6 +363,16 @@ export class OpenMeteoWeatherProvider implements IWeatherProvider {
           } finally {
             clearTimeout(timeout);
           }
+        }
+
+        // Switch providers only after Open-Meteo retries fail. MET Norway is independent.
+        // Do not cache its limited-field output as Open-Meteo data.
+        try {
+          const backup = await fetchMetNorwayWeather(lat, lon, requestedTimezone);
+          console.warn("[WeatherProvider] Using MET Norway fallback forecast; some metrics are unavailable");
+          return backup;
+        } catch (backupError: any) {
+          console.warn("[WeatherProvider] MET Norway fallback failed:", backupError?.message || backupError);
         }
 
         // A recently observed result is safer than fabricated weather. Preserve its original timestamp.
