@@ -1,0 +1,167 @@
+import React from "react";
+
+interface WeatherGptLogoProps {
+  size?: number | string;
+  className?: string;
+  variant?: "icon" | "full" | "horizontal";
+  showText?: boolean;
+}
+
+export const WeatherGptLogo: React.FC<WeatherGptLogoProps> = ({
+  size = 32,
+  className = "",
+  variant = "icon",
+  showText = false,
+}) => {
+  const pixelSize = typeof size === "number" ? size : 32;
+
+  // Icon-only rendering
+  if (variant === "icon" && !showText) {
+    return (
+      <svg
+        viewBox="0 0 256 256"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        style={{ width: size, height: size }}
+        className={`inline-block shrink-0 select-none ${className}`}
+        aria-label="WeatherGPT Logo"
+      >
+        <defs>
+          {/* Cloud Body Gradient */}
+          <linearGradient id="wgCloudGrad" x1="60" y1="70" x2="200" y2="190" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#38BDF8" />
+            <stop offset="45%" stopColor="#0284C7" />
+            <stop offset="100%" stopColor="#0C4A6E" />
+          </linearGradient>
+
+          {/* Cloud Depth Shadow Gradient */}
+          <linearGradient id="wgCloudDepth" x1="128" y1="140" x2="128" y2="190" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#0369A1" stopOpacity="0" />
+            <stop offset="100%" stopColor="#082F49" stopOpacity="0.6" />
+          </linearGradient>
+
+          {/* Rim Highlight Gradient */}
+          <linearGradient id="wgRimHighlight" x1="110" y1="70" x2="160" y2="140" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.8" />
+            <stop offset="50%" stopColor="#BAE6FD" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="#38BDF8" stopOpacity="0" />
+          </linearGradient>
+
+          {/* AI Intelligence Sun Sparkle Gradient */}
+          <linearGradient id="wgSparkleGrad" x1="172" y1="46" x2="216" y2="92" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#FFFFFF" />
+            <stop offset="25%" stopColor="#FDE047" />
+            <stop offset="70%" stopColor="#F59E0B" />
+            <stop offset="100%" stopColor="#D97706" />
+          </linearGradient>
+
+          {/* Neural Track Gradient */}
+          <linearGradient id="wgNeuralGrad" x1="80" y1="150" x2="190" y2="100" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#E0F2FE" />
+            <stop offset="60%" stopColor="#7DD3FC" />
+            <stop offset="100%" stopColor="#FDE047" />
+          </linearGradient>
+
+          {/* Node Gradient */}
+          <radialGradient id="wgNodeGrad" cx="35%" cy="35%" r="65%">
+            <stop offset="0%" stopColor="#FFFFFF" />
+            <stop offset="60%" stopColor="#7DD3FC" />
+            <stop offset="100%" stopColor="#0284C7" />
+          </radialGradient>
+        </defs>
+
+        {/* 1. Ambient Sun / Intelligence Aura */}
+        <circle cx="192" cy="70" r="34" fill="#F59E0B" opacity="0.12" />
+        <circle cx="192" cy="70" r="20" fill="#FDE047" opacity="0.22" />
+
+        {/* 2. Main Cloud Body */}
+        <path
+          d="M 72 184
+             H 184
+             A 24 24 0 0 0 208 160
+             A 30 30 0 0 0 184 114
+             A 44 44 0 0 0 116 96
+             A 36 36 0 0 0 64 140
+             A 24 24 0 0 0 72 184
+             Z"
+          fill="url(#wgCloudGrad)"
+        />
+
+        {/* 3. Base Depth Shade */}
+        <path
+          d="M 72 184
+             H 184
+             A 24 24 0 0 0 208 160
+             C 192 166 172 170 148 170
+             C 118 170 94 164 64 154
+             A 24 24 0 0 0 72 184
+             Z"
+          fill="url(#wgCloudDepth)"
+        />
+
+        {/* 4. Glass Edge Rim Highlight */}
+        <path
+          d="M 68 138
+             A 36 36 0 0 1 116 96
+             A 44 44 0 0 1 184 114"
+          stroke="url(#wgRimHighlight)"
+          strokeWidth="3.5"
+          strokeLinecap="round"
+          fill="none"
+        />
+
+        {/* 5. AI Neural Network / Isobar Synthesis Lines */}
+        <g stroke="url(#wgNeuralGrad)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.95">
+          <line x1="88" y1="152" x2="132" y2="138" />
+          <line x1="132" y1="138" x2="176" y2="152" />
+          <line x1="132" y1="138" x2="158" y2="114" />
+          <line x1="158" y1="114" x2="182" y2="84" strokeWidth="2" strokeDasharray="3 3" opacity="0.85" />
+        </g>
+
+        {/* 6. Synoptic Constellation Nodes */}
+        <circle cx="88" cy="152" r="5.5" fill="url(#wgNodeGrad)" stroke="#0369A1" strokeWidth="1.5" />
+        <circle cx="86.5" cy="150.5" r="1.8" fill="#FFFFFF" />
+
+        <circle cx="132" cy="138" r="6.5" fill="url(#wgNodeGrad)" stroke="#0369A1" strokeWidth="1.5" />
+        <circle cx="130.5" cy="136" r="2.2" fill="#FFFFFF" />
+
+        <circle cx="176" cy="152" r="5.5" fill="url(#wgNodeGrad)" stroke="#0369A1" strokeWidth="1.5" />
+        <circle cx="174.5" cy="150.5" r="1.8" fill="#FFFFFF" />
+
+        <circle cx="158" cy="114" r="5" fill="#FDE047" stroke="#D97706" strokeWidth="1.5" />
+        <circle cx="157" cy="112.5" r="1.6" fill="#FFFFFF" />
+
+        {/* 7. AI Intelligence Star (Sun Sparkle) */}
+        <g transform="translate(192, 70)">
+          {/* 4-point Precision Star */}
+          <path
+            d="M 0 -24 Q 0 0 24 0 Q 0 0 0 24 Q 0 0 -24 0 Q 0 0 0 -24 Z"
+            fill="url(#wgSparkleGrad)"
+          />
+          {/* Center Radiant Core */}
+          <circle cx="0" cy="0" r="4" fill="#FFFFFF" />
+          {/* Diagonal Micro Rays */}
+          <line x1="-10" y1="-10" x2="10" y2="10" stroke="#FFFBEB" strokeWidth="1.5" strokeLinecap="round" opacity="0.75" />
+          <line x1="10" y1="-10" x2="-10" y2="10" stroke="#FFFBEB" strokeWidth="1.5" strokeLinecap="round" opacity="0.75" />
+        </g>
+      </svg>
+    );
+  }
+
+  // Horizontal lockup (Icon + Typography)
+  return (
+    <div className={`inline-flex items-center gap-2 select-none ${className}`}>
+      <WeatherGptLogo size={pixelSize} variant="icon" />
+      <div className="flex items-baseline tracking-tight font-extrabold leading-none">
+        <span className="text-slate-100 dark:text-slate-100 light:text-slate-900 transition-colors">
+          Weather
+        </span>
+        <span className="text-[#0284C7] dark:text-[#38BDF8] light:text-[#0284C7] transition-colors ml-0.5">
+          GPT
+        </span>
+      </div>
+    </div>
+  );
+};
+
+export default WeatherGptLogo;

@@ -1,0 +1,544 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant light (&:where(.light, .light *));
+
+@layer base {
+  :root {
+    --bg-main: #0F141B;
+    --bg-container: #171C23;
+    --bg-secondary: #1B2027;
+    --bg-elevated: #252A32;
+    --border-hairline: #30353D;
+    --accent-amber: #F4A261;
+    --accent-sky: #8ECAE6;
+    --text-main: #f1f5f9;
+    --border-main: #30353D;
+  }
+
+  :root:not(.dark),
+  :root.light {
+    --bg-main: #f8fafc;
+    --bg-card: #ffffff;
+    --text-main: #0f172a;
+    --border-main: #e2e8f0;
+  }
+
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+}
+
+/* Light mode specific styling */
+.light {
+  color-scheme: light;
+}
+
+.light aside#desktop-sidebar {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+.light header {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-color: #e2e8f0 !important;
+}
+
+.light nav#mobile-bottom-nav {
+  background-color: rgba(255, 255, 255, 0.98) !important;
+  border-color: #e2e8f0 !important;
+}
+
+.light .bg-slate-950,
+.light .bg-slate-900 {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+.light .bg-slate-950\/95,
+.light .bg-slate-950\/90,
+.light .bg-slate-950\/80,
+.light .bg-slate-950\/70,
+.light .bg-slate-950\/60,
+.light .bg-slate-950\/40,
+.light .bg-slate-950\/30,
+.light .bg-slate-900\/95,
+.light .bg-slate-900\/90,
+.light .bg-slate-900\/80,
+.light .bg-slate-900\/70,
+.light .bg-slate-900\/60,
+.light .bg-slate-900\/40 {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+.light .bg-slate-800,
+.light .bg-slate-800\/60,
+.light .bg-slate-800\/80 {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+.light .border-slate-800,
+.light .border-slate-800\/80,
+.light .border-slate-800\/90,
+.light .border-slate-700,
+.light .border-slate-700\/80,
+.light .border-slate-700\/60 {
+  border-color: #e2e8f0 !important;
+}
+
+.light h1:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light h2:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light h3:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light h4:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light h5:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light h6:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *) {
+  color: #090D14 !important;
+}
+
+.light .text-slate-50:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *):not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-indigo-600 *):not(.bg-rose-500 *):not(.bg-emerald-500 *):not(.bg-blue-600 *):not(.bg-slate-900 *):not(.bg-black *),
+.light .text-slate-100:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *):not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-indigo-600 *):not(.bg-rose-500 *):not(.bg-emerald-500 *):not(.bg-blue-600 *):not(.bg-slate-900 *):not(.bg-black *),
+.light .text-slate-200:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *):not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-indigo-600 *):not(.bg-rose-500 *):not(.bg-emerald-500 *):not(.bg-blue-600 *):not(.bg-slate-900 *):not(.bg-black *) {
+  color: #0F172A !important;
+}
+
+.light .text-slate-300:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *):not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-indigo-600 *):not(.bg-rose-500 *):not(.bg-emerald-500 *):not(.bg-blue-600 *):not(.bg-slate-900 *):not(.bg-black *),
+.light .text-gray-300:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *):not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-indigo-600 *):not(.bg-rose-500 *):not(.bg-emerald-500 *):not(.bg-blue-600 *):not(.bg-slate-900 *):not(.bg-black *),
+.light .text-zinc-300:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *):not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-indigo-600 *):not(.bg-rose-500 *):not(.bg-emerald-500 *):not(.bg-blue-600 *):not(.bg-slate-900 *):not(.bg-black *) {
+  color: #1E293B !important;
+}
+
+.light .text-slate-400:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *):not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-indigo-600 *):not(.bg-rose-500 *):not(.bg-emerald-500 *):not(.bg-blue-600 *):not(.bg-slate-900 *):not(.bg-black *),
+.light .text-gray-400:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *):not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-indigo-600 *):not(.bg-rose-500 *):not(.bg-emerald-500 *):not(.bg-blue-600 *):not(.bg-slate-900 *):not(.bg-black *),
+.light .text-zinc-400:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *):not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-indigo-600 *):not(.bg-rose-500 *):not(.bg-emerald-500 *):not(.bg-blue-600 *):not(.bg-slate-900 *):not(.bg-black *) {
+  color: #334155 !important;
+}
+
+.light .text-slate-500:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *):not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-indigo-600 *):not(.bg-rose-500 *):not(.bg-emerald-500 *):not(.bg-blue-600 *):not(.bg-slate-900 *):not(.bg-black *),
+.light .text-gray-500:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *):not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-indigo-600 *):not(.bg-rose-500 *):not(.bg-emerald-500 *):not(.bg-blue-600 *):not(.bg-slate-900 *):not(.bg-black *),
+.light .text-zinc-500:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *):not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-indigo-600 *):not(.bg-rose-500 *):not(.bg-emerald-500 *):not(.bg-blue-600 *):not(.bg-slate-900 *):not(.bg-black *) {
+  color: #334155 !important;
+}
+
+.light .text-slate-600:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *) {
+  color: #1E293B !important;
+}
+
+/* High-contrast brand, metric, and status accent text colors in Light View */
+.light .text-\[\#8ECAE6\]:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-sky-300:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-sky-400:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-cyan-300:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-cyan-400:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *) {
+  color: #0369a1 !important;
+}
+
+.light .text-\[\#F4A261\]:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-\[\#FFB703\]:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-\[\#FDB813\]:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-amber-300:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-amber-400:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-yellow-300:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-yellow-400:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *) {
+  color: #b45309 !important;
+}
+
+.light .text-\[\#E76F51\]:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-orange-300:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-orange-400:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *) {
+  color: #c2410c !important;
+}
+
+.light .text-\[\#2A9D8F\]:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-emerald-300:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-emerald-400:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-green-300:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-green-400:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *) {
+  color: #047857 !important;
+}
+
+.light .text-\[\#E63946\]:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-rose-300:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-rose-400:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-red-300:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-red-400:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *) {
+  color: #be123c !important;
+}
+
+.light .text-\[\#C77DFF\]:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-purple-300:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-purple-400:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-violet-300:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *),
+.light .text-violet-400:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *) {
+  color: #7e22ce !important;
+}
+
+/* Atmospheric Hero Card: maintain high-contrast light-on-dark typography in both Light & Dark themes across all pages */
+#hero-atmospheric-card,
+.hero-atmospheric-card,
+.atmospheric-hero-card,
+.atmospheric-banner,
+[data-atmospheric-banner="true"] {
+  background-color: #0F141B !important;
+  border-color: #252A32 !important;
+  color: #FFFFFF !important;
+}
+
+.light #hero-atmospheric-card,
+.light .hero-atmospheric-card,
+.light .atmospheric-hero-card,
+.light .atmospheric-banner,
+.light [data-atmospheric-banner="true"] {
+  background-color: #0F141B !important;
+  border-color: #30353D !important;
+  color: #FFFFFF !important;
+}
+
+/* Hero title & main figures (location name, big temperature, condition, key metrics, page headings) */
+.light #hero-atmospheric-card h1,
+.light #hero-atmospheric-card h2,
+.light .hero-atmospheric-card h1,
+.light .hero-atmospheric-card h2,
+.light .atmospheric-hero-card h1,
+.light .atmospheric-hero-card h2,
+.light .atmospheric-banner h1,
+.light .atmospheric-banner h2,
+.light [data-atmospheric-banner="true"] h1,
+.light [data-atmospheric-banner="true"] h2,
+.light #hero-atmospheric-card .hero-primary-text,
+.light .hero-atmospheric-card .hero-primary-text,
+.light #hero-atmospheric-card .text-slate-100,
+.light .hero-atmospheric-card .text-slate-100,
+.light .atmospheric-hero-card .text-slate-100,
+.light [data-atmospheric-banner="true"] .text-slate-100,
+.light #hero-atmospheric-card .text-white,
+.light .hero-atmospheric-card .text-white,
+.light .atmospheric-hero-card .text-white,
+.light [data-atmospheric-banner="true"] .text-white {
+  color: #FFFFFF !important;
+}
+
+/* Secondary labels & summary synopsis (meteorological paragraph, station telemetry, comfort rating) */
+.light #hero-atmospheric-card p,
+.light .hero-atmospheric-card p,
+.light .atmospheric-hero-card p,
+.light .atmospheric-banner p,
+.light [data-atmospheric-banner="true"] p,
+.light #hero-atmospheric-card .hero-secondary-text,
+.light .hero-atmospheric-card .hero-secondary-text,
+.light #hero-atmospheric-card .text-slate-200,
+.light .hero-atmospheric-card .text-slate-200,
+.light .atmospheric-hero-card .text-slate-200,
+.light [data-atmospheric-banner="true"] .text-slate-200,
+.light #hero-atmospheric-card .text-slate-300,
+.light .hero-atmospheric-card .text-slate-300,
+.light .atmospheric-hero-card .text-slate-300,
+.light [data-atmospheric-banner="true"] .text-slate-300 {
+  color: #E2E8F0 !important;
+}
+
+/* Sub-labels & metadata (feels like, sunset/sunrise labels, outdoor score caption) */
+.light #hero-atmospheric-card .hero-muted-text,
+.light .hero-atmospheric-card .hero-muted-text,
+.light #hero-atmospheric-card .text-slate-400,
+.light .hero-atmospheric-card .text-slate-400,
+.light .atmospheric-hero-card .text-slate-400,
+.light [data-atmospheric-banner="true"] .text-slate-400 {
+  color: #CBD5E1 !important;
+}
+
+/* Atmospheric sky & amber brand accents */
+.light #hero-atmospheric-card .hero-accent-sky,
+.light .hero-atmospheric-card .hero-accent-sky {
+  color: #8ECAE6 !important;
+}
+
+.light #hero-atmospheric-card .hero-accent-amber,
+.light .hero-atmospheric-card .hero-accent-amber {
+  color: #F4A261 !important;
+}
+
+/* Glass subcards & badges inside dark atmospheric hero */
+.light #hero-atmospheric-card .hero-surface-badge,
+.light .hero-atmospheric-card .hero-surface-badge {
+  background-color: rgba(20, 24, 31, 0.85) !important;
+  border-color: #252A32 !important;
+}
+
+/* Fix text-white in light mode so content remains clearly readable on light backgrounds */
+.light .text-white:not(#hero-atmospheric-card *):not(.hero-atmospheric-card *):not(.atmospheric-hero-card *):not(.atmospheric-banner *):not([data-atmospheric-banner="true"] *):not(.bg-sky-500 *):not(.bg-sky-600 *):not(.bg-indigo-600 *):not(.bg-rose-500 *):not(.bg-emerald-500 *):not(.bg-blue-600 *):not(.bg-amber-500 *):not(.bg-sky-500):not(.bg-sky-600):not(.bg-rose-500):not(.bg-emerald-500) {
+  color: #0f172a !important;
+}
+
+.light .bg-gradient-to-b.from-slate-900 {
+  background-image: linear-gradient(to bottom, #ffffff, #f8fafc) !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+}
+
+.light .bg-gradient-to-r.from-slate-900 {
+  background-image: linear-gradient(to right, #f8fafc, #f1f5f9) !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* Ensure action buttons with solid colored backgrounds keep pristine white text */
+.light .bg-sky-500,
+.light .bg-sky-600,
+.light .bg-indigo-600,
+.light .bg-rose-500,
+.light .bg-emerald-500,
+.light .bg-blue-600,
+.light .bg-sky-500 *,
+.light .bg-sky-600 *,
+.light .bg-indigo-600 *,
+.light .bg-rose-500 *,
+.light .bg-emerald-500 *,
+.light .bg-blue-600 * {
+  color: #ffffff !important;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+}
+.light ::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.8);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.4);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.7);
+}
+
+/* Diurnal Full-Page Permanent Atmospheric Theme System */
+[data-diurnal-theme="true"] aside#desktop-sidebar,
+[data-diurnal-trial="true"] aside#desktop-sidebar {
+  background-color: rgba(14, 18, 25, 0.65) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-right-color: var(--diurnal-border, rgba(56, 189, 248, 0.25)) !important;
+}
+
+[data-diurnal-theme="true"] aside#desktop-sidebar > div,
+[data-diurnal-trial="true"] aside#desktop-sidebar > div,
+[data-diurnal-theme="true"] aside#desktop-sidebar .bg-\[\#0F141B\],
+[data-diurnal-trial="true"] aside#desktop-sidebar .bg-\[\#0F141B\],
+[data-diurnal-theme="true"] aside#desktop-sidebar .bg-\[\#171C23\],
+[data-diurnal-trial="true"] aside#desktop-sidebar .bg-\[\#171C23\] {
+  background-color: transparent !important;
+}
+
+[data-diurnal-theme="true"] header,
+[data-diurnal-trial="true"] header {
+  background-color: rgba(15, 20, 28, 0.68) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-bottom-color: var(--diurnal-border, rgba(56, 189, 248, 0.25)) !important;
+}
+
+[data-diurnal-theme="true"] nav#mobile-bottom-nav,
+[data-diurnal-trial="true"] nav#mobile-bottom-nav {
+  background-color: rgba(15, 20, 28, 0.80) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-top-color: var(--diurnal-border, rgba(56, 189, 248, 0.25)) !important;
+}
+
+[data-diurnal-theme="true"] footer,
+[data-diurnal-trial="true"] footer {
+  background-color: rgba(15, 20, 28, 0.60) !important;
+  backdrop-filter: blur(16px) !important;
+  border-top-color: var(--diurnal-border, rgba(56, 189, 248, 0.25)) !important;
+}
+
+/* Make all content cards translucent frosted glass so the solar photographic atmosphere shines through */
+[data-diurnal-theme="true"] main .bg-\[\#171C23\],
+[data-diurnal-trial="true"] main .bg-\[\#171C23\],
+[data-diurnal-theme="true"] main .bg-\[\#1B2027\],
+[data-diurnal-trial="true"] main .bg-\[\#1B2027\],
+[data-diurnal-theme="true"] main .bg-\[\#0F141B\],
+[data-diurnal-trial="true"] main .bg-\[\#0F141B\],
+[data-diurnal-theme="true"] main .bg-slate-900,
+[data-diurnal-trial="true"] main .bg-slate-950,
+[data-diurnal-theme="true"] main div[class*="bg-[#171C23]"],
+[data-diurnal-trial="true"] main div[class*="bg-[#171C23]"],
+[data-diurnal-theme="true"] main div[class*="bg-[#1B2027]"],
+[data-diurnal-trial="true"] main div[class*="bg-[#1B2027]"] {
+  background-color: var(--diurnal-card-bg, rgba(20, 26, 36, 0.72)) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-color: var(--diurnal-border, rgba(255, 255, 255, 0.12)) !important;
+}
+
+/* Light mode support */
+.light [data-diurnal-theme="true"] aside#desktop-sidebar,
+.light[data-diurnal-theme="true"] aside#desktop-sidebar,
+.light [data-diurnal-trial="true"] aside#desktop-sidebar,
+.light[data-diurnal-trial="true"] aside#desktop-sidebar {
+  background-color: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-right-color: var(--diurnal-border, rgba(56, 189, 248, 0.35)) !important;
+}
+
+.light [data-diurnal-theme="true"] aside#desktop-sidebar > div,
+.light[data-diurnal-theme="true"] aside#desktop-sidebar > div,
+.light [data-diurnal-trial="true"] aside#desktop-sidebar > div,
+.light[data-diurnal-trial="true"] aside#desktop-sidebar > div,
+.light [data-diurnal-theme="true"] aside#desktop-sidebar .bg-white,
+.light[data-diurnal-theme="true"] aside#desktop-sidebar .bg-white,
+.light [data-diurnal-trial="true"] aside#desktop-sidebar .bg-white,
+.light[data-diurnal-trial="true"] aside#desktop-sidebar .bg-white {
+  background-color: transparent !important;
+}
+
+.light [data-diurnal-theme="true"] header,
+.light[data-diurnal-theme="true"] header,
+.light [data-diurnal-trial="true"] header,
+.light[data-diurnal-trial="true"] header {
+  background-color: rgba(255, 255, 255, 0.78) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-bottom-color: var(--diurnal-border, rgba(56, 189, 248, 0.35)) !important;
+}
+
+.light [data-diurnal-theme="true"] nav#mobile-bottom-nav,
+.light[data-diurnal-theme="true"] nav#mobile-bottom-nav,
+.light [data-diurnal-trial="true"] nav#mobile-bottom-nav,
+.light[data-diurnal-trial="true"] nav#mobile-bottom-nav {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-top-color: var(--diurnal-border, rgba(56, 189, 248, 0.35)) !important;
+}
+
+.light [data-diurnal-theme="true"] footer,
+.light[data-diurnal-theme="true"] footer,
+.light [data-diurnal-trial="true"] footer,
+.light[data-diurnal-trial="true"] footer {
+  background-color: rgba(255, 255, 255, 0.70) !important;
+  backdrop-filter: blur(16px) !important;
+  border-top-color: var(--diurnal-border, rgba(56, 189, 248, 0.35)) !important;
+}
+
+.light [data-diurnal-theme="true"] main .bg-white:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]),
+.light[data-diurnal-theme="true"] main .bg-white:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]),
+.light [data-diurnal-trial="true"] main .bg-white:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]),
+.light[data-diurnal-trial="true"] main .bg-white:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]),
+.light [data-diurnal-theme="true"] main .bg-slate-50:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]),
+.light[data-diurnal-theme="true"] main .bg-slate-50:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]),
+.light [data-diurnal-trial="true"] main .bg-slate-50:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]),
+.light[data-diurnal-trial="true"] main .bg-slate-50:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]),
+.light [data-diurnal-theme="true"] main .bg-\[\#171C23\]:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]),
+.light[data-diurnal-theme="true"] main .bg-\[\#171C23\]:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]),
+.light [data-diurnal-trial="true"] main .bg-\[\#171C23\]:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]),
+.light[data-diurnal-trial="true"] main .bg-\[\#171C23\]:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]),
+.light [data-diurnal-theme="true"] main .bg-\[\#1B2027\]:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]),
+.light[data-diurnal-theme="true"] main .bg-\[\#1B2027\]:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]),
+.light [data-diurnal-trial="true"] main .bg-\[\#1B2027\]:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]),
+.light[data-diurnal-trial="true"] main .bg-\[\#1B2027\]:not(#hero-atmospheric-card):not(.hero-atmospheric-card):not(.atmospheric-hero-card):not([data-atmospheric-banner="true"]) {
+  background-color: rgba(255, 255, 255, 0.78) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-color: var(--diurnal-border, rgba(0, 0, 0, 0.10)) !important;
+}
+
+
+/* WeatherGPT Landing Page: preserve dark atmospheric contrast in light mode */
+.light #weathergpt-landing-page h1,
+.light #weathergpt-landing-page h2,
+.light #weathergpt-landing-page h3,
+.light #weathergpt-landing-page h4,
+.light #weathergpt-landing-page h5,
+.light #weathergpt-landing-page h6 {
+  color: #FDFBF7 !important;
+}
+
+.light #weathergpt-landing-page .text-slate-300 {
+  color: #cbd5e1 !important;
+}
+
+.light #weathergpt-landing-page .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+/* WeatherGPT Landing Page: preserve dark atmospheric contrast in light mode */
+.light #weathergpt-landing-page h1,
+.light #weathergpt-landing-page h2,
+.light #weathergpt-landing-page h3,
+.light #weathergpt-landing-page h4,
+.light #weathergpt-landing-page h5,
+.light #weathergpt-landing-page h6 {
+  color: #FDFBF7 !important;
+}
+
+.light #weathergpt-landing-page .text-slate-300 {
+  color: #cbd5e1 !important;
+}
+
+.light #weathergpt-landing-page .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+/* Landing Page Light Mode: override conflicting global heading rules */
+html.light #weathergpt-landing-page#weathergpt-landing-page :is(h1, h2, h3, h4, h5, h6) {
+  color: #FDFBF7 !important;
+}
+
+/* Landing Page: preserve dark design and readable text in Light Mode */
+html.light #weathergpt-landing-page#weathergpt-landing-page header {
+  background-color: transparent !important;
+}
+
+html.light #weathergpt-landing-page#weathergpt-landing-page .text-slate-200 {
+  color: #e2e8f0 !important;
+}
+
+html.light #weathergpt-landing-page#weathergpt-landing-page .text-slate-300 {
+  color: #cbd5e1 !important;
+}
+
+html.light #weathergpt-landing-page#weathergpt-landing-page .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+html.light #weathergpt-landing-page#weathergpt-landing-page .text-slate-500 {
+  color: #94a3b8 !important;
+}
+
+html.light #weathergpt-landing-page#weathergpt-landing-page .text-white {
+  color: #ffffff !important;
+}
+
+/* WeatherGPT cinematic sunset — gentle background movement */
+@keyframes wg-cloud-drift {
+  from {
+    transform: translate3d(-1%, -1%, 0) scale(1.08);
+  }
+  to {
+    transform: translate3d(1%, 1%, 0) scale(1.13);
+  }
+}
+
+#weathergpt-landing-page > div:first-of-type > img {
+  animation: wg-cloud-drift 28s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #weathergpt-landing-page > div:first-of-type > img {
+    animation: none;
+    will-change: auto;
+  }
+}

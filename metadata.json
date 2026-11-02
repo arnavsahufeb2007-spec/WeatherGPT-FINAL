@@ -1,0 +1,6 @@
+{
+  "name": "WeatherGPT",
+  "description": "AI-powered weather intelligence product combining real Open-Meteo forecasts, deterministic analysis, and Gemini NLU interpretation for India and global weather.",
+  "requestFramePermissions": ["geolocation", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
