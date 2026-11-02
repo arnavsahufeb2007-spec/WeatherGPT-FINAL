@@ -27,6 +27,10 @@ export interface WeatherDataResult {
   hourly: HourlyForecastItem[];
   daily: DailyForecastItem[];
   timezone: string;
+  source?: "open-meteo" | "met-norway";
+  fetchedAt?: string;
+  isStale?: boolean;
+  unavailableMetrics?: string[];
 }
 
 export interface IWeatherProvider {
@@ -239,6 +243,10 @@ export function normalizeOpenMeteoResponse(raw: any, requestedTimezone: string =
     hourly: hourlyItems,
     daily: dailyItems,
     timezone,
+    source: "open-meteo",
+    fetchedAt: new Date().toISOString(),
+    isStale: false,
+    unavailableMetrics: [],
   };
 }
 
@@ -382,7 +390,7 @@ export class OpenMeteoWeatherProvider implements IWeatherProvider {
             observedAt: stale.data.current.time,
             cachedAt: new Date(stale.fetchedAt).toISOString(),
           });
-          return stale.data;
+          return { ...stale.data, isStale: true };
         }
         throw lastError ?? new WeatherProviderError("Open-Meteo unavailable", "network_error");
       } finally {
