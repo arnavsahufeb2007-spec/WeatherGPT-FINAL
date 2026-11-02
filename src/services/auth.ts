@@ -140,8 +140,8 @@ class AuthService {
     }
 
     // 2. Load saved locations & sync guest favorites
-    const savedLocs = await savedLocationsService.getSavedLocations(userId, false);
-    await savedLocationsService.syncGuestLocationsToCloud(userId);
+    const savedLocs = await savedLocationsService.getSavedLocations(userId, false, "firebase");
+    await savedLocationsService.syncGuestLocationsToCloud(userId, "firebase");
     const updatedLocs = await savedLocationsService.getSavedLocations(userId, false);
 
     this.currentUser = {
@@ -217,6 +217,7 @@ class AuthService {
       avatarUrl: avatar,
       isGuest: false,
       plan,
+      authProvider: "supabase",
       savedLocations: updatedLocs.length > 0 ? updatedLocs : savedLocs,
       joinedDate: joined,
     };
@@ -451,14 +452,14 @@ class AuthService {
     const isGuest = this.currentUser.isGuest;
 
     if (isCurrentlySaved) {
-      await savedLocationsService.removeLocation(userId, isGuest, loc);
+      await savedLocationsService.removeLocation(userId, isGuest, loc, this.currentUser.authProvider === "supabase" ? "supabase" : "firebase");
       this.currentUser.savedLocations = this.currentUser.savedLocations.filter(
         (l) => !(Math.abs(l.latitude - loc.latitude) < 0.05 && Math.abs(l.longitude - loc.longitude) < 0.05)
       );
       this.notify();
       return false;
     } else {
-      await savedLocationsService.saveLocation(userId, isGuest, loc);
+      await savedLocationsService.saveLocation(userId, isGuest, loc, this.currentUser.authProvider === "supabase" ? "supabase" : "firebase");
       this.currentUser.savedLocations.push(loc);
       this.notify();
       return true;
