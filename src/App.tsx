@@ -155,6 +155,7 @@ export default function App() {
   });
 
   const [currentWeather, setCurrentWeather] = useState<CurrentWeatherData | null>(null);
+  const [weatherSource, setWeatherSource] = useState<{ provider: string; fetchedAt: string; isStale: boolean; unavailableMetrics: string[] } | null>(null);
   const [hourlyForecast, setHourlyForecast] = useState<HourlyForecastItem[]>([]);
   const [dailyForecast, setDailyForecast] = useState<DailyForecastItem[]>([]);
   const [weatherAnalysis, setWeatherAnalysis] = useState<WeatherAnalysis | null>(null);
@@ -222,6 +223,7 @@ export default function App() {
       }
 
       setCurrentWeather(weatherBundle.current);
+      setWeatherSource(weatherBundle.weatherSource || null);
       setWeatherAnalysis(weatherBundle.analysis);
       setAdvisories(weatherBundle.advisories || []);
       setHourlyForecast(hourly);
@@ -635,6 +637,21 @@ export default function App() {
               {/* 1. HOME SECTION: Focused on Location, Current Weather Hero, and AI Chat */}
               {currentSection === "home" && (
                 <div className="space-y-6">
+                  {/* Provider and freshness transparency: unavailable fields must not be treated as verified zero readings. */}
+                  {currentWeather && weatherSource && (
+                    <div role="status" className="rounded-lg border border-sky-500/30 bg-sky-500/10 px-4 py-3 text-sm text-slate-200">
+                      <strong>Weather source:</strong> {weatherSource.provider === "met-norway" ? "MET Norway (backup forecast)" : weatherSource.provider === "open-meteo" ? "Open-Meteo" : weatherSource.provider}
+                      {weatherSource.isStale ? " • Cached observation (not live)" : " • Forecast data"}
+                      {weatherSource.fetchedAt && !Number.isNaN(Date.parse(weatherSource.fetchedAt)) && (
+                        <span> • Retrieved {new Date(weatherSource.fetchedAt).toLocaleString()}</span>
+                      )}
+                      {weatherSource.unavailableMetrics.length > 0 && (
+                        <div className="mt-1 text-amber-300">
+                          Limited backup data: UV index, rain probability, feels-like temperature and some other metrics are unavailable. Any zero shown for these fields is a placeholder, not a verified measurement. Outdoor scores and advisories may be incomplete.
+                        </div>
+                      )}
+                    </div>
+                  )}
                   {/* Current Weather Hero Summary */}
                   {currentWeather && currentLocation && (
                     <CurrentWeatherHero
